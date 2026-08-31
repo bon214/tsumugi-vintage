@@ -31,6 +31,11 @@ test("production build carries source-controlled local imagery", async () => {
   assert.match(shell, /TSUMUGI_IMAGES\.asset\("uploads\/RSeo\.png"\)/);
 });
 
+test("production public app suppresses browser-default link underlines", async () => {
+  const source = await read("build/build-app.mjs");
+  assert.match(source, /#dc-root a \{ text-decoration: none \}/);
+});
+
 test("CMS migration provides tables, public filtering, staff RLS and browser RPC", async () => {
   const sql = await read("supabase/migrations/0011_cms_runtime.sql");
   for (const fragment of [

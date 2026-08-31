@@ -115,6 +115,7 @@ const LIVE_CSS = `<style>
   body.dc-live main.prerendered { display: none }
   body.dc-live { display: block }
   #dc-root:empty + main.prerendered { display: block }
+  #dc-root a { text-decoration: none }
 </style>`;
 
 async function main() {
