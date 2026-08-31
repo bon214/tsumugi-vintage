@@ -132,6 +132,25 @@ ${JSON.stringify(jsonLd, null, 2)}
   html, body { margin: 0 }
   body { background: #F8F7F4; color: #222222;
          font-family: 'Hanken Grotesk', system-ui, -apple-system, sans-serif }
+  .dc-boot { position: fixed; inset: 0; z-index: 9999; display: grid; place-items: center;
+             min-height: 100svh; background: #F8F7F4; opacity: 1; visibility: visible;
+             transition: opacity 420ms ease, visibility 0s linear 420ms }
+  .dc-boot__inner { width: min(72vw, 290px); display: flex; flex-direction: column;
+                    align-items: center; gap: 22px }
+  .dc-boot__logo { display: block; width: 100%; height: auto }
+  .dc-boot__track { width: 100%; height: 1px; overflow: hidden; background: #DDD8CF }
+  .dc-boot__bar { display: block; width: 38%; height: 100%; background: #6D7761;
+                  animation: dcBoot 1.25s cubic-bezier(.4,0,.2,1) infinite }
+  .dc-boot__label { font-family: ui-monospace, 'IBM Plex Mono', monospace; font-size: 9px;
+                    letter-spacing: .26em; color: #9C978F }
+  body.dc-live .dc-boot, body.dc-boot-failed .dc-boot {
+    opacity: 0; visibility: hidden; pointer-events: none
+  }
+  @keyframes dcBoot {
+    0% { transform: translateX(-110%) }
+    55% { transform: translateX(85%) }
+    100% { transform: translateX(270%) }
+  }
   .prerendered { max-width: 720px; margin: 0 auto; font-size: 15px; line-height: 1.9;
                  padding: clamp(32px,7vh,80px) clamp(20px,5vw,40px) }
   .prerendered .kicker { font-family: ui-monospace, monospace; font-size: 11px; letter-spacing: .2em; color: #6D7761; margin: 0 0 14px }
@@ -158,6 +177,14 @@ ${JSON.stringify(jsonLd, null, 2)}
 </script>
 </head>
 <body>
+<div id="dc-boot" class="dc-boot" role="status" aria-label="TSUMUGIを読み込んでいます">
+  <div class="dc-boot__inner">
+    <img class="dc-boot__logo" src="${root}assets/tsumugi-logo.svg" alt="TSUMUGI Vintage Shop" width="145" height="27">
+    <span class="dc-boot__track" aria-hidden="true"><span class="dc-boot__bar"></span></span>
+    <span class="dc-boot__label">LOADING ARCHIVE</span>
+  </div>
+</div>
+<noscript><style>.dc-boot { display: none !important }</style></noscript>
 <main class="prerendered">
   ${kicker ? `<p class="kicker">${esc(kicker)}</p>` : ""}
   <h1>${esc(heading || title)}</h1>
@@ -389,6 +416,16 @@ written.push(await emit("404.html", `<!DOCTYPE html>
   html, body { margin: 0 }
   body { background: #F8F7F4; color: #222222;
          font-family: 'Hanken Grotesk', system-ui, -apple-system, sans-serif }
+  .dc-boot { position: fixed; inset: 0; z-index: 9999; display: grid; place-items: center;
+             min-height: 100svh; background: #F8F7F4; opacity: 1; visibility: visible;
+             transition: opacity 420ms ease, visibility 0s linear 420ms }
+  .dc-boot__inner { width: min(72vw, 290px); display: flex; flex-direction: column; align-items: center; gap: 22px }
+  .dc-boot__logo { display: block; width: 100%; height: auto }
+  .dc-boot__track { width: 100%; height: 1px; overflow: hidden; background: #DDD8CF }
+  .dc-boot__bar { display: block; width: 38%; height: 100%; background: #6D7761; animation: dcBoot 1.25s cubic-bezier(.4,0,.2,1) infinite }
+  .dc-boot__label { font-family: ui-monospace, monospace; font-size: 9px; letter-spacing: .26em; color: #9C978F }
+  body.dc-live .dc-boot, body.dc-boot-failed .dc-boot { opacity: 0; visibility: hidden; pointer-events: none }
+  @keyframes dcBoot { 0% { transform: translateX(-110%) } 55% { transform: translateX(85%) } 100% { transform: translateX(270%) } }
   .prerendered { max-width: 720px; margin: 0 auto; font-size: 15px; line-height: 1.9;
                  padding: clamp(32px,7vh,80px) clamp(20px,5vw,40px) }
   .prerendered .kicker { font-family: ui-monospace, monospace; font-size: 11px;
@@ -405,6 +442,14 @@ written.push(await emit("404.html", `<!DOCTYPE html>
 </style>
 </head>
 <body>
+<div id="dc-boot" class="dc-boot" role="status" aria-label="TSUMUGIを読み込んでいます">
+  <div class="dc-boot__inner">
+    <img class="dc-boot__logo" src="${DEPLOY_BASE}assets/tsumugi-logo.svg" alt="TSUMUGI Vintage Shop" width="145" height="27">
+    <span class="dc-boot__track" aria-hidden="true"><span class="dc-boot__bar"></span></span>
+    <span class="dc-boot__label">LOADING ARCHIVE</span>
+  </div>
+</div>
+<noscript><style>.dc-boot { display: none !important }</style></noscript>
 <main class="prerendered">
   <p class="kicker">404</p>
   <h1>ページが見つかりません</h1>

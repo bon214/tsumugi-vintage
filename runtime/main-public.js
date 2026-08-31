@@ -36,6 +36,7 @@ async function main() {
     try { await window.TSUMUGI_CMS.ready(); }
     catch {
       document.documentElement.dataset.cmsError = "1";
+      document.body.classList.add("dc-boot-failed");
       return;
     }
   }
@@ -48,8 +49,15 @@ async function main() {
      failure in the app leaves the readable static page on screen instead of a
      blank one. */
   requestAnimationFrame(() => {
-    requestAnimationFrame(() => document.body.classList.add("dc-live"));
+    requestAnimationFrame(() => {
+      document.body.classList.add("dc-live");
+      const boot = document.getElementById("dc-boot");
+      window.setTimeout(() => { if (boot) boot.remove(); }, 520);
+    });
   });
 }
 
-main();
+main().catch(() => {
+  document.documentElement.dataset.appError = "1";
+  document.body.classList.add("dc-boot-failed");
+});

@@ -150,6 +150,9 @@ async function main() {
   if (existsSync(path.join(ROOT, "uploads"))) {
     await cp(path.join(ROOT, "uploads"), path.join(DIST, "uploads"), { recursive: true });
   }
+  if (existsSync(path.join(ROOT, "assets"))) {
+    await cp(path.join(ROOT, "assets"), path.join(DIST, "assets"), { recursive: true });
+  }
   for (const f of ["favicon.svg", "robots.txt"]) {
     if (existsSync(path.join(ROOT, f))) await cp(path.join(ROOT, f), path.join(DIST, f));
   }
@@ -293,12 +296,30 @@ ${FONT_LINKS}
   html, body { margin: 0; min-height: 100% }
   body { background: #F6F5F2; color: #232220;
          font-family: 'Hanken Grotesk', system-ui, -apple-system, sans-serif }
+  .dc-boot { position: fixed; inset: 0; z-index: 9999; display: grid; place-items: center;
+             min-height: 100svh; background: #F6F5F2; opacity: 1; visibility: visible;
+             transition: opacity 420ms ease, visibility 0s linear 420ms }
+  .dc-boot__inner { width: min(72vw, 260px); display: flex; flex-direction: column; align-items: center; gap: 22px }
+  .dc-boot__logo { display: block; width: 100%; height: auto }
+  .dc-boot__track { width: 100%; height: 1px; overflow: hidden; background: #DBD6CC }
+  .dc-boot__bar { display: block; width: 38%; height: 100%; background: #6D7761; animation: dcBoot 1.25s cubic-bezier(.4,0,.2,1) infinite }
+  .dc-boot__label { font-family: 'IBM Plex Mono', ui-monospace, monospace; font-size: 9px; letter-spacing: .26em; color: #8C887F }
+  body.dc-live .dc-boot, body.dc-boot-failed .dc-boot { opacity: 0; visibility: hidden; pointer-events: none }
+  @keyframes dcBoot { 0% { transform: translateX(-110%) } 55% { transform: translateX(85%) } 100% { transform: translateX(270%) } }
+  @media (prefers-reduced-motion: reduce) { .dc-boot, .dc-boot__bar { animation: none; transition: none } }
   noscript p { padding: 24px; font-size: 13px }
 </style>
 </head>
 <body>
+<div id="dc-boot" class="dc-boot" role="status" aria-label="TSUMUGI管理画面を読み込んでいます">
+  <div class="dc-boot__inner">
+    <img class="dc-boot__logo" src="./assets/tsumugi-logo.svg" alt="TSUMUGI Vintage Shop" width="145" height="27">
+    <span class="dc-boot__track" aria-hidden="true"><span class="dc-boot__bar"></span></span>
+    <span class="dc-boot__label">LOADING CONSOLE</span>
+  </div>
+</div>
 <div id="dc-root"></div>
-<noscript><p>JavaScript が必要です / JavaScript required.</p></noscript>
+<noscript><style>.dc-boot { display: none !important }</style><p>JavaScript が必要です / JavaScript required.</p></noscript>
 ${appTags("./", "main-admin.js")}
 </body>
 </html>

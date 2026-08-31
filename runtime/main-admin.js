@@ -20,11 +20,24 @@ async function main() {
       const host = document.getElementById("dc-root") || document.body;
       host.textContent = "管理データを読み込めませんでした。Supabaseの設定とマイグレーションを確認してください。";
       host.setAttribute("role", "alert");
+      document.body.classList.add("dc-boot-failed");
       return;
     }
   }
   const { host, element } = bootDC(TSUMUGIAdmin, { fullPage: false });
   ReactDOM.createRoot(host).render(element);
+  requestAnimationFrame(() => {
+    requestAnimationFrame(() => {
+      document.body.classList.add("dc-live");
+      const boot = document.getElementById("dc-boot");
+      window.setTimeout(() => { if (boot) boot.remove(); }, 520);
+    });
+  });
 }
 
-main();
+main().catch(() => {
+  const host = document.getElementById("dc-root") || document.body;
+  host.textContent = "管理画面を読み込めませんでした。ページを再読み込みしてください。";
+  host.setAttribute("role", "alert");
+  document.body.classList.add("dc-boot-failed");
+});

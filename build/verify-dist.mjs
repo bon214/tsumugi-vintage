@@ -177,6 +177,7 @@ needFile("generated/pseudo.css", "hover/focus styling would be missing from ever
 needFile("404.html", "GitHub Pages serves /404.html for every unresolvable path; without it "
   + "a retired product URL lands on the platform's default page");
 needFile("favicon.svg", "every page references it, so its absence is an asset 404 sitewide");
+needFile("assets/tsumugi-logo.svg", "the supplied brand mark is missing from the published site");
 needFile("robots.txt", "crawlers get no sitemap pointer and the console is not disallowed");
 needFile("sitemap.xml", "no sitemap for the prerendered routes");
 for (const v of ["vendor/react.production.min.js", "vendor/react-dom.production.min.js",
@@ -200,6 +201,8 @@ for (const f of files.filter((f) => f.endsWith(".html"))) {
   const need = (cond, msg) => { if (!cond) problems.push(`${name}: ${msg}`); };
 
   need(/<div id="dc-root">/.test(raw), "no #dc-root — the application has nowhere to mount");
+  need(/id="dc-boot"/.test(raw), "no branded loading cover — prerendered text would flash before the app paints");
+  need(/assets\/tsumugi-logo\.svg/.test(raw), "the loading cover does not use the supplied TSUMUGI logo");
   need(/<script type="module" src="[^"]*runtime\/main-(public|admin)(\.bundle)?\.js"/.test(raw),
     "no module entry — the page would never boot the application");
   need(/http-equiv="Content-Security-Policy"/.test(raw), "no CSP meta");

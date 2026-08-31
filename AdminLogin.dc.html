@@ -10,7 +10,7 @@
 <div style="min-height:100vh;display:grid;place-items:center;padding:32px 20px;background:#F6F5F2">
   <div style="width:100%;max-width:420px;animation:admRise 320ms ease both">
     <div style="display:flex;flex-direction:column;gap:6px;margin-bottom:28px">
-      <span style="font-family:'EB Garamond',serif;font-size:24px;letter-spacing:0.24em;color:#232220">TSUMUGI</span>
+      <img src="{{ logoUrl }}" alt="TSUMUGI Vintage Shop" width="145" height="27" style="display:block;width:190px;max-width:100%;height:auto">
       <span style="font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:0.28em;color:#8C887F">{{ t.authAdministration }}</span>
     </div>
 
@@ -79,6 +79,9 @@ class Component extends DCLogic {
     const busy = !!p.busy, guestBusy = !!p.guestBusy;
     return {
       t: T,
+      logoUrl: (window.TSUMUGI_IMAGES && window.TSUMUGI_IMAGES.asset)
+        ? window.TSUMUGI_IMAGES.asset("assets/tsumugi-logo.svg")
+        : "assets/tsumugi-logo.svg",
       email: p.email ?? "",
       password: p.password ?? "",
       remember: p.remember !== false,
