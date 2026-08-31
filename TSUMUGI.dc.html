@@ -1658,7 +1658,7 @@ class Component extends DCLogic {
         t: T, isCreate: false, isSignIn: false, isRecover: true,
         heading: T.accRecoverHead,
         intro: recoveryLive ? T.accRecoverIntro : T.accRecoverExpired,
-        recoveryLive,
+        recoveryLive, showForm: recoveryLive,
         email: "", password: s.accPassword, confirm: s.accConfirm,
         onEmail: () => {},
         onPassword: e => this.setState({ accPassword: e.target.value, accError: "" }),
@@ -1683,6 +1683,7 @@ class Component extends DCLogic {
     }
     return {
       t: T, isCreate: create, isSignIn: !create, isRecover: false,
+      showForm: true,
       heading: create ? T.accCreate : T.accTitle,
       intro: create ? T.accCreateIntro : T.accSignInIntro,
       email: s.accEmail, password: s.accPassword, confirm: s.accConfirm,
