@@ -63,49 +63,19 @@
 <div style="min-height:100vh;display:flex;flex-direction:column;background:#F8F7F4">
 
   <header style="position:sticky;top:0;z-index:40;background:rgba(248,247,244,0.94);backdrop-filter:blur(10px);border-bottom:1px solid #E6E0D7">
-    <div style="display:grid;grid-template-columns:minmax(0,1fr) auto minmax(0,1fr);align-items:center;gap:16px;padding:clamp(14px,1.4vw,22px) clamp(20px,4vw,64px)">
-      <sc-if value="{{ isCompact }}" hint-placeholder-val="{{ false }}">
-        <button type="button" data-trigger="menu" onClick="{{ openMenu }}" aria-label="{{ t.aOpenMenu }}" aria-expanded="{{ menuExpanded }}" aria-controls="tsumugi-menu" style="justify-self:start;border:none;background:transparent;padding:0;margin-left:-11px;width:44px;height:44px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;cursor:pointer">
-          <span style="display:block;width:21px;height:1px;background:#222222"></span>
-          <span style="display:block;width:21px;height:1px;background:#222222"></span>
-          <span style="display:block;width:21px;height:1px;background:#222222"></span>
-        </button>
-      </sc-if>
-      <a href="#/" onClick="{{ goHome }}" aria-label="TSUMUGI — Home" style="justify-self:{{ logoJustify }};display:flex;align-items:center;min-height:44px;color:#222222;transform:{{ logoTransform }}">
-        <img src="{{ logoUrl }}" alt="TSUMUGI Vintage Shop" width="145" height="27" style="display:block;width:clamp(84px,11vw,160px);height:auto">
+    <div data-site-header-inner="1" style="display:grid;grid-template-columns:minmax(0,1fr) auto minmax(0,1fr);align-items:center;gap:{{ headerGap }};padding:{{ headerPadding }}">
+      <button type="button" data-trigger="menu" onClick="{{ openMenu }}" aria-label="{{ t.aOpenMenu }}" aria-expanded="{{ menuExpanded }}" aria-controls="tsumugi-menu" style="justify-self:start;border:none;background:transparent;padding:0;width:44px;height:44px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;cursor:pointer">
+        <span style="display:block;width:21px;height:1px;background:#222222"></span>
+        <span style="display:block;width:21px;height:1px;background:#222222"></span>
+        <span style="display:block;width:21px;height:1px;background:#222222"></span>
+      </button>
+      <a href="#/" onClick="{{ goHome }}" aria-label="TSUMUGI — Home" style="justify-self:center;display:flex;align-items:center;min-height:44px;color:#222222">
+        <img data-header-logo="1" src="{{ headerLogoUrl }}" alt="TSUMUGI" width="145" height="13" style="display:block;width:{{ headerLogoWidth }};height:auto">
       </a>
-      <sc-if value="{{ isDesktop }}" hint-placeholder-val="{{ true }}">
-        <nav style="justify-self:center;display:flex;gap:clamp(18px,2.2vw,34px);align-items:center">
-          <sc-for list="{{ navItems }}" as="n" hint-placeholder-count="5">
-            <a href="{{ n.href }}" onClick="{{ n.onClick }}" style="font-size:13px;letter-spacing:0.05em;color:#222222;padding:6px 0;border-bottom:1px solid transparent;transition:border-color 300ms ease" style-hover="border-bottom-color:#6D7761">{{ n.label }}</a>
-          </sc-for>
-        </nav>
-      </sc-if>
-      <div style="justify-self:end;display:flex;gap:clamp(12px,1.4vw,22px);align-items:center">
-        <sc-if value="{{ showHeaderLang }}" hint-placeholder-val="{{ true }}">
-        <div style="position:relative;display:flex;align-items:center">
-          <button type="button" onClick="{{ toggleHeaderLang }}" aria-label="{{ t.aLangSelect }}" aria-expanded="{{ headerLangExpanded }}" aria-controls="tsumugi-lang-header" style="display:flex;align-items:center;gap:7px;border:none;background:transparent;font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:0.14em;color:#6D7761;min-height:44px;padding:0 2px;white-space:nowrap;cursor:pointer" style-hover="color:#222222">
-            <span>Language</span>
-            <span aria-hidden="true" style="font-size:10px;color:#9C978F">{{ headerLangCaret }}</span>
-          </button>
-          <sc-if value="{{ headerLangOpen }}" hint-placeholder-val="{{ false }}">
-            <div onClick="{{ closeHeaderLang }}" style="position:fixed;inset:0;z-index:1"></div>
-            <div id="tsumugi-lang-header" role="group" aria-label="{{ t.aLangSelect }}" style="position:absolute;right:0;top:calc(100% + 6px);z-index:2;min-width:168px;background:#F8F7F4;border:1px solid #D9D1C4;box-shadow:0 12px 28px rgba(34,34,34,0.1);display:flex;flex-direction:column;padding:5px 0;animation:fadeIn 180ms ease both">
-              <sc-for list="{{ headerLangOptions }}" as="o" hint-placeholder-count="2">
-                <button type="button" onClick="{{ o.onSelect }}" aria-current="{{ o.current }}" style="display:flex;align-items:center;gap:10px;border:none;background:{{ o.bg }};padding:11px 15px;min-height:44px;font-size:13px;letter-spacing:0.04em;color:{{ o.color }};font-weight:{{ o.weight }};cursor:pointer;text-align:left;transition:background 160ms ease,color 160ms ease" style-hover="background:#EFE9E0;color:#222222">
-                  <span aria-hidden="true" style="width:10px;flex:none;font-family:'IBM Plex Mono',monospace;font-size:10px;color:#6D7761">{{ o.mark }}</span>
-                  <span>{{ o.label }}</span>
-                </button>
-              </sc-for>
-            </div>
-          </sc-if>
-        </div>
-        </sc-if>
-        <sc-if value="{{ showHeaderAccount }}" hint-placeholder-val="{{ true }}">
-        <button type="button" onClick="{{ goAccountHeader }}" style="border:none;background:transparent;font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:0.14em;color:#6D7761;white-space:nowrap;cursor:pointer;padding:12px 4px;min-height:44px;transition:color 300ms ease" style-hover="color:#222222">{{ t.accHeader }}</button>
-        </sc-if>
-        <button type="button" data-trigger="search" onClick="{{ openSearch }}" aria-label="{{ t.search }}" aria-expanded="{{ searchExpanded }}" aria-controls="tsumugi-search" style="border:none;background:transparent;font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:0.14em;color:#6D7761;white-space:nowrap;cursor:pointer;padding:12px 4px;min-height:44px;white-space:nowrap;transition:color 300ms ease" style-hover="color:#222222">Search</button>
-        <button type="button" data-trigger="cart" onClick="{{ openCart }}" aria-label="{{ t.aOpenCart }}" aria-expanded="{{ cartExpanded }}" aria-controls="tsumugi-cart" style="border:none;background:transparent;font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:0.14em;color:#222222;white-space:nowrap;cursor:pointer;padding:12px 4px;min-height:44px;white-space:nowrap">{{ cartLabel }}</button>
+      <div data-header-actions="1" style="justify-self:end;display:flex;gap:{{ headerActionsGap }};align-items:center;min-width:0">
+        <button data-header-action="1" type="button" onClick="{{ goAccountHeader }}" style="border:none;background:transparent;font-family:'IBM Plex Mono',monospace;font-size:{{ headerActionFontSize }};letter-spacing:{{ headerActionLetterSpacing }};color:#6D7761;white-space:nowrap;cursor:pointer;padding:{{ headerActionPadding }};min-height:44px;transition:color 300ms ease" style-hover="color:#222222">{{ t.accHeader }}</button>
+        <button data-header-action="1" type="button" data-trigger="search" onClick="{{ openSearch }}" aria-label="{{ t.search }}" aria-expanded="{{ searchExpanded }}" aria-controls="tsumugi-search" style="border:none;background:transparent;font-family:'IBM Plex Mono',monospace;font-size:{{ headerActionFontSize }};letter-spacing:{{ headerActionLetterSpacing }};color:#6D7761;white-space:nowrap;cursor:pointer;padding:{{ headerActionPadding }};min-height:44px;transition:color 300ms ease" style-hover="color:#222222">Search</button>
+        <button data-header-action="1" type="button" data-trigger="cart" onClick="{{ openCart }}" aria-label="{{ t.aOpenCart }}" aria-expanded="{{ cartExpanded }}" aria-controls="tsumugi-cart" style="border:none;background:transparent;font-family:'IBM Plex Mono',monospace;font-size:{{ headerActionFontSize }};letter-spacing:{{ headerActionLetterSpacing }};color:#222222;white-space:nowrap;cursor:pointer;padding:{{ headerActionPadding }};min-height:44px">{{ cartLabel }}</button>
       </div>
     </div>
   </header>
@@ -1969,6 +1939,9 @@ class Component extends DCLogic {
       logoUrl: (window.TSUMUGI_IMAGES && window.TSUMUGI_IMAGES.asset)
         ? window.TSUMUGI_IMAGES.asset("assets/tsumugi-logo.svg")
         : "assets/tsumugi-logo.svg",
+      headerLogoUrl: (window.TSUMUGI_IMAGES && window.TSUMUGI_IMAGES.asset)
+        ? window.TSUMUGI_IMAGES.asset("assets/tsumugi-wordmark.svg")
+        : "assets/tsumugi-wordmark.svg",
       heroFeatures: heroSrc.map((f, i) => ({
         ...f,
         hasEyebrow: !!f.eyebrow,
@@ -2000,14 +1973,15 @@ class Component extends DCLogic {
          than the one a press would switch to. */
       langCurrentLabel: isJa ? T.langNameJa : T.langNameEn,
       isDesktop, isCompact,
-      /* The header is a three-column grid, so the wordmark's position no longer
-         depends on how wide the side content happens to be — English and
-         Japanese labels differ enough to visibly shift it otherwise. Compact:
-         menu | wordmark (centred) | actions. Desktop: wordmark | nav | actions. */
-      logoJustify: isCompact ? "center" : "start",
-      logoTransform: isMobile ? "translateX(-20px)" : (isCompact ? "translateX(-12px)" : "none"),
-      showHeaderLang: !isMobile,
-      showHeaderAccount: !isMobile,
+      /* Three equal grid tracks keep the wordmark mathematically centred at
+         every viewport width: menu | home wordmark | account/search/cart. */
+      headerGap: isMobile ? "4px" : "16px",
+      headerPadding: isMobile ? "8px" : "clamp(14px,1.4vw,22px) clamp(20px,4vw,64px)",
+      headerLogoWidth: isMobile ? "clamp(80px,26vw,104px)" : "clamp(96px,11vw,145px)",
+      headerActionsGap: isMobile ? "0" : "clamp(12px,1.4vw,22px)",
+      headerActionFontSize: isMobile ? "clamp(7px,2.25vw,9px)" : "11px",
+      headerActionLetterSpacing: isMobile ? "0.02em" : "0.14em",
+      headerActionPadding: isMobile ? "10px 2px" : "12px 4px",
       goAccountHeader: () => this.goAccount(""),
       goAccountMenu: (e) => { if (e) e.preventDefault(); this.goAccount(""); },
       /* The account route is the only one that waits for the auth status, and a
