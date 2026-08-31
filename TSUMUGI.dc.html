@@ -46,7 +46,13 @@
   @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
   @keyframes slideIn { from { transform: translateX(24px); opacity: 0; } to { transform: none; opacity: 1; } }
   @keyframes slideInLeft { from { transform: translateX(-20px); opacity: 0; } to { transform: none; opacity: 1; } }
+  @keyframes menuBackdropIn { from { opacity: 0; } to { opacity: 1; } }
+  @keyframes menuPanelIn { from { transform: translateX(-32px); opacity: 0.45; } to { transform: translateX(0); opacity: 1; } }
+  @keyframes menuItemIn { from { transform: translateY(8px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
   @keyframes reveal { from { opacity: 0; transform: scale(1.03); } to { opacity: 1; transform: none; } }
+  @media (prefers-reduced-motion: reduce) {
+    [data-overlay="menu"], [data-panel="menu"], [data-panel="menu"] * { animation: none !important; transition: none !important; }
+  }
   /* Japanese runs must not inherit the Latin eyebrow tracking. */
   html[lang="ja"] main *, html[lang="ja"] header *, html[lang="ja"] [role="note"] *,
   html[lang="ja"] [role="dialog"] *, html[lang="ja"] [role="alertdialog"] *,
@@ -105,18 +111,18 @@
   </header>
 
   <sc-if value="{{ menuOpen }}" hint-placeholder-val="{{ false }}">
-    <div data-overlay="menu" onClick="{{ onMenuBackdrop }}" style="position:fixed;inset:0;height:100dvh;z-index:60;background:rgba(34,34,34,0.3);animation:fadeIn 240ms ease both;display:flex;justify-content:flex-start">
-      <div data-panel="menu" id="tsumugi-menu" role="dialog" aria-modal="true" aria-label="{{ t.menu }}" tabIndex="-1" style="width:min(420px,88%);height:100%;background:#F8F7F4;display:flex;flex-direction:column;overflow-y:auto;overscroll-behavior:contain;outline:none;animation:slideInLeft 300ms cubic-bezier(0.2,0.7,0.2,1) both">
-        <div style="flex:none;display:flex;align-items:center;justify-content:space-between;padding:18px 20px;border-bottom:1px solid #E6E0D7">
+    <div data-overlay="menu" onClick="{{ onMenuBackdrop }}" style="position:fixed;inset:0;height:100dvh;z-index:60;background:rgba(34,34,34,0.3);animation:menuBackdropIn 220ms ease-out both;display:flex;justify-content:flex-start">
+      <div data-panel="menu" id="tsumugi-menu" role="dialog" aria-modal="true" aria-label="{{ t.menu }}" tabIndex="-1" style="width:min(420px,88%);height:100%;background:#F8F7F4;display:flex;flex-direction:column;overflow-y:auto;overscroll-behavior:contain;outline:none;animation:menuPanelIn 360ms cubic-bezier(0.22,0.7,0.24,1) both">
+        <div style="flex:none;display:flex;align-items:center;justify-content:space-between;padding:18px 20px;border-bottom:1px solid #E6E0D7;animation:menuItemIn 280ms 70ms ease-out both">
           <img src="{{ logoUrl }}" alt="TSUMUGI Vintage Shop" width="145" height="27" style="display:block;width:142px;height:auto">
           <button type="button" onClick="{{ closeMenu }}" aria-label="{{ t.aCloseMenu }}" style="border:none;background:transparent;font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:0.16em;color:#222222;min-height:44px;padding:12px;white-space:nowrap;cursor:pointer">{{ t.closeX }}</button>
         </div>
         <nav style="padding:24px 20px calc(26px + env(safe-area-inset-bottom));display:flex;flex-direction:column;flex:1 1 auto;background:#EFE9E0">
           <sc-for list="{{ navItems }}" as="n" hint-placeholder-count="5">
-            <a href="{{ n.href }}" onClick="{{ n.onClick }}" style="font-family:'EB Garamond',serif;font-size:18px;letter-spacing:0.04em;color:#222222;padding:14px 0;border-bottom:1px solid #E0D8CB;min-height:48px;display:flex;align-items:center">{{ n.label }}</a>
+            <a href="{{ n.href }}" onClick="{{ n.onClick }}" style="font-family:'EB Garamond',serif;font-size:18px;letter-spacing:0.04em;color:#222222;padding:14px 0;border-bottom:1px solid #E0D8CB;min-height:48px;display:flex;align-items:center;animation:menuItemIn 320ms cubic-bezier(0.22,0.7,0.24,1) both;animation-delay:{{ n.menuDelay }}">{{ n.label }}</a>
           </sc-for>
-          <a href="#/account" onClick="{{ goAccountMenu }}" style="font-family:'EB Garamond',serif;font-size:18px;letter-spacing:0.04em;color:#222222;padding:14px 0;border-bottom:1px solid #E0D8CB;min-height:48px;display:flex;align-items:center" style-hover="color:#6D7761">{{ t.accHeader }}</a>
-          <div style="margin-top:auto;padding-top:44px;display:flex;flex-direction:column;align-items:flex-start;gap:2px">
+          <a href="#/account" onClick="{{ goAccountMenu }}" style="font-family:'EB Garamond',serif;font-size:18px;letter-spacing:0.04em;color:#222222;padding:14px 0;border-bottom:1px solid #E0D8CB;min-height:48px;display:flex;align-items:center;animation:menuItemIn 320ms 365ms cubic-bezier(0.22,0.7,0.24,1) both" style-hover="color:#6D7761">{{ t.accHeader }}</a>
+          <div style="margin-top:auto;padding-top:44px;display:flex;flex-direction:column;align-items:flex-start;gap:2px;animation:menuItemIn 320ms 410ms ease-out both">
             <div style="position:relative;display:flex;flex-direction:column;align-items:flex-start">
               <button type="button" onClick="{{ toggleLangMenu }}" aria-label="{{ t.aLangSelect }}" aria-expanded="{{ langExpanded }}" aria-controls="tsumugi-lang" style="display:flex;align-items:center;gap:12px;border:none;background:transparent;padding:9px 0;min-height:44px;font-family:'EB Garamond',serif;font-size:20px;letter-spacing:0.04em;color:#222222;cursor:pointer;text-align:left">
                 <span>Language</span>
@@ -2027,7 +2033,10 @@ class Component extends DCLogic {
       // While a page is held back, main reserves a viewport so the footer
       // cannot flash into view above the content that is still loading.
       mainMinH: (s.fading || !s.pageReady) ? "100vh" : "0px",
-      navItems: nav.map(([label, page]) => ({ label, href: "#/" + page, onClick: (e) => { e.preventDefault(); this.go(page); } })),
+      navItems: nav.map(([label, page], index) => ({
+        label, href: "#/" + page, menuDelay: (140 + index * 45) + "ms",
+        onClick: (e) => { e.preventDefault(); this.go(page); }
+      })),
       goHome: (e) => { if (e) e.preventDefault(); this.go("home"); },
       goShop: () => this.go("shop"), goAbout: () => this.go("about"), goJournal: () => this.go("journal"),
       goCartPage: () => this.go("cart"),
