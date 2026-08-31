@@ -152,6 +152,8 @@ const rel = (p) => p.slice(ROOT.length + 1).split("\\").join("/");
 const names = new Set(files.map(rel));
 const has = (p) => names.has(p);
 const bundled = has("runtime/main-public.bundle.js");
+const menuAnimations = ["menuBackdropIn", "menuPanelIn", "menuItemIn"];
+const adminAnimations = ["admFade", "admRise", "admToast", "admDrawer", "admSpin", "admPulse"];
 
 const needFile = (p, why) => { if (!has(p)) problems.push(`missing ${p} — ${why}`); };
 
@@ -160,6 +162,18 @@ if (bundled) {
   if (has("generated/TSUMUGI.js")) {
     problems.push("generated/ still present alongside a bundle — dead weight, and two "
       + "copies of every component can drift");
+  }
+  const publicBundle = await readFile(join(ROOT, "runtime/main-public.bundle.js"), "utf8");
+  for (const name of menuAnimations) {
+    if (!publicBundle.includes(name)) {
+      problems.push(`runtime/main-public.bundle.js: no ${name} animation reference`);
+    }
+  }
+  const adminBundle = await readFile(join(ROOT, "runtime/main-admin.bundle.js"), "utf8");
+  for (const name of adminAnimations) {
+    if (!adminBundle.includes(name)) {
+      problems.push(`runtime/main-admin.bundle.js: no ${name} animation reference`);
+    }
   }
 } else {
   needFile("runtime/main-public.js", "no application entry: the pages would stay static");
@@ -196,7 +210,7 @@ if ([...names].some((n) => n.endsWith(".dc.html"))) {
 for (const f of files.filter((f) => f.endsWith(".html"))) {
   const raw = await readFile(f, "utf8");
   const name = rel(f);
-  const isAdmin = /noindex/.test(raw);
+  const isConsole = name === "admin.html";
   const dcBase = /<meta name="dc-base" content="([^"]*)"/.exec(raw)?.[1] || null;
   const need = (cond, msg) => { if (!cond) problems.push(`${name}: ${msg}`); };
 
@@ -229,13 +243,26 @@ for (const f of files.filter((f) => f.endsWith(".html"))) {
     problems.push(`${name}: no import map, so "react" resolves to nothing`);
   }
 
-  if (!isAdmin) {
+  if (!isConsole) {
     /* 404.html carries an empty dc-route on purpose: it is a fallback, not a
        route, and the app opens the home screen from it. */
     need(/<meta name="dc-route" content="/.test(raw),
       "no dc-route meta — the application cannot tell which screen this URL is");
     need(/<main class="prerendered">/.test(raw),
       "the prerendered article is not marked, so it will not be hidden once the app paints");
+    need((raw.match(/data-dc-global="TSUMUGI"/g) || []).length === 1,
+      "compiled TSUMUGI global styles must appear exactly once");
+    for (const animation of menuAnimations) {
+      need((raw.match(new RegExp(`@keyframes\\s+${animation}\\b`, "g")) || []).length === 1,
+        `${animation} keyframes must appear exactly once while the component references them`);
+    }
+  } else {
+    need((raw.match(/data-dc-global="TSUMUGI Admin"/g) || []).length === 1,
+      "compiled TSUMUGI Admin global styles must appear exactly once");
+    for (const animation of adminAnimations) {
+      need((raw.match(new RegExp(`@keyframes\\s+${animation}\\b`, "g")) || []).length === 1,
+        `${animation} admin keyframes must appear exactly once`);
+    }
   }
 
   /* Asset references must resolve inside dist/, or the deployed page 404s on

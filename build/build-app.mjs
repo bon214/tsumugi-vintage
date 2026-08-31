@@ -27,6 +27,7 @@ import { readdir, readFile, writeFile, mkdir, rm, cp, stat } from "node:fs/promi
 import { existsSync } from "node:fs";
 import { spawnSync } from "node:child_process";
 import path from "node:path";
+import { parseFragment as parseHtmlFragment } from "parse5";
 
 const ROOT = path.resolve(import.meta.dirname, "..");
 const DIST = path.join(ROOT, "dist");
@@ -83,6 +84,34 @@ const CSP = [
 
 const die = (msg) => { console.error("build-app: " + msg); process.exit(1); };
 
+/* The compiler keeps each root component's <helmet> as build metadata. Only
+   its CSS belongs in the shipped document: scripts are assembled separately
+   in a fixed dependency order, and page-specific metadata comes from the
+   prerenderer. Requiring exactly one style block prevents a silent partial
+   extraction if the compiler output ever changes shape. */
+const helmetStyle = (helmets, componentName) => {
+  const helmet = helmets && helmets[componentName];
+  if (typeof helmet !== "string") {
+    die(`generated/helmets.json has no ${componentName} entry`);
+  }
+  const fragment = parseHtmlFragment(helmet);
+  const styles = (fragment.childNodes || []).filter((node) => node.tagName === "style");
+  if (styles.length !== 1) {
+    die(`${componentName} helmet must contain exactly one <style> block; found ${styles.length}`);
+  }
+  const style = styles[0];
+  if ((style.attrs || []).length) {
+    die(`${componentName} helmet <style> must not carry attributes; found `
+      + style.attrs.map((attr) => attr.name).join(", "));
+  }
+  if ((style.childNodes || []).some((node) => node.nodeName !== "#text")) {
+    die(`${componentName} helmet <style> contains a non-text child`);
+  }
+  const css = (style.childNodes || []).map((node) => node.value || "").join("").trim();
+  if (!css) die(`${componentName} helmet <style> is empty`);
+  return `<style data-dc-global="${componentName}">\n${css}\n</style>`;
+};
+
 const upTo = (file) => {
   const depth = file.split("/").length - 1;
   return depth === 0 ? "./" : "../".repeat(depth);
@@ -135,6 +164,15 @@ async function main() {
       + "    npm ci && npm run build:vendor\n"
       + "  See BUILD.md §2. Nothing else in the build depends on the network.");
   }
+
+  let helmets;
+  try {
+    helmets = JSON.parse(await readFile(path.join(ROOT, "generated", "helmets.json"), "utf8"));
+  } catch (e) {
+    die(`cannot read generated/helmets.json — run npm run build:dc first (${e.message})`);
+  }
+  const publicGlobalStyle = helmetStyle(helmets, "TSUMUGI");
+  const adminGlobalStyle = helmetStyle(helmets, "TSUMUGI Admin");
 
   /* ---- 1. prerender straight into dist/ ------------------------------ */
   await rm(DIST, { recursive: true, force: true });
@@ -269,7 +307,7 @@ async function main() {
     html = html.replace("</head>",
       `<meta http-equiv="Content-Security-Policy" content="${CSP}">\n`
       + `<link rel="stylesheet" href="${root}generated/pseudo.css">\n`
-      + `${FONT_LINKS}\n${LIVE_CSS}\n</head>`);
+      + `${FONT_LINKS}\n${publicGlobalStyle}\n${LIVE_CSS}\n</head>`);
     html = html.replace("</body>",
       `<div id="dc-root"></div>\n${appTags(root, "main-public.js")}\n</body>`);
 
@@ -293,6 +331,7 @@ async function main() {
 <link rel="icon" href="./favicon.svg" type="image/svg+xml">
 <link rel="stylesheet" href="./generated/pseudo.css">
 ${FONT_LINKS}
+${adminGlobalStyle}
 <style>
   html, body { margin: 0; min-height: 100% }
   body { background: #F6F5F2; color: #232220;

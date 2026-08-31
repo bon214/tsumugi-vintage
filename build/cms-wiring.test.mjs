@@ -36,6 +36,15 @@ test("production public app suppresses browser-default link underlines", async (
   assert.match(source, /#dc-root a \{ text-decoration: none \}/);
 });
 
+test("production build carries root component global styles", async () => {
+  const source = await read("build/build-app.mjs");
+  assert.match(source, /generated", "helmets\.json"/);
+  assert.match(source, /helmetStyle\(helmets, "TSUMUGI"\)/);
+  assert.match(source, /helmetStyle\(helmets, "TSUMUGI Admin"\)/);
+  assert.match(source, /publicGlobalStyle/);
+  assert.match(source, /adminGlobalStyle/);
+});
+
 test("CMS migration provides tables, public filtering, staff RLS and browser RPC", async () => {
   const sql = await read("supabase/migrations/0011_cms_runtime.sql");
   for (const fragment of [
