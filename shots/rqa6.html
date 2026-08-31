@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>TSUMUGI pre-backend fix QA</title>
+<style>
+  body { margin: 0; font: 13px/1.45 ui-monospace, monospace; background: #14140f; color: #e8e4da; display: flex; }
+  #wrap { flex: none; overflow: hidden; border-right: 2px solid #333; }
+  iframe { border: 0; display: block; background: #fff; transform-origin: 0 0; }
+  #log { flex: 1; padding: 10px 12px; white-space: pre-wrap; overflow: auto; height: 100vh; }
+</style>
+</head>
+<body>
+<div id="wrap"><iframe id="f" src="about:blank"></iframe></div>
+<pre id="log">running…</pre>
+<script>
+const F = document.getElementById("f"), WRAP = document.getElementById("wrap"), LOG = document.getElementById("log");
+let lines = [];
+const say = s => { lines.push(s); LOG.textContent = lines.join("\n"); };
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+const D = () => F.contentWindow.document;
+const W = () => F.contentWindow;
+const CS = el => W().getComputedStyle(el);
+const R = el => { const r = el.getBoundingClientRect(); return { w: Math.round(r.width), h: Math.round(r.height) }; };
+const txt = el => (el ? (el.innerText || el.textContent || "").replace(/\s+/g, " ").trim() : "");
+const click = el => el && el.dispatchEvent(new (W().MouseEvent)("click", { bubbles: true, cancelable: true, view: W() }));
+const S = () => W().TSUMUGI_STORE;
+function size(w, h) {
+  const s = Math.min(1, 190 / w);
+  F.style.width = w + "px"; F.style.height = h + "px"; F.style.transform = "scale(" + s + ")";
+  WRAP.style.width = Math.round(w * s) + "px"; WRAP.style.height = Math.round(h * s) + "px";
+}
+async function load(file, w, h, hash) {
+  size(w, h);
+  await new Promise(res => { F.onload = res; F.src = "../" + file + "?q=" + Date.now() + (hash || ""); });
+  await sleep(2100);
+}
+function setInput(el, v) {
+  const proto = el.tagName === "SELECT" ? W().HTMLSelectElement.prototype : el.tagName === "TEXTAREA" ? W().HTMLTextAreaElement.prototype : W().HTMLInputElement.prototype;
+  const setter = Object.getOwnPropertyDescriptor(proto, "value").set;
+  setter.call(el, v);
+  el.dispatchEvent(new (W().Event)("input", { bubbles: true }));
+  el.dispatchEvent(new (W().Event)("change", { bubbles: true }));
+}
+const errEls = () => [...D().querySelectorAll("span,div,p")].filter(e => !e.querySelector("span,div,p") && txt(e) && /rgb\(162, 73, 60\)|rgb\(160, 60, 45\)/.test(CS(e).color));
+function overflow() {
+  const iw = W().innerWidth;
+  return { iw, sw: D().documentElement.scrollWidth };
+}
+
+/* ---- 1. i18n keys resolve in both languages ---- */
+async function tKeys() {
+  await load("TSUMUGI.dc.html", 1180, 800, "#/");
+  const I = W().TSUMUGI_I18N;
+  const keys = ["productNameRequired", "skuRequired", "skuInUsePre", "skuInUsePost", "brandRequired", "schedulePre", "schedulePost", "scheduleNoDate"];
+  const en = I.t("en"), ja = I.t("ja");
+  say("<b>I18N KEYS</b> (" + keys.length + " new keys)");
+  keys.forEach(k => {
+    const e = en[k], j = ja[k];
+    const defined = e !== undefined && j !== undefined;
+    say("  " + k.padEnd(20) + " EN=\"" + e + "\"  JA=\"" + j + "\"" + (defined ? " ✓" : " ✗ UNDEFINED"));
+  });
+  say("  composed EN sku clash: \"" + en.skuInUsePre + "MOLESKIN JACKET" + en.skuInUsePost + "\"");
+  say("  composed JA sku clash: \"" + ja.skuInUsePre + "モールスキン ジャケット" + ja.skuInUsePost + "\"");
+  say("  composed EN schedule: \"" + en.schedulePre + "2026-08-30" + en.schedulePost + "\"  no-date=\"" + en.scheduleNoDate + "\"");
+  say("  composed JA schedule: \"" + ja.schedulePre + "2026-08-30" + ja.schedulePost + "\"  no-date=\"" + ja.scheduleNoDate + "\"");
+  const jaAscii = ["productNameRequired", "skuRequired", "brandRequired"].filter(k => /[A-Za-z]{4,}/.test(String(ja[k]).replace("SKU", "")));
+  say("  JA strings containing english words (excl. \"SKU\")=" + (jaAscii.join(",") || "none") + (jaAscii.length ? " ✗" : " ✓"));
+}
+
+/* ---- 2. Admin product validation, EN + JA ---- */
+async function tAdminProducts(lang) {
+  await load("TSUMUGI%20Admin.dc.html", 1180, 900, "#/admin/products/new");
+  const st = S();
+  const before = st.lang();
+  st.setLang(lang); await sleep(300);
+  if (!st.session()) { st.login("admin@tsumugi.archive", "tsumugi-demo", false); await sleep(900); }
+  W().location.hash = "#/admin/products/new"; await sleep(1600);
+  const save = [...D().querySelectorAll("button")].find(b => /^(Save|保存|Save product|商品を保存)/.test(txt(b)));
+  say("<b>ADMIN PRODUCTS " + lang.toUpperCase() + "</b> hash=" + W().location.hash + " signedIn=" + !!st.session() + " saveBtn=\"" + txt(save) + "\"");
+  click(save); await sleep(900);
+  const errs = errEls().map(e => txt(e));
+  say("  empty-form errors (" + errs.length + "): " + (errs.join(" | ") || "NONE FOUND"));
+  // duplicate SKU
+  const skuIn = [...D().querySelectorAll("input")].find(i => /sku/i.test(i.id + i.name + (i.getAttribute("aria-label") || "")));
+  const existing = st.products()[0];
+  if (skuIn && existing) {
+    setInput(skuIn, existing.sku); await sleep(500);
+    click([...D().querySelectorAll("button")].find(b => /^(Save|保存)/.test(txt(b)))); await sleep(900);
+    const e2 = errEls().map(e => txt(e)).filter(t => t.indexOf(existing.name) >= 0 || /SKU/i.test(t));
+    say("  duplicate SKU \"" + existing.sku + "\" (owner \"" + existing.name + "\") → " + (e2.join(" | ") || "NO SKU ERROR"));
+  } else say("  duplicate SKU test skipped (input=" + !!skuIn + " product=" + !!existing + ")");
+  st.setLang(before);
+}
+
+/* ---- 3. Admin news schedule label, EN + JA ---- */
+async function tAdminNews(lang) {
+  await load("TSUMUGI%20Admin.dc.html", 1180, 900, "#/admin/news/new");
+  const st = S();
+  const before = st.lang();
+  st.setLang(lang); await sleep(300);
+  if (!st.session()) { st.login("admin@tsumugi.archive", "tsumugi-demo", false); await sleep(900); }
+  W().location.hash = "#/admin/news/new"; await sleep(1700);
+  const btn = () => [...D().querySelectorAll("button")].find(b => /Schedule|公開予約/.test(txt(b)));
+  const date = D().querySelector("#n-date");
+  say("<b>ADMIN NEWS " + lang.toUpperCase() + "</b> dateInput=" + (date ? "\"" + date.value + "\"" : "MISSING") + " scheduleBtn=\"" + txt(btn()) + "\"");
+  if (date) { setInput(date, "2026-08-30"); await sleep(700); }
+  say("  with date 2026-08-30 → \"" + txt(btn()) + "\"");
+  if (date) { setInput(date, ""); await sleep(700); }
+  say("  with no date → \"" + txt(btn()) + "\"" + (/Schedule for\s*$/.test(txt(btn())) ? " ✗ dangling label" : " ✓ no dangling label"));
+  const leak = /Schedule for/.test(D().body.innerText) && lang === "ja";
+  say("  english leak in JA body=" + leak + (leak ? " ✗" : " ✓"));
+  st.setLang(before);
+}
+
+/* ---- 4. Public checkout / cart / about ---- */
+async function tPublic(w, h) {
+  await load("TSUMUGI.dc.html", w, h, "#/");
+  const st = S();
+  const p = st.products().find(x => x.status !== "soldout") || st.products()[0];
+  // add an item through the product page so the cart page has a row
+  W().location.hash = "#/product/" + p.id; await sleep(1500);
+  const add = [...D().querySelectorAll("main button")].find(b => /ADD TO CART|カートに入れる/i.test(txt(b)));
+  click(add); await sleep(800);
+  W().location.hash = "#/cart"; await sleep(1500);
+  const rm = [...D().querySelectorAll("main button")].find(b => /REMOVE|削除|取り除く/i.test(txt(b)));
+  const o1 = overflow();
+  say("<b>PUBLIC " + w + "×" + h + "</b> cart hash=" + W().location.hash + " removeBtn=\"" + txt(rm) + "\" box=" + JSON.stringify(R(rm)) +
+      " minHeight=" + (rm ? CS(rm).minHeight : "-") + (rm && R(rm).h >= 44 ? " ✓ ≥44px" : " ✗ <44px") + " sw=" + o1.sw + "/" + o1.iw + (o1.sw <= o1.iw + 1 ? " ✓" : " ✗"));
+  const rows = D().querySelectorAll("main img").length;
+  click(rm); await sleep(900);
+  say("  remove works: imgs " + rows + " → " + D().querySelectorAll("main img").length + " cartCount=" + (st.cart ? "-" : "-") + (D().querySelectorAll("main img").length < rows ? " ✓" : " ✗ row still there"));
+  // checkout prefecture
+  click(add);
+  W().location.hash = "#/product/" + p.id; await sleep(1200);
+  click([...D().querySelectorAll("main button")].find(b => /ADD TO CART|カートに入れる/i.test(txt(b)))); await sleep(700);
+  W().location.hash = "#/checkout/information"; await sleep(1600);
+  const sel = D().querySelector("#co-prefecture");
+  const cont = [...D().querySelectorAll("main button")].find(b => /CONTINUE|次へ|配送/i.test(txt(b)));
+  say("  checkout select=" + !!sel + " valid-state aria-invalid=" + (sel && sel.getAttribute("aria-invalid")) + " aria-describedby=" + (sel && (sel.getAttribute("aria-describedby") || "(absent)")));
+  click(cont); await sleep(900);
+  const sel2 = D().querySelector("#co-prefecture");
+  const db = sel2 && sel2.getAttribute("aria-describedby");
+  const target = db ? D().getElementById(db) : null;
+  const ids = [...D().querySelectorAll("[id]")].map(e => e.id);
+  const dup = ids.filter((v, i) => ids.indexOf(v) !== i);
+  say("  after invalid submit → aria-invalid=" + (sel2 && sel2.getAttribute("aria-invalid")) + " aria-describedby=" + (db || "(absent)") +
+      " target=" + (target ? "\"" + txt(target) + "\"" : "MISSING") + (db && target ? " ✓ resolves" : " ✗") + " dupIds=" + (dup.join(",") || "none"));
+  const o2 = overflow();
+  W().location.hash = "#/about"; await sleep(1600);
+  const img = [...D().querySelectorAll("main img")].find(i => /RSeo/i.test(i.getAttribute("src") || ""));
+  const o3 = overflow();
+  say("  checkout sw=" + o2.sw + "/" + o2.iw + (o2.sw <= o2.iw + 1 ? " ✓" : " ✗") + "   about sw=" + o3.sw + "/" + o3.iw + (o3.sw <= o3.iw + 1 ? " ✓" : " ✗"));
+  say("  founder img src=\"" + (img ? img.getAttribute("src") : "MISSING") + "\" loaded=" + (img ? img.complete && img.naturalWidth > 0 : "-") + " natural=" + (img ? img.naturalWidth + "×" + img.naturalHeight : "-") +
+      " alt=\"" + (img ? img.getAttribute("alt") : "-") + "\"" + (img && img.naturalWidth > 0 ? " ✓" : " ✗ broken"));
+}
+
+(async () => {
+  const errs = [];
+  window.addEventListener("error", e => errs.push(e.message));
+  for (const fn of [() => tKeys(), () => tAdminProducts("en"), () => tAdminProducts("ja"), () => tAdminNews("en"), () => tAdminNews("ja"), () => tPublic(390, 844), () => tPublic(1440, 900)]) {
+    try { await fn(); } catch (e) { say("  ✗ THREW: " + (e && e.message) + " @ " + String(e && e.stack).split("\n")[1]); }
+  }
+  say("DONE" + (errs.length ? "  harness errors: " + errs.join(" | ") : "  no harness errors"));
+})();
+</script>
+</body>
+</html>

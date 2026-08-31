@@ -1,0 +1,691 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<sc-if value="{{ loading }}" hint-placeholder-val="{{ false }}">
+  <div role="status" style="background:#FFFFFF;border:1px solid #E3DFD7;padding:48px 24px;display:flex;flex-direction:column;align-items:center;gap:10px;text-align:center">
+    <span style="font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:0.16em;color:#8C887F">{{ t.orders }}</span>
+    <span style="font-size:13px;color:#77736B">{{ t.kConnectingToTheStoreDatabase }}</span>
+  </div>
+</sc-if>
+
+<sc-if value="{{ notFound }}" hint-placeholder-val="{{ false }}">
+  <div style="background:#FFFFFF;border:1px solid #E3DFD7;padding:56px 24px;display:flex;flex-direction:column;align-items:center;gap:12px;text-align:center">
+    <h2 style="margin:0;font-size:16px;font-weight:600">{{ t.orderNotFound }}</h2>
+    <p style="margin:0;max-width:380px;font-size:13.5px;line-height:1.65;color:#77736B">{{ t.orderNotFoundBody }}</p>
+    <button type="button" onClick="{{ backToList }}" style="border:1px solid #DAD5CB;background:#FFFFFF;padding:10px 16px;min-height:44px;font-size:13.5px;white-space:nowrap;cursor:pointer" style-hover="border-color:#6D7761;color:#6D7761">{{ t.backToOrders }}</button>
+  </div>
+</sc-if>
+
+<sc-if value="{{ isList }}" hint-placeholder-val="{{ true }}">
+  <div style="display:flex;flex-direction:column;gap:14px">
+
+    <div style="background:#FFFFFF;border:1px solid #E3DFD7;padding:13px 14px;display:flex;flex-direction:column;gap:12px">
+      <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center">
+        <div style="position:relative;flex:1 1 240px;min-width:0">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#9C978F" stroke-width="1.7" stroke-linecap="round" aria-hidden="true" style="position:absolute;left:11px;top:50%;transform:translateY(-50%)"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-3.5-3.5"></path></svg>
+          <label for="or-search" style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)">{{ t.searchOrders }}</label>
+          <input id="or-search" type="search" placeholder="{{ t.searchOrdersPh }}" value="{{ query }}" onChange="{{ onQuery }}" style="width:100%;border:1px solid #DAD5CB;background:#FCFBF9;padding:10px 12px 10px 33px;font-size:13.5px;min-height:44px" style-focus="border-color:#6D7761;background:#FFFFFF">
+        </div>
+        <div style="display:flex;align-items:center;gap:7px">
+          <label for="or-sort" style="font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:0.14em;color:#77736B">{{ t.kSort }}</label>
+          <select id="or-sort" value="{{ sort }}" onChange="{{ onSort }}" style="border:1px solid #DAD5CB;background:#FCFBF9;padding:9px 10px;font-size:13px;min-height:44px" style-focus="border-color:#6D7761">
+            <sc-for list="{{ sortOptions }}" as="o" hint-placeholder-count="4">
+              <option value="{{ o.value }}">{{ o.label }}</option>
+            </sc-for>
+          </select>
+        </div>
+        <button type="button" onClick="{{ toggleFilters }}" aria-expanded="{{ filtersOpen }}" style="border:1px solid #DAD5CB;background:#FFFFFF;padding:10px 13px;min-height:44px;font-size:13px;white-space:nowrap;cursor:pointer" style-hover="border-color:#6D7761;color:#6D7761">{{ filterLabel }}</button>
+        <button type="button" onClick="{{ exportCsv }}" disabled="{{ noExport }}" style="border:1px solid #DAD5CB;background:#FFFFFF;padding:10px 13px;min-height:44px;font-size:13px;white-space:nowrap;cursor:{{ exportCursor }};color:{{ exportColor }}" style-hover="border-color:#6D7761">{{ t.exportOrders }}</button>
+      </div>
+
+      <sc-if value="{{ filtersOpen }}" hint-placeholder-val="{{ false }}">
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,190px),1fr));gap:10px;padding-top:11px;border-top:1px solid #EDEAE3">
+          <sc-for list="{{ filterSelects }}" as="f" hint-placeholder-count="4">
+            <div style="display:flex;flex-direction:column;gap:5px">
+              <label for="{{ f.id }}" style="font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:0.14em;color:#77736B">{{ f.label }}</label>
+              <select id="{{ f.id }}" value="{{ f.value }}" onChange="{{ f.onChange }}" style="border:1px solid #DAD5CB;background:#FCFBF9;padding:9px 10px;font-size:13px;min-height:44px" style-focus="border-color:#6D7761">
+                <sc-for list="{{ f.options }}" as="o" hint-placeholder-count="4">
+                  <option value="{{ o.v }}">{{ o.t }}</option>
+                </sc-for>
+              </select>
+            </div>
+          </sc-for>
+          <div style="display:flex;flex-direction:column;gap:5px">
+            <label for="or-after" style="font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:0.14em;color:#77736B">{{ t.orderedAfter }}</label>
+            <input id="or-after" type="date" value="{{ afterDate }}" onChange="{{ onAfter }}" style="border:1px solid #DAD5CB;background:#FCFBF9;padding:9px 10px;font-size:13px;min-height:44px" style-focus="border-color:#6D7761">
+          </div>
+          <div style="display:flex;align-items:flex-end">
+            <button type="button" onClick="{{ clearFilters }}" style="border:1px solid #DAD5CB;background:#FFFFFF;padding:10px 13px;min-height:44px;font-size:13px;white-space:nowrap;cursor:pointer" style-hover="border-color:#6D7761;color:#6D7761">{{ t.kClearAll }}</button>
+          </div>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{ hasSelection }}" hint-placeholder-val="{{ false }}">
+        <div role="group" aria-label="{{ t.kBulkActions }}" style="display:flex;gap:9px;flex-wrap:wrap;align-items:center;padding-top:11px;border-top:1px solid #EDEAE3">
+          <span style="font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:0.14em;color:#3F3D38">{{ selectedLabel }}</span>
+          <button type="button" onClick="{{ bulkPaid }}" disabled="{{ bulkLocked }}" style="opacity:{{ bulkOpacity }};border:1px solid #DAD5CB;background:#FFFFFF;padding:9px 12px;min-height:44px;font-size:13px;white-space:nowrap;cursor:pointer" style-hover="border-color:#6D7761;color:#6D7761">{{ t.markPaid }}</button>
+          <button type="button" onClick="{{ bulkPreparing }}" disabled="{{ bulkLocked }}" style="opacity:{{ bulkOpacity }};border:1px solid #DAD5CB;background:#FFFFFF;padding:9px 12px;min-height:44px;font-size:13px;white-space:nowrap;cursor:pointer" style-hover="border-color:#6D7761;color:#6D7761">{{ t.beginPreparation }}</button>
+          <button type="button" onClick="{{ bulkShipped }}" disabled="{{ bulkLocked }}" style="opacity:{{ bulkOpacity }};border:1px solid #DAD5CB;background:#FFFFFF;padding:9px 12px;min-height:44px;font-size:13px;white-space:nowrap;cursor:pointer" style-hover="border-color:#6D7761;color:#6D7761">{{ t.markShipped }}</button>
+          <button type="button" onClick="{{ exportSelected }}" disabled="{{ exportLocked }}" style="opacity:{{ exportOpacity }};border:1px solid #DAD5CB;background:#FFFFFF;padding:9px 12px;min-height:44px;font-size:13px;white-space:nowrap;cursor:pointer" style-hover="border-color:#6D7761;color:#6D7761">{{ t.kExportSelected }}</button>
+          <button type="button" onClick="{{ clearSelection }}" style="border:none;background:transparent;padding:9px 4px;min-height:44px;font-size:13px;color:#77736B;white-space:nowrap;cursor:pointer" style-hover="color:#3F3D38">{{ t.kClearSelection }}</button>
+        </div>
+      </sc-if>
+    </div>
+
+    <sc-if value="{{ isEmpty }}" hint-placeholder-val="{{ false }}">
+      <div style="background:#FFFFFF;border:1px solid #E3DFD7;padding:56px 24px;display:flex;flex-direction:column;align-items:center;gap:12px;text-align:center">
+        <span style="font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:0.16em;color:#8C887F">{{ t.kNoResults }}</span>
+        <h2 style="margin:0;font-size:16px;font-weight:600">{{ t.noOrders }}</h2>
+        <p style="margin:0;max-width:400px;font-size:13.5px;line-height:1.65;color:#77736B">{{ t.noOrdersBody }}</p>
+        <button type="button" onClick="{{ clearFilters }}" style="border:1px solid #DAD5CB;background:#FFFFFF;padding:10px 16px;min-height:44px;font-size:13.5px;white-space:nowrap;cursor:pointer" style-hover="border-color:#6D7761;color:#6D7761">{{ t.kClearAll }}</button>
+      </div>
+    </sc-if>
+
+    <sc-if value="{{ showTable }}" hint-placeholder-val="{{ true }}">
+      <div style="background:#FFFFFF;border:1px solid #E3DFD7">
+        <div data-adm-scroll style="overflow-x:auto">
+          <table style="width:100%;border-collapse:collapse;min-width:1020px">
+            <caption style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)">{{ t.orderManagement }}</caption>
+            <thead>
+              <tr style="border-bottom:1px solid #E3DFD7;background:#FBFAF7">
+                <th scope="col" style="width:42px;padding:11px 10px">
+                  <input type="checkbox" checked="{{ allChecked }}" onChange="{{ toggleAll }}" aria-label="{{ t.kSelectAllProductsOnThisPage }}" style="width:18px;height:18px;accent-color:#6D7761;cursor:pointer">
+                </th>
+                <sc-for list="{{ columns }}" as="c" hint-placeholder-count="9">
+                  <th scope="col" style="padding:11px 10px;text-align:{{ c.align }};font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:0.1em;color:#6E6A62;font-weight:500;white-space:nowrap">{{ c.label }}</th>
+                </sc-for>
+              </tr>
+            </thead>
+            <tbody>
+              <sc-for list="{{ rows }}" as="r" hint-placeholder-count="8">
+                <tr style="border-bottom:1px solid #F1EFEA;background:{{ r.rowBg }}">
+                  <td style="padding:10px">
+                    <input type="checkbox" checked="{{ r.checked }}" onChange="{{ r.onCheck }}" aria-label="{{ r.checkLabel }}" style="width:18px;height:18px;accent-color:#6D7761;cursor:pointer">
+                  </td>
+                  <td style="padding:10px">
+                    <button type="button" onClick="{{ r.onOpen }}" style="border:none;background:transparent;padding:0;min-height:24px;font-family:'IBM Plex Mono',monospace;font-size:13px;color:#3F3D38;text-align:left;white-space:nowrap;cursor:pointer;text-decoration:underline;text-underline-offset:3px" style-hover="color:#6D7761">{{ r.number }}</button>
+                  </td>
+                  <td style="padding:10px;font-size:13px;color:#55534C;white-space:nowrap">{{ r.date }}</td>
+                  <td style="padding:10px;font-size:14px;color:#232220">
+                    <span style="display:block;max-width:210px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ r.customerName }}</span>
+                  </td>
+                  <td style="padding:10px;text-align:right;font-size:13px;color:#55534C;white-space:nowrap">{{ r.itemCount }}</td>
+                  <td style="padding:10px;text-align:right;font-size:14px;color:#232220;white-space:nowrap">{{ r.total }}</td>
+                  <td style="padding:10px">
+                    <span style="display:inline-flex;align-items:center;gap:5px;padding:3px 8px;white-space:nowrap;background:{{ r.payBg }};color:{{ r.payFg }};font-size:12px">
+                      <span aria-hidden="true">{{ r.payIcon }}</span>{{ r.payLabel }}
+                    </span>
+                  </td>
+                  <td style="padding:10px">
+                    <span style="display:inline-flex;align-items:center;gap:5px;padding:3px 8px;white-space:nowrap;background:{{ r.fulBg }};color:{{ r.fulFg }};font-size:12px">
+                      <span aria-hidden="true">{{ r.fulIcon }}</span>{{ r.fulLabel }}
+                    </span>
+                  </td>
+                  <td style="padding:10px;font-size:13px;color:#55534C;white-space:nowrap">{{ r.deliveryLabel }}</td>
+                  <td style="padding:10px;font-size:13px;color:#55534C;white-space:nowrap">{{ r.updated }}</td>
+                </tr>
+              </sc-for>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </sc-if>
+
+    <sc-if value="{{ showCards }}" hint-placeholder-val="{{ false }}">
+      <div style="display:flex;flex-direction:column;gap:10px">
+        <sc-for list="{{ rows }}" as="r" hint-placeholder-count="5">
+          <article style="background:#FFFFFF;border:1px solid #E3DFD7;padding:13px;display:flex;flex-direction:column;gap:10px">
+            <div style="display:flex;align-items:flex-start;gap:10px">
+              <input type="checkbox" checked="{{ r.checked }}" onChange="{{ r.onCheck }}" aria-label="{{ r.checkLabel }}" style="width:20px;height:20px;margin-top:2px;accent-color:#6D7761;flex:0 0 auto;cursor:pointer">
+              <div style="flex:1;min-width:0;display:flex;flex-direction:column;gap:4px">
+                <button type="button" onClick="{{ r.onOpen }}" style="border:none;background:transparent;padding:0;min-height:32px;font-family:'IBM Plex Mono',monospace;font-size:14px;color:#232220;text-align:left;cursor:pointer;text-decoration:underline;text-underline-offset:3px">{{ r.number }}</button>
+                <span style="font-size:14px;color:#3F3D38;overflow-wrap:anywhere">{{ r.customerName }}</span>
+                <span style="font-size:12.5px;color:#77736B">{{ r.cardMeta }}</span>
+              </div>
+              <span style="font-size:15px;color:#232220;white-space:nowrap">{{ r.total }}</span>
+            </div>
+            <div style="display:flex;gap:7px;flex-wrap:wrap">
+              <span style="display:inline-flex;align-items:center;gap:5px;padding:4px 9px;white-space:nowrap;background:{{ r.payBg }};color:{{ r.payFg }};font-size:12px"><span aria-hidden="true">{{ r.payIcon }}</span>{{ r.payLabel }}</span>
+              <span style="display:inline-flex;align-items:center;gap:5px;padding:4px 9px;white-space:nowrap;background:{{ r.fulBg }};color:{{ r.fulFg }};font-size:12px"><span aria-hidden="true">{{ r.fulIcon }}</span>{{ r.fulLabel }}</span>
+              <span style="padding:4px 9px;white-space:nowrap;background:#F4F2ED;color:#55534C;font-size:12px">{{ r.deliveryLabel }}</span>
+            </div>
+          </article>
+        </sc-for>
+      </div>
+    </sc-if>
+
+    <sc-if value="{{ showPager }}" hint-placeholder-val="{{ false }}">
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap">
+        <span style="font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:0.1em;color:#6E6A62">{{ pagerLabel }}</span>
+        <div style="display:flex;gap:8px">
+          <button type="button" onClick="{{ prevPage }}" disabled="{{ onFirst }}" style="border:1px solid #DAD5CB;background:#FFFFFF;padding:10px 14px;min-height:44px;font-size:13px;white-space:nowrap;cursor:{{ prevCursor }};color:{{ prevColor }}" style-hover="border-color:#6D7761">{{ t.kPrevious }}</button>
+          <button type="button" onClick="{{ nextPage }}" disabled="{{ onLast }}" style="border:1px solid #DAD5CB;background:#FFFFFF;padding:10px 14px;min-height:44px;font-size:13px;white-space:nowrap;cursor:{{ nextCursor }};color:{{ nextColor }}" style-hover="border-color:#6D7761">{{ t.kNext }}</button>
+        </div>
+      </div>
+    </sc-if>
+  </div>
+</sc-if>
+
+<sc-if value="{{ isDetail }}" hint-placeholder-val="{{ false }}">
+  <div style="display:flex;flex-direction:column;gap:14px">
+
+    <div style="background:#FFFFFF;border:1px solid #E3DFD7;padding:16px;display:flex;flex-direction:column;gap:13px">
+      <button type="button" onClick="{{ backToList }}" style="border:none;background:transparent;padding:4px 0;min-height:44px;font-size:13px;color:#77736B;text-align:left;white-space:nowrap;cursor:pointer;width:fit-content" style-hover="color:#3F3D38">{{ t.allOrders }}</button>
+      <div style="display:flex;justify-content:space-between;gap:14px;flex-wrap:wrap;align-items:flex-start">
+        <div style="display:flex;flex-direction:column;gap:6px;min-width:0">
+          <span style="font-family:'IBM Plex Mono',monospace;font-size:21px;font-weight:500;letter-spacing:0.02em;color:#232220;overflow-wrap:anywhere">{{ d.number }}</span>
+          <span style="font-size:13px;color:#77736B">{{ d.metaLine }}</span>
+        </div>
+        <div style="display:flex;gap:7px;flex-wrap:wrap">
+          <span style="display:inline-flex;align-items:center;gap:5px;padding:5px 10px;white-space:nowrap;background:{{ d.payBg }};color:{{ d.payFg }};font-size:12.5px"><span aria-hidden="true">{{ d.payIcon }}</span>{{ d.payLabel }}</span>
+          <span style="display:inline-flex;align-items:center;gap:5px;padding:5px 10px;white-space:nowrap;background:{{ d.fulBg }};color:{{ d.fulFg }};font-size:12.5px"><span aria-hidden="true">{{ d.fulIcon }}</span>{{ d.fulLabel }}</span>
+        </div>
+      </div>
+    </div>
+
+    <div style="display:grid;grid-template-columns:{{ detailCols }};gap:14px;align-items:start">
+      <div style="display:flex;flex-direction:column;gap:14px;min-width:0">
+
+        <section style="background:#FFFFFF;border:1px solid #E3DFD7">
+          <div style="padding:14px 16px;border-bottom:1px solid #EDEAE3"><h2 style="margin:0;font-size:14px;font-weight:600">{{ t.purchasedItems }}</h2></div>
+          <div style="padding:6px 16px 14px">
+            <sc-for list="{{ d.items }}" as="it" hint-placeholder-count="2">
+              <div style="display:flex;gap:12px;align-items:center;padding:11px 0;border-bottom:1px solid #F4F2ED">
+                <sc-if value="{{ it.hasThumb }}" hint-placeholder-val="{{ true }}">
+                  <img loading="lazy" decoding="async" src="{{ it.thumb }}" alt="{{ it.alt }}" style="width:46px;height:60px;object-fit:cover;background:#EDE9E2;flex:0 0 46px;filter:saturate(0.9)">
+                </sc-if>
+                <sc-if value="{{ it.noThumb }}" hint-placeholder-val="{{ false }}">
+                  <span role="img" aria-label="{{ t.kNoPhotographYet }}" style="width:46px;height:60px;flex:0 0 46px;display:grid;place-items:center;background:#EDE9E2;color:#A8A398;font-family:'IBM Plex Mono',monospace;font-size:8px;letter-spacing:0.08em">NO<br>IMG</span>
+                </sc-if>
+                <div style="flex:1;min-width:0;display:flex;flex-direction:column;gap:3px">
+                  <span style="font-size:14px;color:#232220;overflow-wrap:anywhere">{{ it.name }}</span>
+                  <span style="font-size:12.5px;color:#77736B">{{ it.meta }}</span>
+                </div>
+                <span style="font-size:14px;color:#232220;white-space:nowrap">{{ it.price }}</span>
+              </div>
+            </sc-for>
+            <div style="display:flex;flex-direction:column;gap:8px;padding-top:13px">
+              <div style="display:flex;justify-content:space-between;gap:12px;font-size:13.5px;color:#55534C"><span>{{ t.subtotal }}</span><span>{{ d.subtotal }}</span></div>
+              <div style="display:flex;justify-content:space-between;gap:12px;font-size:13.5px;color:#55534C"><span>{{ t.shippingFee }}</span><span>{{ d.shippingFee }}</span></div>
+              <div style="display:flex;justify-content:space-between;gap:12px;padding-top:9px;border-top:1px solid #E3DFD7;font-size:16px;color:#232220"><span>{{ t.total }}</span><span>{{ d.total }}</span></div>
+            </div>
+          </div>
+        </section>
+
+        <section style="background:#FFFFFF;border:1px solid #E3DFD7">
+          <div style="padding:14px 16px;border-bottom:1px solid #EDEAE3"><h2 style="margin:0;font-size:14px;font-weight:600">{{ t.orderActions }}</h2></div>
+          <div style="padding:16px;display:flex;flex-direction:column;gap:13px">
+            <sc-if value="{{ d.readOnly }}" hint-placeholder-val="{{ false }}">
+              <p role="note" style="margin:0;padding:11px 13px;background:#F7F5F1;border-left:3px solid #9A7A32;font-size:13px;line-height:1.6;color:#55534C">{{ t.readOnlyRole }}</p>
+            </sc-if>
+            <div style="display:flex;gap:9px;flex-wrap:wrap">
+              <sc-for list="{{ d.actions }}" as="a" hint-placeholder-count="4">
+                <button type="button" onClick="{{ a.onClick }}" disabled="{{ a.disabled }}" style="border:1px solid {{ a.border }};background:{{ a.bg }};padding:10px 14px;min-height:44px;font-size:13.5px;color:{{ a.color }};white-space:nowrap;cursor:{{ a.cursor }}" style-hover="border-color:#6D7761">{{ a.label }}</button>
+              </sc-for>
+            </div>
+            <div style="display:flex;flex-direction:column;gap:6px;padding-top:6px;border-top:1px solid #F1EFEA">
+              <label for="or-track" style="font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:0.14em;color:#77736B">{{ t.tracking }}</label>
+              <div style="display:flex;gap:9px;flex-wrap:wrap">
+                <input id="or-track" value="{{ trackingDraft }}" onChange="{{ onTracking }}" disabled="{{ d.readOnly }}" placeholder="{{ t.enterTracking }}" style="flex:1 1 200px;min-width:0;border:1px solid #DAD5CB;background:#FCFBF9;padding:10px 12px;font-size:13.5px;min-height:44px;font-family:'IBM Plex Mono',monospace" style-focus="border-color:#6D7761;background:#FFFFFF">
+                <button type="button" onClick="{{ saveTracking }}" disabled="{{ d.readOnly }}" style="border:1px solid #DAD5CB;background:#FFFFFF;padding:10px 14px;min-height:44px;font-size:13.5px;white-space:nowrap;cursor:{{ d.mutateCursor }}" style-hover="border-color:#6D7761;color:#6D7761">{{ t.saveTracking }}</button>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section style="background:#FFFFFF;border:1px solid #E3DFD7">
+          <div style="padding:14px 16px;border-bottom:1px solid #EDEAE3"><h2 style="margin:0;font-size:14px;font-weight:600">{{ t.orderNotes }}</h2></div>
+          <div style="padding:16px;display:flex;flex-direction:column;gap:13px">
+            <div style="display:flex;flex-direction:column;gap:8px">
+              <label for="or-note" style="font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:0.14em;color:#77736B">{{ t.kAddANote }}</label>
+              <textarea id="or-note" rows="3" value="{{ noteDraft }}" onChange="{{ onNote }}" disabled="{{ d.readOnly }}" style="border:1px solid #DAD5CB;background:#FCFBF9;padding:11px 12px;font-size:13.5px;line-height:1.6;resize:vertical;font-family:inherit" style-focus="border-color:#6D7761;background:#FFFFFF"></textarea>
+              <div style="display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;align-items:center">
+                <span style="font-size:12px;color:#8C887F">{{ t.kVisibleOnlyToStoreStaff }}</span>
+                <button type="button" onClick="{{ addNote }}" disabled="{{ noteDisabled }}" style="border:1px solid #DAD5CB;background:#FFFFFF;padding:10px 14px;min-height:44px;font-size:13.5px;white-space:nowrap;cursor:{{ noteCursor }}" style-hover="border-color:#6D7761;color:#6D7761">{{ t.kAddNote }}</button>
+              </div>
+            </div>
+            <sc-if value="{{ d.noNotes }}" hint-placeholder-val="{{ false }}">
+              <p style="margin:0;font-size:13px;color:#8C887F">{{ t.kNoInternalNotesYet }}</p>
+            </sc-if>
+            <sc-for list="{{ d.notes }}" as="n" hint-placeholder-count="0">
+              <div style="padding:12px;background:#FBFAF7;border:1px solid #EDEAE3;display:flex;flex-direction:column;gap:6px">
+                <span style="font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:0.12em;color:#8C887F">{{ n.meta }}</span>
+                <p style="margin:0;font-size:13.5px;line-height:1.65;color:#3F3D38;overflow-wrap:anywhere">{{ n.text }}</p>
+              </div>
+            </sc-for>
+          </div>
+        </section>
+      </div>
+
+      <div style="display:flex;flex-direction:column;gap:14px;min-width:0">
+        <section style="background:#FFFFFF;border:1px solid #E3DFD7">
+          <div style="padding:14px 16px;border-bottom:1px solid #EDEAE3"><h2 style="margin:0;font-size:14px;font-weight:600">{{ t.orderSummaryHead }}</h2></div>
+          <dl style="margin:0;padding:14px 16px;display:flex;flex-direction:column;gap:11px">
+            <sc-for list="{{ d.summary }}" as="row" hint-placeholder-count="6">
+              <div style="display:flex;justify-content:space-between;gap:12px;align-items:baseline">
+                <dt style="font-size:12.5px;color:#77736B">{{ row.k }}</dt>
+                <dd style="margin:0;font-size:13.5px;color:#3F3D38;text-align:right;overflow-wrap:anywhere">{{ row.v }}</dd>
+              </div>
+            </sc-for>
+          </dl>
+        </section>
+
+        <section style="background:#FFFFFF;border:1px solid #E3DFD7">
+          <div style="padding:14px 16px;border-bottom:1px solid #EDEAE3;display:flex;justify-content:space-between;gap:10px;align-items:center;flex-wrap:wrap">
+            <h2 style="margin:0;font-size:14px;font-weight:600">{{ t.customerDetails }}</h2>
+            <button type="button" onClick="{{ openCustomer }}" style="border:none;background:transparent;padding:4px 0;min-height:44px;font-size:12.5px;color:#6D7761;white-space:nowrap;cursor:pointer;text-decoration:underline;text-underline-offset:3px" style-hover="color:#3F3D38">{{ t.kOpenCustomer }}</button>
+          </div>
+          <dl style="margin:0;padding:14px 16px;display:flex;flex-direction:column;gap:11px">
+            <sc-for list="{{ d.customer }}" as="row" hint-placeholder-count="4">
+              <div style="display:flex;flex-direction:column;gap:3px">
+                <dt style="font-size:12px;color:#8C887F">{{ row.k }}</dt>
+                <dd style="margin:0;font-size:13.5px;color:#3F3D38;overflow-wrap:anywhere">{{ row.v }}</dd>
+              </div>
+            </sc-for>
+          </dl>
+        </section>
+
+        <section style="background:#FFFFFF;border:1px solid #E3DFD7">
+          <div style="padding:14px 16px;border-bottom:1px solid #EDEAE3"><h2 style="margin:0;font-size:14px;font-weight:600">{{ t.shippingAddress }}</h2></div>
+          <address style="margin:0;padding:14px 16px;font-style:normal;font-size:13.5px;line-height:1.75;color:#3F3D38;overflow-wrap:anywhere">{{ d.address }}</address>
+        </section>
+
+        <section style="background:#FFFFFF;border:1px solid #E3DFD7">
+          <div style="padding:14px 16px;border-bottom:1px solid #EDEAE3"><h2 style="margin:0;font-size:14px;font-weight:600">{{ t.orderHistory }}</h2></div>
+          <ol style="margin:0;padding:14px 16px;list-style:none;display:flex;flex-direction:column;gap:13px">
+            <sc-for list="{{ d.history }}" as="h" hint-placeholder-count="3">
+              <li style="display:flex;flex-direction:column;gap:3px">
+                <span style="font-size:13.5px;color:#3F3D38;overflow-wrap:anywhere">{{ h.text }}</span>
+                <span style="font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:0.1em;color:#8C887F">{{ h.meta }}</span>
+              </li>
+            </sc-for>
+          </ol>
+        </section>
+
+        <section style="background:#FFFFFF;border:1px solid #E3DFD7">
+          <div style="padding:14px 16px;border-bottom:1px solid #EDEAE3"><h2 style="margin:0;font-size:14px;font-weight:600">{{ t.auditLog }}</h2></div>
+          <ol style="margin:0;padding:14px 16px;list-style:none;display:flex;flex-direction:column;gap:13px">
+            <sc-if value="{{ d.noAudit }}" hint-placeholder-val="{{ false }}">
+              <li style="font-size:13px;color:#8C887F">{{ t.noAudit }}</li>
+            </sc-if>
+            <sc-for list="{{ d.audit }}" as="a" hint-placeholder-count="0">
+              <li style="display:flex;flex-direction:column;gap:3px">
+                <span style="font-size:13.5px;color:#3F3D38;overflow-wrap:anywhere">{{ a.summary }}</span>
+                <span style="font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:0.1em;color:#8C887F">{{ a.meta }}</span>
+              </li>
+            </sc-for>
+          </ol>
+        </section>
+      </div>
+    </div>
+  </div>
+</sc-if>
+
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:1180,&quot;height&quot;:900},&quot;view&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;list&quot;,&quot;detail&quot;],&quot;default&quot;:&quot;list&quot;,&quot;tsType&quot;:&quot;\&quot;list\&quot; | \&quot;detail\&quot;&quot;},&quot;entityId&quot;:{&quot;editor&quot;:&quot;text&quot;,&quot;default&quot;:&quot;&quot;,&quot;tsType&quot;:&quot;string&quot;},&quot;nav&quot;:{&quot;editor&quot;:null,&quot;tsType&quot;:&quot;(path: string) =&gt; void&quot;}}">
+const T3 = new Proxy({}, {
+  get: (_, key) => {
+    const I = window.TSUMUGI_I18N, S = window.TSUMUGI_STORE;
+    const d = I ? I.t(S && S.lang ? S.lang() : "en") : {};
+    return d[key];
+  }
+});
+
+const PAY_BADGE = {
+  Paid: ["#EEF0EA", "#4F5C42", "payPaid", "●"],
+  Pending: ["#F6F1E4", "#7A6320", "payPending", "◐"],
+  Refunded: ["#F1EFE9", "#6E6A62", "payRefunded", "↩"],
+  Failed: ["#F6EAE7", "#8A3F33", "payFailed", "✕"]
+};
+const FUL_BADGE = {
+  Unfulfilled: ["#F6F1E4", "#7A6320", "fulUnfulfilled", "○"],
+  Preparing: ["#EDF0F3", "#41546B", "fulPreparing", "◔"],
+  Shipped: ["#EAF0EC", "#3F6048", "fulShipped", "→"],
+  Delivered: ["#EEF0EA", "#4F5C42", "fulDelivered", "✓"],
+  Cancelled: ["#F1EFE9", "#6E6A62", "fulCancelled", "✕"],
+  Returned: ["#F6EAE7", "#8A3F33", "fulReturned", "↩"]
+};
+const DELIVERY_KEY = { "Standard shipping": "standardShipping", "Store pickup": "storePickup" };
+const PAYMETHOD_KEY = { "Demo credit card": "demoCard", "Demo cash on delivery": "demoCod" };
+const SORTS = ["Newest first", "Oldest first", "Highest total", "Lowest total"];
+
+class Component extends DCLogic {
+  state = {
+    query: "", sort: "Newest first", filtersOpen: false, page: 1,
+    fPayment: "", fFulfilment: "", fDelivery: "", afterDate: "",
+    selected: [], noteDraft: "", trackingDraft: null,
+    vw: typeof window !== "undefined" ? window.innerWidth : 1440, tick: 0
+  };
+
+  componentDidMount() {
+    this._bind();
+    this._onResize = () => this.setState({ vw: window.innerWidth });
+    window.addEventListener("resize", this._onResize);
+  }
+  _bind() {
+    this.S = window.TSUMUGI_STORE;
+    if (!this.S) {
+      this._poll = setInterval(() => {
+        if (!window.TSUMUGI_STORE) return;
+        clearInterval(this._poll); this._poll = null;
+        this._bind(); this.forceUpdate();
+      }, 50);
+      return;
+    }
+    if (!this._unsub) this._unsub = this.S.subscribe(() => this.setState(s => ({ tick: s.tick + 1 })));
+  }
+  componentWillUnmount() {
+    window.removeEventListener("resize", this._onResize);
+    if (this._poll) clearInterval(this._poll);
+    if (this._unsub) this._unsub();
+  }
+  componentDidUpdate(prev) {
+    if (prev.entityId !== this.props.entityId || prev.view !== this.props.view) {
+      this.setState({ selected: [], noteDraft: "", trackingDraft: null });
+    }
+  }
+
+  _lang() { const S = this.S || window.TSUMUGI_STORE; return (S && S.lang) ? S.lang() : "en"; }
+  _dict() { const I = window.TSUMUGI_I18N; return I ? I.t(this._lang()) : {}; }
+
+  /* Permission gate: hidden controls are not enough — every handler checks too. */
+  _guard(perm) {
+    const S = this.S;
+    if (S.can(perm)) return true;
+    S.toast(this._dict().permissionDenied, "error");
+    return false;
+  }
+
+  _fmtDate(v) {
+    if (!v) return "—";
+    try {
+      return new Date(String(v).length <= 10 ? v + "T00:00:00" : v)
+        .toLocaleDateString(this._lang() === "ja" ? "ja-JP" : "en-GB", { day: "2-digit", month: "short", year: "numeric" });
+    } catch (e) { return v; }
+  }
+  _fmtTime(v) {
+    if (!v) return "—";
+    try {
+      const d = new Date(v);
+      return d.toLocaleDateString(this._lang() === "ja" ? "ja-JP" : "en-GB", { day: "2-digit", month: "short" }) +
+        " " + d.toLocaleTimeString(this._lang() === "ja" ? "ja-JP" : "en-GB", { hour: "2-digit", minute: "2-digit" });
+    } catch (e) { return v; }
+  }
+
+  _filtered() {
+    const S = this.S, s = this.state;
+    const q = s.query.trim().toLowerCase();
+    let rows = S.orders().slice();
+    if (q) rows = rows.filter(o =>
+      [o.number, o.customerName, o.email, o.phone, o.tracking].some(v => String(v || "").toLowerCase().includes(q)));
+    if (s.fPayment) rows = rows.filter(o => o.paymentStatus === s.fPayment);
+    if (s.fFulfilment) rows = rows.filter(o => o.fulfilmentStatus === s.fFulfilment);
+    if (s.fDelivery) rows = rows.filter(o => o.deliveryMethod === s.fDelivery);
+    if (s.afterDate) rows = rows.filter(o => (o.date || "") >= s.afterDate);
+    const by = {
+      "Newest first": (a, b) => (a.date < b.date ? 1 : a.date > b.date ? -1 : 0),
+      "Oldest first": (a, b) => (a.date > b.date ? 1 : a.date < b.date ? -1 : 0),
+      "Highest total": (a, b) => b.total - a.total,
+      "Lowest total": (a, b) => a.total - b.total
+    };
+    return rows.sort(by[s.sort] || by["Newest first"]);
+  }
+
+  _download(name, text) {
+    try {
+      const blob = new Blob([text], { type: "text/csv;charset=utf-8" });
+      const a = document.createElement("a");
+      a.href = URL.createObjectURL(blob); a.download = name;
+      document.body.appendChild(a); a.click(); document.body.removeChild(a);
+      return true;
+    } catch (e) { return false; }
+  }
+
+  _exportRows(rows) {
+    const T = this._dict();
+    if (!this._guard("export")) return;
+    const ok = this._download("tsumugi-orders.csv", this.S.orderCSV(rows));
+    this.S.logAudit("order.export", "order", rows.length + " records", "Exported " + rows.length + " order records");
+    this.S.toast(ok ? T.ordersExported : T.kExportIsNotAvailableInThisBrowser, ok ? "success" : "error");
+  }
+
+  async _confirmThen(titleKey, bodyKey, acceptKey, fn) {
+    const T = this._dict();
+    const ok = await this.S.confirm({ title: T[titleKey], body: T[bodyKey], accept: T[acceptKey], danger: true });
+    if (ok) fn();
+  }
+
+  renderVals() {
+    const l = this._lang();
+    return Object.assign({
+      t: this._dict(), lang: l, isJa: l === "ja"
+    }, this._renderVals());
+  }
+
+  _renderVals() {
+    if (!this.S) this._bind();
+    if (!this.S) return { isList: false, isDetail: false, notFound: false, loading: true };
+    const S = this.S, s = this.state, T = this._dict();
+    const l = this._lang();
+    const nav = this.props.nav || (() => { });
+    const backToList = () => nav("/admin/orders");
+    const canEdit = S.can("orders.edit");
+    const canExport = S.can("export");
+
+    if (this.props.view !== "detail") {
+      const filtered = this._filtered();
+      const perPage = Number(S.settings().itemsPerPage || 10);
+      const pages = Math.max(1, Math.ceil(filtered.length / perPage));
+      const page = Math.min(s.page, pages);
+      const shown = filtered.slice((page - 1) * perPage, page * perPage);
+      const activeFilters = [s.fPayment, s.fFulfilment, s.fDelivery, s.afterDate].filter(Boolean).length;
+      const sel = s.selected;
+
+      const badge = (map, key) => {
+        const b = map[key] || map[Object.keys(map)[0]];
+        return { bg: b[0], fg: b[1], label: T[b[2]] || key, icon: b[3] };
+      };
+
+      return {
+        isList: true, isDetail: false, notFound: false, loading: false,
+        query: s.query, sort: s.sort, filtersOpen: s.filtersOpen, afterDate: s.afterDate,
+        onQuery: e => this.setState({ query: e.target.value, page: 1 }),
+        onSort: e => this.setState({ sort: e.target.value }),
+        toggleFilters: () => this.setState(st => ({ filtersOpen: !st.filtersOpen })),
+        onAfter: e => this.setState({ afterDate: e.target.value, page: 1 }),
+        clearFilters: () => this.setState({ query: "", fPayment: "", fFulfilment: "", fDelivery: "", afterDate: "", page: 1 }),
+        filterLabel: T.kFilters + (activeFilters ? " (" + activeFilters + ")" : ""),
+        sortOptions: SORTS.map(v => ({ value: v, label: window.TSUMUGI_I18N ? window.TSUMUGI_I18N.label(v, l) : v })),
+
+        filterSelects: [
+          {
+            id: "or-f-pay", label: T.payment, value: s.fPayment,
+            onChange: e => this.setState({ fPayment: e.target.value, page: 1 }),
+            options: [{ v: "", t: T.allPayments }].concat(S.PAYMENT_STATUSES.map(v => ({ v, t: T[(PAY_BADGE[v] || [])[2]] || v })))
+          },
+          {
+            id: "or-f-ful", label: T.fulfilment, value: s.fFulfilment,
+            onChange: e => this.setState({ fFulfilment: e.target.value, page: 1 }),
+            options: [{ v: "", t: T.allFulfilments }].concat(S.FULFILMENT_STATUSES.map(v => ({ v, t: T[(FUL_BADGE[v] || [])[2]] || v })))
+          },
+          {
+            id: "or-f-del", label: T.delivery, value: s.fDelivery,
+            onChange: e => this.setState({ fDelivery: e.target.value, page: 1 }),
+            options: [{ v: "", t: T.allDeliveries }].concat(S.DELIVERY_METHODS.map(v => ({ v, t: T[DELIVERY_KEY[v]] || v })))
+          }
+        ],
+
+        isEmpty: filtered.length === 0,
+        showTable: filtered.length > 0 && s.vw >= 900,
+        showCards: filtered.length > 0 && s.vw < 900,
+        noExport: !canExport,
+        exportCursor: canExport ? "pointer" : "not-allowed",
+        exportColor: canExport ? "#3F3D38" : "#A8A398",
+
+        columns: [
+          { label: T.orderNumber, align: "left" }, { label: T.orderDate, align: "left" },
+          { label: T.customer, align: "left" }, { label: T.items, align: "right" },
+          { label: T.total, align: "right" }, { label: T.payment, align: "left" },
+          { label: T.fulfilment, align: "left" }, { label: T.delivery, align: "left" },
+          { label: T.updated, align: "left" }
+        ],
+
+        rows: shown.map(o => {
+          const p = badge(PAY_BADGE, o.paymentStatus), f = badge(FUL_BADGE, o.fulfilmentStatus);
+          const checked = sel.indexOf(o.id) >= 0;
+          return {
+            number: o.number, date: this._fmtDate(o.date), customerName: o.customerName,
+            itemCount: o.itemCount, total: S.yen(o.total),
+            payBg: p.bg, payFg: p.fg, payLabel: p.label, payIcon: p.icon,
+            fulBg: f.bg, fulFg: f.fg, fulLabel: f.label, fulIcon: f.icon,
+            deliveryLabel: T[DELIVERY_KEY[o.deliveryMethod]] || o.deliveryMethod,
+            updated: this._fmtDate((o.updatedAt || "").slice(0, 10)),
+            cardMeta: this._fmtDate(o.date) + " · " + o.itemCount + (l === "ja" ? " 点" : " items"),
+            rowBg: checked ? "#FBFAF6" : "#FFFFFF",
+            checked, checkLabel: T.viewOrder + " " + o.number,
+            onCheck: () => this.setState(st => ({
+              selected: st.selected.indexOf(o.id) >= 0 ? st.selected.filter(x => x !== o.id) : st.selected.concat(o.id)
+            })),
+            onOpen: () => nav("/admin/orders/" + o.id)
+          };
+        }),
+
+        allChecked: shown.length > 0 && shown.every(o => sel.indexOf(o.id) >= 0),
+        toggleAll: () => this.setState(st => {
+          const ids = shown.map(o => o.id);
+          const every = ids.every(id => st.selected.indexOf(id) >= 0);
+          return { selected: every ? st.selected.filter(id => ids.indexOf(id) < 0) : st.selected.concat(ids.filter(id => st.selected.indexOf(id) < 0)) };
+        }),
+        hasSelection: sel.length > 0,
+        selectedLabel: sel.length + (l === "ja" ? " 件選択" : " SELECTED"),
+        clearSelection: () => this.setState({ selected: [] }),
+        /* The handlers already refuse through _guard; disabling matches what the
+           role can actually do so a read-only visitor is not invited to try. */
+        bulkLocked: !S.can("orders.edit"),
+        bulkOpacity: S.can("orders.edit") ? 1 : 0.45,
+        exportLocked: !S.can("export"),
+        exportOpacity: S.can("export") ? 1 : 0.45,
+        bulkPaid: () => { if (this._guard("orders.edit")) { S.setOrderPayment(sel, "Paid"); S.toast(T.paidToast); this.setState({ selected: [] }); } },
+        bulkPreparing: () => { if (this._guard("orders.edit")) { S.setOrderFulfilment(sel, "Preparing"); S.toast(T.preparingToast); this.setState({ selected: [] }); } },
+        bulkShipped: () => { if (this._guard("orders.edit")) { S.setOrderFulfilment(sel, "Shipped"); S.toast(T.shippedToast); this.setState({ selected: [] }); } },
+        exportSelected: () => this._exportRows(filtered.filter(o => sel.indexOf(o.id) >= 0)),
+        exportCsv: () => this._exportRows(filtered),
+
+        showPager: pages > 1,
+        pagerLabel: (l === "ja" ? filtered.length + " 件中 " + shown.length + " 件" : "SHOWING " + shown.length + " OF " + filtered.length),
+        onFirst: page <= 1, onLast: page >= pages,
+        prevCursor: page <= 1 ? "not-allowed" : "pointer", nextCursor: page >= pages ? "not-allowed" : "pointer",
+        prevColor: page <= 1 ? "#A8A398" : "#3F3D38", nextColor: page >= pages ? "#A8A398" : "#3F3D38",
+        prevPage: () => this.setState(st => ({ page: Math.max(1, st.page - 1), selected: [] })),
+        nextPage: () => this.setState(st => ({ page: Math.min(pages, st.page + 1), selected: [] }))
+      };
+    }
+
+    /* ---- detail ---- */
+    const o = S.getOrder(this.props.entityId);
+    if (!o) return { isList: false, isDetail: false, notFound: true, loading: false, backToList };
+
+    const p = PAY_BADGE[o.paymentStatus] || PAY_BADGE.Pending;
+    const f = FUL_BADGE[o.fulfilmentStatus] || FUL_BADGE.Unfulfilled;
+    const tracking = s.trackingDraft == null ? (o.tracking || "") : s.trackingDraft;
+    const act = (labelKey, perm, fn, danger) => ({
+      label: T[labelKey], onClick: () => { if (this._guard(perm)) fn(); },
+      disabled: !S.can(perm), cursor: S.can(perm) ? "pointer" : "not-allowed",
+      border: danger ? "#DFC9C4" : "#DAD5CB", bg: "#FFFFFF",
+      color: !S.can(perm) ? "#A8A398" : danger ? "#8A3F33" : "#3F3D38"
+    });
+
+    return {
+      isList: false, isDetail: true, notFound: false, loading: false, backToList,
+      trackingDraft: tracking, noteDraft: s.noteDraft,
+      detailCols: s.vw >= 1080 ? "minmax(0,1.55fr) minmax(0,1fr)" : "minmax(0,1fr)",
+      noteDisabled: !canEdit || !s.noteDraft.trim(),
+      noteCursor: (!canEdit || !s.noteDraft.trim()) ? "not-allowed" : "pointer",
+      onNote: e => this.setState({ noteDraft: e.target.value }),
+      onTracking: e => this.setState({ trackingDraft: e.target.value }),
+      saveTracking: () => {
+        if (!this._guard("orders.edit")) return;
+        S.setOrderTracking(o.id, tracking.trim());
+        S.toast(T.trackingToast);
+        this.setState({ trackingDraft: null });
+      },
+      addNote: () => {
+        if (!this._guard("orders.edit")) return;
+        S.addOrderNote(o.id, s.noteDraft.trim());
+        S.toast(T.orderNoteAdded);
+        this.setState({ noteDraft: "" });
+      },
+      openCustomer: () => nav("/admin/customers/" + o.customerId),
+
+      d: {
+        number: o.number,
+        metaLine: this._fmtDate(o.date) + " · " + o.customerName + " · " + o.itemCount + (l === "ja" ? " 点" : " items"),
+        payBg: p[0], payFg: p[1], payLabel: T[p[2]] || o.paymentStatus, payIcon: p[3],
+        fulBg: f[0], fulFg: f[1], fulLabel: T[f[2]] || o.fulfilmentStatus, fulIcon: f[3],
+        readOnly: !canEdit,
+        mutateCursor: canEdit ? "pointer" : "not-allowed",
+
+        items: (o.items || []).map(it => ({
+          name: it.name, meta: it.brand + " · " + S.yen(it.price) + " × " + it.qty,
+          price: S.yen(it.price * it.qty), thumb: it.thumb,
+          alt: it.name + " — " + it.brand,
+          hasThumb: !!it.thumb, noThumb: !it.thumb
+        })),
+        subtotal: S.yen(o.subtotal), shippingFee: o.shippingFee ? S.yen(o.shippingFee) : (l === "ja" ? "無料" : "Free"),
+        total: S.yen(o.total),
+
+        summary: [
+          { k: T.orderNumber, v: o.number },
+          { k: T.orderDate, v: this._fmtDate(o.date) },
+          { k: T.payment, v: T[p[2]] || o.paymentStatus },
+          { k: T.paymentMethod, v: T[PAYMETHOD_KEY[o.paymentMethod]] || o.paymentMethod },
+          { k: T.fulfilment, v: T[f[2]] || o.fulfilmentStatus },
+          { k: T.delivery, v: T[DELIVERY_KEY[o.deliveryMethod]] || o.deliveryMethod },
+          { k: T.tracking, v: o.tracking || "—" },
+          { k: T.updated, v: this._fmtTime(o.updatedAt) }
+        ],
+        customer: [
+          { k: T.customer, v: o.customerName },
+          { k: T.email, v: S.can("customers.pii") ? o.email : S.maskEmail(o.email) },
+          { k: T.telephone, v: S.can("customers.pii") ? o.phone : S.maskPhone(o.phone) },
+          { k: T.kCustomerId, v: o.customerId }
+        ],
+        address: [
+          (o.shipping || {}).name,
+          [(o.shipping || {}).postalCode, (o.shipping || {}).prefecture].filter(Boolean).join(" "),
+          (o.shipping || {}).city,
+          (o.shipping || {}).address
+        ].filter(Boolean).join("\n") || "—",
+
+        actions: [
+          act("markPaid", "orders.edit", () => { S.setOrderPayment(o.id, "Paid"); S.toast(T.paidToast); }),
+          act("beginPreparation", "orders.edit", () => { S.setOrderFulfilment(o.id, "Preparing"); S.toast(T.preparingToast); }),
+          act("markShipped", "orders.edit", () => { S.setOrderFulfilment(o.id, "Shipped"); S.toast(T.shippedToast); }),
+          act("markDelivered", "orders.edit", () => { S.setOrderFulfilment(o.id, "Delivered"); S.toast(T.deliveredToast); }),
+          act("createReturn", "orders.edit", () => this._confirmThen("confirmReturnT", "confirmReturnB", "createReturn",
+            () => { S.setOrderFulfilment(o.id, "Returned"); S.toast(T.returnedToast); }), true),
+          act("markRefunded", "orders.refund", () => this._confirmThen("confirmRefundT", "confirmRefundB", "markRefunded",
+            () => { S.setOrderPayment(o.id, "Refunded"); S.toast(T.refundedToast); }), true),
+          act("cancelOrder", "orders.edit", () => this._confirmThen("confirmCancelT", "confirmCancelB", "cancelOrder",
+            () => { S.setOrderFulfilment(o.id, "Cancelled"); S.toast(T.cancelledToast); }), true)
+        ],
+
+        notes: (o.notes || []).map(n => ({ text: n.text, meta: n.author + " · " + this._fmtTime(n.at) })),
+        noNotes: !(o.notes || []).length,
+        history: (o.history || []).map(h => ({ text: h.text, meta: h.who + " · " + this._fmtTime(h.at) })),
+        audit: S.auditFor("order", o.id).map(a => ({ summary: a.summary, meta: a.who + " · " + a.role + " · " + this._fmtTime(a.at) })),
+        noAudit: !S.auditFor("order", o.id).length
+      }
+    };
+  }
+}
+
+</script>
+</body>
+</html>

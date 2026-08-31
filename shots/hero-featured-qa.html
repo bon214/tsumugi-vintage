@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>QA harness — hero featured content (not referenced by production)</title>
+<style>
+  body { font: 13px/1.5 ui-monospace, monospace; padding: 16px; background: #F8F7F4; }
+  table { border-collapse: collapse; margin-bottom: 18px; }
+  th, td { border: 1px solid #D8D3C9; padding: 5px 9px; text-align: left; }
+  .bad { background: #FBE9E5; }
+  iframe { border: 1px solid #ccc; }
+</style>
+</head>
+<body>
+<h1 style="font-size:15px">Hero / Featured Content — responsive probe</h1>
+<div id="out">measuring…</div>
+<div id="stage" style="position:fixed;left:-99999px;top:0"></div>
+<script>
+const PUBLIC = [[390, 844], [390, 700], [768, 900], [900, 800], [1024, 768], [1440, 900]];
+const ADMIN = [[390, 844], [768, 900], [1440, 900]];
+
+function measure(src, w, h, probe) {
+  return new Promise(resolve => {
+    const f = document.createElement("iframe");
+    f.style.width = w + "px"; f.style.height = h + "px"; f.src = src;
+    document.getElementById("stage").appendChild(f);
+    f.onload = () => setTimeout(async () => {
+      let r;
+      try { r = await probe(f.contentWindow, f.contentDocument); }
+      catch (e) { r = { error: String(e) }; }
+      f.remove();
+      resolve(Object.assign({ w, h }, r));
+    }, 2600);
+  });
+}
+
+const publicProbe = (win, doc) => {
+  const sec = doc.querySelector('section[aria-roledescription]');
+  const ctrl = sec && sec.querySelector('div[style*="flex-end"]');
+  const cr = ctrl ? ctrl.getBoundingClientRect() : null;
+  const h1 = sec && sec.querySelector("h1");
+  return {
+    ovf: doc.documentElement.scrollWidth - win.innerWidth,
+    heroH: sec ? Math.round(sec.getBoundingClientRect().height) : -1,
+    ctrlBottom: cr ? Math.round(cr.bottom) : -1,
+    inFold: cr ? cr.bottom <= win.innerHeight : false,
+    titlePx: h1 ? Math.round(parseFloat(win.getComputedStyle(h1).fontSize)) : -1,
+    counter: ctrl ? ctrl.textContent.replace(/\s+/g, " ").trim() : "",
+    slides: sec ? sec.querySelectorAll("img").length : 0
+  };
+};
+
+const adminProbe = (win, doc) => {
+  // The harness runs outside the user's admin session, so sign in as the demo owner.
+  try {
+    if (!win.TSUMUGI_STORE.session()) win.TSUMUGI_STORE.login("admin@tsumugi.archive", "tsumugi-demo", false);
+  } catch (e) { }
+  win.location.hash = "#/admin/featured";
+  return new Promise(r => setTimeout(() => {
+    const rows = doc.querySelectorAll('select[id^="fc-src-"]').length;
+    const btns = [...doc.querySelectorAll('button')].filter(b => /Move|移動/.test(b.getAttribute("aria-label") || ""));
+    const small = btns.filter(b => b.getBoundingClientRect().height < 42).length;
+    r({
+      ovf: doc.documentElement.scrollWidth - win.innerWidth,
+      rows, moveButtons: btns.length, undersizedControls: small,
+      selectsClipped: [...doc.querySelectorAll('select[id^="fc-"]')]
+        .filter(s => s.getBoundingClientRect().right > win.innerWidth).length
+    });
+  }, 2600));
+};
+
+(async () => {
+  const rows = [];
+  for (const [w, h] of PUBLIC) rows.push(["public", await measure("../TSUMUGI.dc.html", w, h, publicProbe)]);
+  for (const [w, h] of ADMIN) rows.push(["admin", await measure("../TSUMUGI Admin.dc.html", w, h, adminProbe)]);
+  window.__QA = rows;
+  const keys = r => Object.keys(r).filter(k => k !== "w" && k !== "h");
+  document.getElementById("out").innerHTML = rows.map(([kind, r]) => {
+    const bad = (r.ovf !== 0) || (kind === "public" && !r.inFold) || r.undersizedControls > 0 || r.selectsClipped > 0;
+    return '<table class="' + (bad ? "bad" : "") + '"><tr><th>' + kind + " " + r.w + "×" + r.h + "</th>" +
+      keys(r).map(k => "<th>" + k + "</th>").join("") + "</tr><tr><td></td>" +
+      keys(r).map(k => "<td>" + r[k] + "</td>").join("") + "</tr></table>";
+  }).join("");
+})();
+</script>
+</body>
+</html>

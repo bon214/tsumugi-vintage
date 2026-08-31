@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+      <div style="animation:fadeUp 400ms ease both">
+        <section style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,420px),1fr));gap:clamp(28px,5vw,80px);padding:0 clamp(20px,4vw,64px) clamp(56px,9vh,110px);align-items:start">
+          <div style="min-width:0;display:flex;flex-direction:column;gap:14px">
+            <button type="button" onClick="{{ vm.toggleZoom }}" onPointerDown="{{ vm.onZoomDown }}" onPointerMove="{{ vm.onZoomMove }}" onPointerUp="{{ vm.onZoomUp }}" onPointerCancel="{{ vm.onZoomUp }}" aria-label="{{ vm.t.aZoom }}" style="min-width:0;position:relative;width:calc(100% + 2 * clamp(0px,(980px - 100vw) * 999,clamp(20px,4vw,64px)));margin-inline:calc(-1 * clamp(0px,(980px - 100vw) * 999,clamp(20px,4vw,64px)));aspect-ratio:3/4;background:#E4DCD1;border:none;padding:0;cursor:{{ vm.zoomCursor }};overflow:hidden;touch-action:pan-y;animation:reveal 1s ease-out both">
+              <div style="width:100%;height:100%;transform:{{ vm.zoomScale }};transform-origin:{{ vm.zoomOrigin }};transition:{{ vm.zoomTransition }}">
+                <div role="img" aria-label="{{ vm.prodAlt }}" style="width:100%;height:100%;background-image:{{ vm.prodMainCss }};background-size:cover;background-position:center;filter:saturate(0.86) sepia(0.1) contrast(1.02)"></div>
+              </div>
+              <span style="position:absolute;right:14px;bottom:14px;pointer-events:none;font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:0.14em;background:rgba(248,247,244,0.9);padding:8px 10px;color:#6D7761">{{ vm.zoomLabel }}</span>
+            </button>
+            <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:10px">
+              <sc-for list="{{ vm.prodGallery }}" as="g" hint-placeholder-count="5">
+                <button type="button" onClick="{{ g.onSelect }}" aria-label="{{ g.roleLabel }}" style="min-width:0;position:relative;aspect-ratio:1;background:#E4DCD1;border:none;padding:0;cursor:pointer;overflow:hidden;opacity:{{ g.opacity }};transition:opacity 320ms ease">
+                  <img loading="lazy" decoding="async" src="{{ g.thumb }}" alt="{{ g.shot }}" style="width:100%;height:100%;object-fit:cover;display:block;filter:saturate(0.86) sepia(0.1) contrast(1.02)">
+                </button>
+              </sc-for>
+            </div>
+          </div>
+
+          <div style="min-width:0;display:flex;flex-direction:column;gap:clamp(22px,3vh,34px)">
+            <div style="display:flex;flex-direction:column;gap:12px">
+              <span style="font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:0.22em;color:#6D7761">{{ vm.prod.meta }}</span>
+              <h1 style="margin:0;font-family:'EB Garamond',serif;font-size:clamp(25px,3.2vw,36px);line-height:1.16;font-weight:400">{{ vm.prod.name }}</h1>
+              <div style="display:flex;gap:18px;align-items:baseline;flex-wrap:wrap">
+                <span style="font-family:'EB Garamond',serif;font-size:clamp(19px,2vw,23px)">{{ vm.prod.priceLabel }}</span>
+                <span style="font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:0.14em;color:#9C978F">{{ vm.prodSizeMeta }}</span>
+              </div>
+            </div>
+
+            <div style="display:flex;flex-direction:column;gap:12px;padding:24px 0;border-top:1px solid #E6E0D7;border-bottom:1px solid #E6E0D7">
+              <span style="font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:0.22em;color:#6D7761">{{ vm.t.curatorNote }}</span>
+              <p style="margin:0;font-family:'EB Garamond',serif;font-size:15px;line-height:1.85;text-wrap:pretty;white-space:pre-line">{{ vm.prodNote }}</p>
+              <span style="font-size:13px;color:#9C978F">{{ vm.t.kenjiKirigaya }}</span>
+            </div>
+
+            <div style="display:flex;gap:12px;align-items:center">
+              <button type="button" onClick="{{ vm.addCurrent }}" disabled="{{ vm.prodSoldOut }}" style="flex:1;border:none;color:#F8F7F4;font-family:'IBM Plex Mono',monospace;font-size:12px;letter-spacing:0.18em;padding:20px;min-height:56px;cursor:{{ vm.prodCtaCursor }};transition:background 320ms ease;background:{{ vm.prodCtaBg }}" style-hover="background:#6D7761">{{ vm.prodAddLabel }}</button>
+              <button type="button" onClick="{{ vm.wishCurrent }}" aria-label="{{ vm.t.aAddWishlist }}" style="width:56px;height:56px;border:1px solid #B8B1A6;background:transparent;font-size:15px;color:#6D7761;cursor:pointer;flex:none">{{ vm.wishCurrentLabel }}</button>
+            </div>
+            <span style="font-size:13px;color:#9C978F">{{ vm.t.shipNote }}</span>
+
+            <div style="display:flex;flex-direction:column;gap:14px;padding-top:6px">
+              <span style="font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:0.22em;color:#6D7761">{{ vm.t.measurements }}</span>
+              <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:16px 24px">
+                <sc-for list="{{ vm.prodMeasurements }}" as="m" hint-placeholder-count="4">
+                  <div style="min-width:0;display:flex;flex-direction:column;gap:5px;padding-bottom:12px;border-bottom:1px solid #E6E0D7">
+                    <span style="font-size:12px;color:#9C978F">{{ m.k }}</span>
+                    <span style="font-family:'EB Garamond',serif;font-size:20px">{{ m.v }}</span>
+                  </div>
+                </sc-for>
+              </div>
+            </div>
+
+            <div style="display:flex;flex-direction:column">
+              <sc-for list="{{ vm.accordion }}" as="a" hint-placeholder-count="4">
+                <div style="display:flex;flex-direction:column;gap:10px;padding:18px 0;border-top:1px solid #E6E0D7">
+                  <button type="button" onClick="{{ a.onToggle }}" style="display:flex;justify-content:space-between;align-items:center;border:none;background:transparent;padding:6px 0;cursor:pointer;min-height:40px;width:100%;text-align:left">
+                    <span style="font-size:15px;letter-spacing:0.03em;color:#222222">{{ a.title }}</span>
+                    <span style="font-family:'IBM Plex Mono',monospace;font-size:13px;color:#9C978F">{{ a.sign }}</span>
+                  </button>
+                  <sc-if value="{{ a.open }}" hint-placeholder-val="{{ true }}">
+                    <p style="margin:0;font-size:13px;line-height:1.95;color:#4A4740;max-width:560px;white-space:pre-line;animation:fadeUp 280ms ease both">{{ a.body }}</p>
+                  </sc-if>
+                </div>
+              </sc-for>
+            </div>
+          </div>
+        </section>
+
+        <section style="background:#EFE9E0;padding:clamp(48px,8vh,110px) clamp(20px,4vw,64px);display:flex;flex-direction:column;gap:clamp(20px,3vh,40px)">
+          <span style="font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:0.22em;color:#6D7761">{{ vm.t.fabricDetail }}</span>
+          <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:clamp(12px,1.6vw,24px)">
+            <figure style="margin:0;min-width:0;display:flex;flex-direction:column;gap:10px">
+              <div style="min-width:0;position:relative;aspect-ratio:4/3;background:#E4DCD1;overflow:hidden"><img loading="lazy" decoding="async" src="https://images.unsplash.com/photo-1523381210434-271e8be1f52b?auto=format&amp;fit=crop&amp;q=72&amp;w=900" alt="Cotton garments on hangers, close view" style="width:100%;height:100%;object-fit:cover;display:block;filter:saturate(0.86) sepia(0.1) contrast(1.02)"></div>
+              <figcaption style="font-size:12px;line-height:1.7;color:#6D7761">{{ vm.detailCap1 }}</figcaption>
+            </figure>
+            <figure style="margin:0;min-width:0;display:flex;flex-direction:column;gap:10px">
+              <div style="min-width:0;position:relative;aspect-ratio:4/3;background:#E4DCD1;overflow:hidden"><img loading="lazy" decoding="async" src="https://images.unsplash.com/photo-1596755094514-f87e34085b2c?auto=format&amp;fit=crop&amp;q=72&amp;w=900" alt="Chambray shirt on a hanger, collar and placket" style="width:100%;height:100%;object-fit:cover;display:block;filter:saturate(0.86) sepia(0.1) contrast(1.02)"></div>
+              <figcaption style="font-size:12px;line-height:1.7;color:#6D7761">{{ vm.detailCap2 }}</figcaption>
+            </figure>
+            <figure style="margin:0;min-width:0;display:flex;flex-direction:column;gap:10px">
+              <div style="min-width:0;position:relative;aspect-ratio:4/3;background:#E4DCD1;overflow:hidden"><img loading="lazy" decoding="async" src="https://images.unsplash.com/photo-1495105787522-5334e3ffa0ef?auto=format&amp;fit=crop&amp;q=72&amp;w=900" alt="Cuff and hardware detail on a denim jacket" style="width:100%;height:100%;object-fit:cover;display:block;filter:saturate(0.86) sepia(0.1) contrast(1.02)"></div>
+              <figcaption style="font-size:12px;line-height:1.7;color:#6D7761">{{ vm.detailCap3 }}</figcaption>
+            </figure>
+          </div>
+        </section>
+
+        <section style="padding:clamp(48px,8vh,110px) clamp(20px,4vw,64px);display:flex;flex-direction:column;gap:clamp(24px,4vh,40px)">
+          <p style="margin:0;font-size:13px;line-height:1.9;color:#4A4740;max-width:560px">{{ vm.t.shelfIntro }}</p>
+          <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:clamp(18px,2.4vw,32px)">
+            <sc-for list="{{ vm.related }}" as="p" hint-placeholder-count="3">
+              <article style="min-width:0;display:flex;flex-direction:column;gap:12px">
+                <button type="button" onClick="{{ p.onOpen }}" aria-label="{{ p.name }}" style="min-width:0;position:relative;aspect-ratio:3/4;background:#E4DCD1;border:none;padding:0;cursor:pointer;overflow:hidden;transition:opacity 500ms ease" style-hover="opacity:0.88">
+                  <img loading="lazy" decoding="async" src="{{ p.card }}" alt="{{ p.shot }}" style="width:100%;height:100%;object-fit:cover;display:block;filter:saturate(0.86) sepia(0.1) contrast(1.02)">
+                </button>
+                <span style="font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:0.18em;color:#9C978F">{{ p.meta }}</span>
+                <button type="button" onClick="{{ p.onOpen }}" style="border:none;background:transparent;padding:0;text-align:left;font-family:'EB Garamond',serif;font-size:20px;color:#222222;cursor:pointer">{{ p.name }}</button>
+                <span style="font-size:13px;color:#4A4740">{{ p.priceLabel }}</span>
+                <span style="font-size:12px;color:#4A4740">{{ p.sizeMeasure }}</span>
+              </article>
+            </sc-for>
+          </div>
+        </section>
+      </div></x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;vm&quot;:{&quot;editor&quot;:null,&quot;tsType&quot;:&quot;object&quot;}}">
+/* Product view — gallery, purchase column, facts, accordion, related pieces.
+   Presentational only: every value and handler arrives in the `vm` prop built
+   by TSUMUGI.dc.html, which keeps all state, routing, overlays and listeners. */
+class Component extends DCLogic {
+  renderVals() { return {}; }
+}
+</script>
+</body>
+</html>

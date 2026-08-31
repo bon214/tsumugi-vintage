@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>QA harness — admin authentication (not referenced by production)</title>
+<style>
+  body { font: 13px/1.5 ui-monospace, monospace; padding: 16px; background: #F8F7F4; }
+  pre { background: #fff; border: 1px solid #D8D3C9; padding: 12px; overflow: auto; }
+</style>
+</head>
+<body>
+<h1 style="font-size:15px">Auth QA — login &amp; guest console</h1>
+<pre id="out">measuring…</pre>
+<div id="stage" style="position:fixed;left:-99999px;top:0"></div>
+<script>
+const ADMIN = "../TSUMUGI%20Admin.dc.html";
+const STORE_KEYS = ["tsumugi.db.v8", "tsumugi.db.v7", "tsumugi.session.v1", "tsumugi.receipts.v1"];
+
+/* ---- storage isolation -------------------------------------------------
+   These probes sign in and out, reload frames and (through the console) touch
+   the same localStorage the real app uses. A QA run must not leave the
+   operator's data changed, so the relevant keys are snapshotted before the
+   suite and restored after it — including keys the run created, which are
+   removed rather than left behind. */
+function snapshotStorage() {
+  const snap = {};
+  for (let i = 0; i < localStorage.length; i++) {
+    const k = localStorage.key(i);
+    if (k && k.indexOf("tsumugi.") === 0) snap[k] = localStorage.getItem(k);
+  }
+  return snap;
+}
+function restoreStorage(snap) {
+  const now = [];
+  for (let i = 0; i < localStorage.length; i++) {
+    const k = localStorage.key(i);
+    if (k && k.indexOf("tsumugi.") === 0) now.push(k);
+  }
+  now.forEach(k => { if (!(k in snap)) localStorage.removeItem(k); });
+  Object.keys(snap).forEach(k => localStorage.setItem(k, snap[k]));
+  try { sessionStorage.removeItem("tsumugi.receipts.v1"); } catch (e) { }
+}
+
+/* ---- frame plumbing ----------------------------------------------------
+   onload fires again after every navigation inside the frame, including the
+   reload the flash probe performs. The previous version started its probe from
+   onload and reloaded inside it, so each reload re-entered the probe: the frame
+   reloaded continuously and every observer attached to the previous (now
+   detached) document threw. The handler is therefore armed ONCE. */
+function frame(w, h, run, src) {
+  return new Promise(resolve => {
+    const f = document.createElement("iframe");
+    let started = false;
+    let settled = false;
+    const done = (r) => {
+      if (settled) return;
+      settled = true;
+      clearTimeout(guard);
+      try { f.onload = null; } catch (e) { }
+      f.remove();
+      resolve(Object.assign({ w, h }, r));
+    };
+    /* Never let one hung probe hang the suite. */
+    const guard = setTimeout(() => done({ error: "timeout" }), 30000);
+
+    f.style.width = w + "px"; f.style.height = h + "px";
+    f.src = src || ADMIN;
+    document.getElementById("stage").appendChild(f);
+    f.onload = async () => {
+      if (started) return;                 /* second onload = the probe's own reload */
+      started = true;
+      let r;
+      try { r = await run(f.contentWindow, f.contentDocument, f); }
+      catch (e) { r = { error: String(e && e.message || e) }; }
+      done(r);
+    };
+  });
+}
+const wait = ms => new Promise(r => setTimeout(r, ms));
+
+/* Waits for the frame to finish ONE navigation, without relying on f.onload
+   (already consumed) and without observing a detached document. */
+function reloadOnce(win, f) {
+  return new Promise((resolve, reject) => {
+    const timer = setTimeout(() => reject(new Error("reload timeout")), 15000);
+    const onLoad = () => {
+      f.removeEventListener("load", onLoad);
+      clearTimeout(timer);
+      resolve();
+    };
+    f.addEventListener("load", onLoad);
+    win.location.reload();
+  });
+}
+
+/* Does administration content ever paint before the auth status is known?
+   One reload, one sampling window, no recursion. */
+async function flashProbe(win, doc, f) {
+  await win.TSUMUGI_AUTH.signOut();
+  await reloadOnce(win, f);
+  /* The document object is replaced by the navigation: re-read it, and never
+     hold a reference to (or observe) the one from before. */
+  const d = f.contentDocument;
+  const w = f.contentWindow;
+  const samples = [];
+  for (let i = 0; i < 18; i++) {
+    samples.push({
+      t: i * 90,
+      status: (w.TSUMUGI_AUTH && w.TSUMUGI_AUTH.status()) || "?",
+      main: !!d.querySelector("main"),
+      login: !!d.querySelector("#adm-email")
+    });
+    await wait(90);
+  }
+  return {
+    reloads: 1,
+    adminEverPainted: samples.some(s => s.main),
+    firstLoginAt: (samples.find(s => s.login) || {}).t,
+    statuses: [...new Set(samples.map(s => s.status))].join(">")
+  };
+}
+
+async function loginProbe(win, doc) {
+  await win.TSUMUGI_AUTH.signOut();
+  await wait(700);
+  const controls = [...doc.querySelectorAll("#dc-root input, #dc-root button")];
+  return {
+    ovf: doc.documentElement.scrollWidth - win.innerWidth,
+    form: !!doc.querySelector("form"),
+    fields: doc.querySelectorAll("#adm-email, #adm-pass").length,
+    guestButton: [...doc.querySelectorAll("button")].some(b => /GUEST|ゲスト/.test(b.textContent)),
+    undersized: controls.filter(c => c.type !== "checkbox" && c.getBoundingClientRect().height < 36).length,
+    alertLive: !!doc.querySelector("[aria-live]")
+  };
+}
+
+async function guestProbe(win, doc) {
+  await win.TSUMUGI_AUTH.signOut();
+  await wait(300);
+  await win.TSUMUGI_AUTH.signInAsGuest();
+  await wait(900);
+  win.location.hash = "#/admin/news/11";
+  await wait(1700);
+  const inputs = [...doc.querySelectorAll("main input, main select, main textarea")];
+  const S = win.TSUMUGI_STORE;
+  return {
+    ovf: doc.documentElement.scrollWidth - win.innerWidth,
+    status: win.TSUMUGI_AUTH.status(),
+    role: S.roleOf(),
+    isStaff: S.isStaffSession(),
+    chip: [...doc.querySelectorAll("header span")].some(s => /GUEST|ゲスト/.test(s.textContent)),
+    editorInputs: inputs.length,
+    editorLive: inputs.filter(x => !x.disabled).length,
+    /* The guest role must no longer carry real orders or real customers. */
+    canReadOrders: S.can("orders.view"),
+    canReadCustomers: S.can("customers.view"),
+    canReadPII: S.can("customers.pii"),
+    canEditContent: S.can("content.edit")
+  };
+}
+
+(async () => {
+  const snap = snapshotStorage();
+  const rows = {};
+  try {
+    rows.flash = await frame(1280, 900, flashProbe);
+    for (const [w, h] of [[390, 844], [768, 900], [1440, 900]]) {
+      rows["login " + w] = await frame(w, h, loginProbe);
+    }
+    for (const [w, h] of [[390, 844], [768, 900], [1440, 900]]) {
+      rows["guest " + w] = await frame(w, h, guestProbe);
+    }
+  } finally {
+    restoreStorage(snap);
+    rows._storageRestored = true;
+  }
+  window.__AUTHQA = rows;
+  document.getElementById("out").textContent = JSON.stringify(rows, null, 2);
+})();
+</script>
+</body>
+</html>

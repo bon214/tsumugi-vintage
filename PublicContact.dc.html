@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+      <div style="animation:fadeUp 400ms ease both">
+        <section style="display:grid;grid-template-columns:{{ vm.contactCols }};gap:clamp(32px,5vw,72px);padding:clamp(40px,7vh,90px) clamp(20px,4vw,64px) clamp(56px,9vh,110px);align-items:start">
+          <div style="min-width:0;display:flex;flex-direction:column;gap:26px">
+            <span style="font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:0.16em;color:#9C978F">{{ vm.t.crumbContact }}</span>
+            <h1 style="margin:0;font-family:'EB Garamond',serif;font-size:clamp(25px,3.2vw,36px);font-weight:400;line-height:1.16">{{ vm.t.contactTitle }}</h1>
+            <p style="margin:0;font-size:15px;line-height:1.95;color:#4A4740;max-width:440px;white-space:pre-line">{{ vm.t.contactBody }}</p>
+            <div style="display:flex;flex-direction:column;gap:clamp(14px,2vh,20px);padding-top:clamp(6px,1.5vh,14px)">
+              <h2 style="margin:0;font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:0.2em;font-weight:400;color:#6D7761">{{ vm.t.contactHelpHead }}</h2>
+              <div style="display:flex;flex-direction:column">
+                <sc-for list="{{ vm.contactHelp }}" as="c" hint-placeholder-count="5">
+                  <div style="display:flex;flex-direction:column;gap:7px;padding:clamp(16px,2.4vh,22px) 0;border-top:1px solid #E6E0D7">
+                    <span style="font-size:13px;line-height:1.7;color:#222222">{{ c.title }}</span>
+                    <p style="margin:0;font-size:13px;line-height:1.9;color:#4A4740;max-width:46ch;text-wrap:pretty">{{ c.body }}</p>
+                  </div>
+                </sc-for>
+              </div>
+            </div>
+          </div>
+
+          <div id="c-form" style="min-width:0;display:flex;flex-direction:column;gap:22px;background:transparent;border:1px solid #E0D8CB;padding:clamp(22px,3vw,40px)">
+            <h2 style="margin:0;font-family:'EB Garamond',serif;font-size:clamp(19px,2vw,23px);font-weight:400">{{ vm.t.writeToUs }}</h2>
+            <p style="margin:0;font-size:13px;line-height:1.9;color:#4A4740;white-space:pre-line">{{ vm.t.writeBody }}</p>
+            <sc-if value="{{ vm.contactSent }}" hint-placeholder-val="{{ false }}">
+              <div role="status" style="display:flex;flex-direction:column;gap:12px;padding:24px 0;animation:fadeUp 300ms ease both">
+                <span style="font-family:'EB Garamond',serif;font-size:clamp(19px,2vw,23px);color:#222222">{{ vm.t.cSentHead }}</span>
+                <p style="margin:0;font-size:13px;line-height:1.9;color:#4A4740">{{ vm.t.thanksMsg }}</p>
+              </div>
+            </sc-if>
+            <sc-if value="{{ vm.contactOpen }}" hint-placeholder-val="{{ true }}">
+              <div style="display:flex;flex-direction:column;gap:22px">
+                <div style="display:flex;flex-direction:column;gap:6px">
+                  <label for="c-name" style="font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:0.2em;color:#6D7761">{{ vm.t.nameLabel }}</label>
+                  <input id="c-name" type="text" value="{{ vm.contactName }}" onChange="{{ vm.onContactName }}" aria-invalid="{{ vm.cNameInvalid }}" aria-describedby="{{ vm.cNameDesc }}" style="border:none;border-bottom:1px solid {{ vm.cNameBorder }};background:transparent;font-size:16px;padding:12px 0;min-height:44px;outline:none;color:#222222">
+                  <sc-if value="{{ vm.cNameInvalid }}" hint-placeholder-val="{{ false }}">
+                    <span id="c-name-err" style="font-size:13px;line-height:1.7;color:#8C5A46">{{ vm.cNameError }}</span>
+                  </sc-if>
+                </div>
+                <div style="display:flex;flex-direction:column;gap:6px">
+                  <label for="c-email" style="font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:0.2em;color:#6D7761">{{ vm.t.emailLabel }}</label>
+                  <input id="c-email" type="email" value="{{ vm.contactEmail }}" onChange="{{ vm.onContactEmail }}" aria-invalid="{{ vm.cEmailInvalid }}" aria-describedby="{{ vm.cEmailDesc }}" style="border:none;border-bottom:1px solid {{ vm.cEmailBorder }};background:transparent;font-size:16px;padding:12px 0;min-height:44px;outline:none;color:#222222">
+                  <sc-if value="{{ vm.cEmailInvalid }}" hint-placeholder-val="{{ false }}">
+                    <span id="c-email-err" style="font-size:13px;line-height:1.7;color:#8C5A46">{{ vm.cEmailError }}</span>
+                  </sc-if>
+                </div>
+                <div style="display:flex;flex-direction:column;gap:6px">
+                  <label for="c-msg" style="font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:0.2em;color:#6D7761">{{ vm.t.messageLabel }}</label>
+                  <textarea id="c-msg" rows="7" value="{{ vm.contactMessage }}" onChange="{{ vm.onContactMessage }}" aria-invalid="{{ vm.cMsgInvalid }}" aria-describedby="{{ vm.cMsgDesc }}" style="border:1px solid {{ vm.cMsgBorder }};background:#F8F7F4;font-size:15px;line-height:1.7;padding:14px;outline:none;color:#222222;resize:vertical;font-family:'Hanken Grotesk',sans-serif"></textarea>
+                  <sc-if value="{{ vm.cMsgInvalid }}" hint-placeholder-val="{{ false }}">
+                    <span id="c-msg-err" style="font-size:13px;line-height:1.7;color:#8C5A46">{{ vm.cMsgError }}</span>
+                  </sc-if>
+                </div>
+                <button type="button" onClick="{{ vm.sendContact }}" disabled="{{ vm.contactSending }}" aria-busy="{{ vm.contactSending }}" style="border:none;background:#222222;color:#F8F7F4;font-family:'IBM Plex Mono',monospace;font-size:12px;letter-spacing:0.2em;padding:19px;min-height:52px;cursor:pointer;transition:background 320ms ease" style-hover="background:#6D7761">{{ vm.cSendLabel }}</button>
+              </div>
+            </sc-if>
+          </div>
+        </section>
+
+        <section style="padding:0 clamp(20px,4vw,64px) clamp(56px,9vh,110px);display:flex;flex-direction:column;gap:clamp(20px,3vh,32px)">
+          <span style="font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:0.24em;color:#9C978F;padding-top:clamp(24px,4vh,40px);border-top:1px solid #E6E0D7">{{ vm.t.contactShopHead }}</span>
+          <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,200px),1fr));gap:clamp(20px,3vw,40px)">
+            <div style="display:flex;flex-direction:column;gap:6px">
+              <span style="font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:0.2em;color:#6D7761">{{ vm.t.address }}</span>
+              <span style="font-size:13px;line-height:1.8;color:#222222">{{ vm.t.addressValue }}</span>
+            </div>
+            <div style="display:flex;flex-direction:column;gap:6px">
+              <span style="font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:0.2em;color:#6D7761">{{ vm.t.hours }}</span>
+              <span style="font-size:13px;line-height:1.8;color:#222222">{{ vm.t.hoursValue }}</span>
+            </div>
+            <div style="display:flex;flex-direction:column;gap:6px">
+              <span style="font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:0.2em;color:#6D7761">{{ vm.t.emailLabel }}</span>
+              <a href="mailto:hello@tsumugi.archive" style="font-size:13px;color:#6D7761">hello@tsumugi.archive</a>
+            </div>
+            <div style="display:flex;flex-direction:column;gap:6px">
+              <span style="font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:0.2em;color:#6D7761">{{ vm.t.accessLabel }}</span>
+              <span style="font-size:13px;line-height:1.8;color:#222222;white-space:pre-line">{{ vm.t.accessValue }}</span>
+            </div>
+          </div>
+          <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,260px),1fr));gap:clamp(12px,1.6vw,20px)">
+            <div style="min-width:0;position:relative;aspect-ratio:4/3;background:#E4DCD1;overflow:hidden"><img loading="lazy" decoding="async" src="https://images.unsplash.com/photo-1519710164239-da123dc03ef4?auto=format&amp;fit=crop&amp;q=72&amp;w=900" alt="The entrance landing on the second floor" style="width:100%;height:100%;object-fit:cover;display:block;filter:saturate(0.86) sepia(0.1) contrast(1.02)"></div>
+            <div style="min-width:0;position:relative;aspect-ratio:4/3;background:#E4DCD1;overflow:hidden"><img loading="lazy" decoding="async" src="https://images.unsplash.com/photo-1567401893414-76b7b1e5a7a5?auto=format&amp;fit=crop&amp;q=72&amp;w=900" alt="Rails of garments inside the shop" style="width:100%;height:100%;object-fit:cover;display:block;filter:saturate(0.86) sepia(0.1) contrast(1.02)"></div>
+            <div style="min-width:0;position:relative;aspect-ratio:4/3;background:#E4DCD1;overflow:hidden"><img loading="lazy" decoding="async" src="https://images.unsplash.com/photo-1441984904996-e0b6ba687e04?auto=format&amp;fit=crop&amp;q=72&amp;w=900" alt="Daylight inside the shop, seen from the entrance" style="width:100%;height:100%;object-fit:cover;display:block;filter:saturate(0.86) sepia(0.1) contrast(1.02)"></div>
+          </div>
+        </section>
+
+      </div></x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;vm&quot;:{&quot;editor&quot;:null,&quot;tsType&quot;:&quot;object&quot;}}">
+/* Contact page view — enquiry examples, the form and the shop details.
+   Presentational only: every value and every handler arrives in the `vm` prop
+   built by TSUMUGI.dc.html, which keeps all state, routing and listeners. */
+class Component extends DCLogic {
+  renderVals() { return {}; }
+}
+</script>
+</body>
+</html>

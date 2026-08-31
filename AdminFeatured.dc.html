@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<div style="display:flex;flex-direction:column;gap:14px;max-width:1180px">
+
+  <div style="background:#FFFFFF;border:1px solid #E3DFD7;padding:14px;display:flex;gap:12px;align-items:flex-start;flex-wrap:wrap">
+    <div style="flex:1 1 320px;min-width:0;display:flex;flex-direction:column;gap:6px">
+      <span style="font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:0.16em;color:#8C887F">{{ t.fcHeroHead }}</span>
+      <p style="margin:0;font-size:13px;line-height:1.65;color:#77736B;max-width:560px">{{ t.fcHeroNote }}</p>
+    </div>
+    <sc-if value="{{ canEdit }}" hint-placeholder-val="{{ true }}">
+      <button type="button" onClick="{{ onAdd }}" disabled="{{ atMax }}" style="border:none;background:#6D7761;color:#FFFFFF;padding:10px 16px;min-height:44px;font-size:13.5px;white-space:nowrap;cursor:pointer;opacity:{{ addOpacity }}" style-hover="background:#59614F">{{ t.fcAdd }}</button>
+    </sc-if>
+  </div>
+
+  <sc-if value="{{ readOnly }}" hint-placeholder-val="{{ false }}">
+    <div role="note" style="background:#F5F3EE;border:1px solid #E3DFD7;padding:12px 14px;font-size:13px;line-height:1.6;color:#55534C">{{ t.fcReadOnly }}</div>
+  </sc-if>
+
+  <sc-if value="{{ noLive }}" hint-placeholder-val="{{ false }}">
+    <div role="alert" style="background:#FBF3E4;border:1px solid #E7D6AE;padding:12px 14px;font-size:13px;line-height:1.6;color:#7E6224">{{ t.fcNoLive }}</div>
+  </sc-if>
+
+  <sc-if value="{{ manyNotice }}" hint-placeholder-val="{{ false }}">
+    <div role="note" style="background:#F5F3EE;border:1px solid #E3DFD7;padding:12px 14px;font-size:13px;line-height:1.6;color:#55534C">{{ t.fcManyNotice }}</div>
+  </sc-if>
+
+  <sc-if value="{{ isEmpty }}" hint-placeholder-val="{{ false }}">
+    <div style="background:#FFFFFF;border:1px solid #E3DFD7;padding:56px 24px;display:flex;flex-direction:column;align-items:center;gap:12px;text-align:center">
+      <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="#C6C1B7" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 5h18v11H3zM3 19h18"></path><path d="m8 13 3-3 3 3 2-2"></path></svg>
+      <h2 style="margin:0;font-size:16px;font-weight:600">{{ t.fcEmpty }}</h2>
+      <p style="margin:0;max-width:380px;font-size:13.5px;line-height:1.65;color:#77736B">{{ t.fcEmptyBody }}</p>
+    </div>
+  </sc-if>
+
+  <div style="display:flex;flex-direction:column;gap:10px">
+    <sc-for list="{{ rows }}" as="r" hint-placeholder-count="4">
+      <article style="background:#FFFFFF;border:1px solid {{ r.border }};padding:13px;display:flex;gap:13px;align-items:flex-start;flex-wrap:{{ wrapMode }}">
+        <span style="font-family:'IBM Plex Mono',monospace;font-size:12px;letter-spacing:0.1em;color:#8C887F;min-width:26px;padding-top:4px">{{ r.no }}</span>
+        <sc-if value="{{ r.hasThumb }}" hint-placeholder-val="{{ true }}">
+          <img loading="lazy" decoding="async" src="{{ r.thumb }}" alt="{{ r.alt }}" style="width:96px;height:72px;object-fit:cover;background:#EDE9E2;flex:0 0 96px;filter:saturate(0.9);opacity:{{ r.thumbOpacity }}">
+        </sc-if>
+        <sc-if value="{{ r.noThumb }}" hint-placeholder-val="{{ false }}">
+          <span role="img" aria-label="{{ r.stateLabel }}" style="width:96px;height:72px;flex:0 0 96px;display:grid;place-items:center;background:#EDE9E2;color:#A8A398;font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:0.1em">—</span>
+        </sc-if>
+
+        <div style="flex:1 1 280px;min-width:0;display:flex;flex-direction:column;gap:8px">
+          <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+            <span style="font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:0.14em;padding:3px 7px;white-space:nowrap;background:#EEF0EA;color:#4F5C42">{{ r.typeLabel }}</span>
+            <span style="font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:0.1em;padding:3px 7px;white-space:nowrap;background:{{ r.stateBg }};color:{{ r.stateFg }}">{{ r.stateLabel }}</span>
+            <span style="font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:0.1em;padding:3px 7px;white-space:nowrap;background:{{ r.liveBg }};color:{{ r.liveFg }}">{{ r.liveLabel }}</span>
+          </div>
+          <span style="font-family:'EB Garamond',serif;font-size:19px;line-height:1.3;color:{{ r.titleColour }}">{{ r.title }}</span>
+          <span style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:#8C887F">{{ r.meta }}</span>
+          <sc-if value="{{ r.hasWarning }}" hint-placeholder-val="{{ false }}">
+            <p role="note" style="margin:0;background:#FBF3E4;border-left:2px solid #E7D6AE;padding:8px 10px;font-size:12.5px;line-height:1.6;color:#7E6224;max-width:560px">{{ r.warning }}</p>
+          </sc-if>
+
+          <div style="display:flex;gap:10px;flex-wrap:wrap;padding-top:2px">
+            <div style="display:flex;flex-direction:column;gap:5px;min-width:0">
+              <label for="{{ r.typeId }}" style="font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:0.14em;color:#8C887F">{{ t.fcSourceType }}</label>
+              <select id="{{ r.typeId }}" value="{{ r.sourceType }}" onChange="{{ r.onType }}" disabled="{{ r.locked }}" style="border:1px solid #DAD5CB;background:#FCFBF9;padding:9px 10px;font-size:13px;min-height:42px;max-width:100%" style-focus="border-color:#6D7761">
+                <sc-for list="{{ typeOptions }}" as="o" hint-placeholder-count="2">
+                  <option value="{{ o.v }}">{{ o.t }}</option>
+                </sc-for>
+              </select>
+            </div>
+            <div style="display:flex;flex-direction:column;gap:5px;flex:1 1 260px;min-width:0">
+              <label for="{{ r.srcId }}" style="font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:0.14em;color:#8C887F">{{ t.fcSource }}</label>
+              <select id="{{ r.srcId }}" value="{{ r.sourceValue }}" onChange="{{ r.onSource }}" disabled="{{ r.locked }}" style="border:1px solid #DAD5CB;background:#FCFBF9;padding:9px 10px;font-size:13px;min-height:42px;width:100%;max-width:460px" style-focus="border-color:#6D7761">
+                <sc-for list="{{ r.sourceOptions }}" as="o" hint-placeholder-count="4">
+                  <option value="{{ o.v }}">{{ o.t }}</option>
+                </sc-for>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <div style="display:flex;gap:7px;flex-wrap:wrap;align-items:flex-start">
+          <button type="button" onClick="{{ r.onUp }}" disabled="{{ r.atFirst }}" aria-label="{{ r.upLabel }}" style="border:1px solid #DAD5CB;background:#FFFFFF;width:42px;min-height:42px;display:grid;place-items:center;cursor:pointer;color:#77736B;opacity:{{ r.upOpacity }}" style-hover="border-color:#6D7761;color:#6D7761">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 19V5"></path><path d="m5 12 7-7 7 7"></path></svg>
+          </button>
+          <button type="button" onClick="{{ r.onDown }}" disabled="{{ r.atLast }}" aria-label="{{ r.downLabel }}" style="border:1px solid #DAD5CB;background:#FFFFFF;width:42px;min-height:42px;display:grid;place-items:center;cursor:pointer;color:#77736B;opacity:{{ r.downOpacity }}" style-hover="border-color:#6D7761;color:#6D7761">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14"></path><path d="m19 12-7 7-7-7"></path></svg>
+          </button>
+          <button type="button" onClick="{{ r.onToggle }}" disabled="{{ r.toggleLocked }}" style="border:1px solid {{ r.toggleBorder }};background:{{ r.toggleBg }};color:{{ r.toggleFg }};padding:9px 13px;min-height:42px;font-size:13px;white-space:nowrap;cursor:pointer;opacity:{{ r.toggleOpacity }}" style-hover="border-color:#6D7761">{{ r.toggleLabel }}</button>
+          <button type="button" onClick="{{ r.onRemove }}" disabled="{{ r.locked }}" aria-label="{{ r.removeLabel }}" style="border:1px solid #DAD5CB;background:#FFFFFF;padding:9px 13px;min-height:42px;font-size:13px;white-space:nowrap;cursor:pointer;color:#77736B;opacity:{{ r.removeOpacity }}" style-hover="border-color:#A2493C;color:#A2493C">{{ t.fcRemove }}</button>
+        </div>
+      </article>
+    </sc-for>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;view&quot;:{&quot;editor&quot;:null,&quot;tsType&quot;:&quot;string&quot;},&quot;entityId&quot;:{&quot;editor&quot;:null,&quot;tsType&quot;:&quot;string&quot;},&quot;nav&quot;:{&quot;editor&quot;:null,&quot;tsType&quot;:&quot;function&quot;},&quot;compact&quot;:{&quot;editor&quot;:null,&quot;tsType&quot;:&quot;boolean&quot;},&quot;tick&quot;:{&quot;editor&quot;:null,&quot;tsType&quot;:&quot;number&quot;}}">
+/* Featured Content — the ordered list the storefront hero reads.
+   Presentational logic only: every mutation goes through the shared store
+   (saveHeroFeature / setHeroFeatureEnabled / reorderHeroFeatures /
+   deleteHeroFeature), which owns persistence, permissions and the audit trail.
+   Publication is never judged here — heroSourceState() is the single gate. */
+/* Preview thumbnails for page features — the same photographs the storefront
+   hero uses for those routes, so the console shows what will actually appear. */
+const PAGE_IMG = {
+  shop: "https://images.unsplash.com/photo-1544022613-e87ca75a784a?auto=format&fit=crop&q=72&w=220",
+  about: "https://images.unsplash.com/photo-1441984904996-e0b6ba687e04?auto=format&fit=crop&q=72&w=220",
+  journal: "https://images.unsplash.com/photo-1434389677669-e08b4cac3105?auto=format&fit=crop&q=72&w=220",
+  contact: "https://images.unsplash.com/photo-1519710164239-da123dc03ef4?auto=format&fit=crop&q=72&w=220"
+};
+
+class Component extends DCLogic {
+  state = { tick: 0, vw: typeof window !== "undefined" ? window.innerWidth : 1440 };
+
+  componentDidMount() {
+    this.S = window.TSUMUGI_STORE;
+    if (!this.S) setTimeout(() => { this.S = window.TSUMUGI_STORE; this.forceUpdate(); }, 60);
+    this._unsub = this.S && this.S.subscribe(() => this.setState(s => ({ tick: s.tick + 1 })));
+    this._onResize = () => this.setState({ vw: window.innerWidth });
+    window.addEventListener("resize", this._onResize);
+  }
+  componentWillUnmount() {
+    if (this._unsub) this._unsub();
+    window.removeEventListener("resize", this._onResize);
+  }
+
+  _lang() { const S = this.S || window.TSUMUGI_STORE; return (S && S.lang) ? S.lang() : "en"; }
+  _dict() { const I = window.TSUMUGI_I18N; return I ? I.t(this._lang()) : {}; }
+  _art(v) { const I = window.TSUMUGI_I18N; return I ? I.art(v, this._lang()) : v; }
+
+  _statusLabel(n, T) {
+    return { published: T.published, draft: T.draft, scheduled: T.scheduled, archived: T.kArchived }[n.status] || n.status;
+  }
+
+  renderVals() {
+    const S = this.S || window.TSUMUGI_STORE;
+    const T = this._dict();
+    const isJa = this._lang() === "ja";
+    if (!S) return { t: T, rows: [], isEmpty: false, typeOptions: [] };
+
+    const list = S.heroFeatures();
+    const canEdit = S.can("content.edit");
+    const news = S.news().slice().sort((a, b) => (b.publishDate || "").localeCompare(a.publishDate || ""));
+    const pageLabel = { shop: T.fcPageShop, about: T.fcPageAbout, journal: T.fcPageJournal, contact: T.fcPageContact };
+    const typeOptions = [{ v: "journal", t: T.fcJournalType }, { v: "page", t: T.fcPageType }];
+    const articleOptions = [{ v: "", t: T.fcPickArticle }].concat(news.map(n => ({
+      v: String(n.id), t: this._art(n.title) + " · " + this._statusLabel(n, T)
+    })));
+    const pageOptions = [{ v: "", t: T.fcPickPage }].concat(S.HERO_PAGES.map(r => ({ v: r, t: pageLabel[r] || r })));
+
+    const STATE = {
+      ok: [T.fcEnabledState, "#EEF0EA", "#4F5C42", ""],
+      unset: [T.fcUnset, "#F1EFE9", "#6E6A62", T.fcUnsetNote],
+      unpublished: [T.fcUnpublished, "#F6EFDF", "#7E6224", T.fcUnpubNote],
+      missing: [T.fcMissing, "#FBF0EE", "#8A3F33", T.fcMissingNote]
+    };
+
+    const rows = list.map((f, i) => {
+      const state = S.heroSourceState(f);
+      const rec = f.sourceType === "journal" && f.sourceId != null ? S.getNews(f.sourceId) : null;
+      const title = f.sourceType === "page"
+        ? (pageLabel[f.route] || T.fcUnset)
+        : (rec ? this._art(rec.title) : T.fcUnset);
+      const dest = f.sourceType === "page"
+        ? (f.route ? "#/" + f.route : "—")
+        : (rec ? "#/" + (rec.type === "news" ? "news" : "journal") + "/" + rec.slug : "—");
+      const live = !!f.enabled && state === "ok";
+      const [stateLabel, stateBg, stateFg, warnBase] = STATE[state] || STATE.unset;
+      const warning = state === "ok" ? "" : warnBase;
+      const thumb = f.imageOverride
+        || (rec ? (rec.thumb || rec.image) : "")
+        || (f.sourceType === "page" ? (PAGE_IMG[f.route] || "") : "");
+      const statusPart = rec ? this._statusLabel(rec, T) : (f.sourceType === "page" ? T.fcPageType : T.fcUnset);
+      return {
+        no: String(f.order).padStart(2, "0"),
+        typeId: "fc-type-" + f.id,
+        srcId: "fc-src-" + f.id,
+        typeLabel: f.sourceType === "page" ? T.fcPageType : T.fcJournalType,
+        sourceType: f.sourceType,
+        sourceValue: f.sourceType === "page" ? (f.route || "") : (f.sourceId == null ? "" : String(f.sourceId)),
+        sourceOptions: f.sourceType === "page" ? pageOptions : articleOptions,
+        title,
+        titleColour: state === "ok" ? "#232220" : "#8C887F",
+        meta: T.fcDestination + " " + dest + " · " + T.fcSourceStatus + " " + statusPart,
+        hasThumb: !!thumb, noThumb: !thumb, thumb, alt: rec ? (rec.alt || title) : title,
+        thumbOpacity: live ? 1 : 0.55,
+        stateLabel, stateBg, stateFg,
+        hasWarning: !!warning, warning,
+        liveLabel: live ? T.fcLive : T.fcNotLive,
+        liveBg: live ? "#EEF0EA" : "#F1EFE9",
+        liveFg: live ? "#4F5C42" : "#6E6A62",
+        border: live ? "#E3DFD7" : "#EAE6DE",
+        atFirst: i === 0 || !canEdit, atLast: i === list.length - 1 || !canEdit,
+        upOpacity: (i === 0 || !canEdit) ? 0.4 : 1,
+        downOpacity: (i === list.length - 1 || !canEdit) ? 0.4 : 1,
+        upLabel: T.fcMoveUp + " — " + title,
+        downLabel: T.fcMoveDown + " — " + title,
+        removeLabel: T.fcRemove + " — " + title,
+        locked: !canEdit,
+        removeOpacity: canEdit ? 1 : 0.4,
+        toggleLabel: f.enabled ? T.fcDisable : T.fcEnable,
+        toggleLocked: !canEdit || (!f.enabled && state === "unset"),
+        toggleOpacity: (!canEdit || (!f.enabled && state === "unset")) ? 0.4 : 1,
+        toggleBg: f.enabled ? "#FFFFFF" : "#6D7761",
+        toggleFg: f.enabled ? "#77736B" : "#FFFFFF",
+        toggleBorder: f.enabled ? "#DAD5CB" : "#6D7761",
+        onType: async ev => {
+          const sourceType = ev.target.value;
+          await S.saveHeroFeature({ id: f.id, sourceType, sourceId: null, route: "" });
+        },
+        onSource: async ev => {
+          const v = ev.target.value;
+          const patch = f.sourceType === "page" ? { route: v } : { sourceId: v === "" ? null : Number(v) };
+          const id = await S.saveHeroFeature(Object.assign({ id: f.id, sourceType: f.sourceType }, patch));
+          if (id) S.toast(T.fcSavedToast, "success");
+        },
+        onUp: async () => { const ok = await S.reorderHeroFeatures(f.id, -1); if (ok) S.toast(T.fcMovedToast, "info"); },
+        onDown: async () => { const ok = await S.reorderHeroFeatures(f.id, 1); if (ok) S.toast(T.fcMovedToast, "info"); },
+        onToggle: async () => {
+          const ok = await S.setHeroFeatureEnabled(f.id, !f.enabled);
+          if (ok) S.toast(T.fcSavedToast, f.enabled ? "warning" : "success");
+        },
+        onRemove: async () => {
+          const ok = await S.confirm({
+            title: T.fcRemoveQ, body: T.fcRemoveBody,
+            accept: T.fcRemove, cancel: T.cancel, tone: "#A2493C"
+          });
+          if (!ok) return;
+          const deleted = await S.deleteHeroFeature(f.id);
+          if (deleted) S.toast(T.fcRemovedToast, "error");
+        }
+      };
+    });
+
+    const liveCount = S.publicHeroFeatures().length;
+    return {
+      t: T, rows, typeOptions,
+      canEdit, readOnly: !canEdit,
+      isEmpty: list.length === 0,
+      noLive: liveCount === 0,
+      manyNotice: list.length >= 5,
+      atMax: list.length >= S.HERO_MAX || !canEdit,
+      addOpacity: (list.length >= S.HERO_MAX || !canEdit) ? 0.4 : 1,
+      wrapMode: this.state.vw < 900 ? "wrap" : "nowrap",
+      onAdd: async () => {
+        if (list.length >= S.HERO_MAX) {
+          S.toast(String(T.fcAtMax).split("{n}").join(S.HERO_MAX), "warning");
+          return;
+        }
+        const id = await S.saveHeroFeature(S.blankHeroFeature());
+        if (id) S.toast(T.fcSavedToast, "success");
+      }
+    };
+  }
+}
+</script>
+</body>
+</html>

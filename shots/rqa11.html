@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html><head><meta charset="utf-8"><title>RQA11 — menu LANGUAGE UI</title>
+<style>body{margin:0;font:12px/1.5 ui-monospace,monospace;background:#111;color:#dfd}
+#f{border:0;background:#fff;display:block}#o{white-space:pre-wrap;padding:10px}</style></head>
+<body><div id="o">running…</div><iframe id="f" width="390" height="844"></iframe>
+<script>
+const f = document.getElementById("f"), o = document.getElementById("o");
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+const say = s => { o.textContent += "\n" + s; };
+const W = () => f.contentWindow, D = () => f.contentDocument;
+const S = () => W().TSUMUGI_STORE;
+const txt = e => (e.innerText || "").trim().replace(/\s+/g, " ");
+async function load(w, h, hash) {
+  f.width = w; f.height = h;
+  f.src = "about:blank";
+  await new Promise(r => f.onload = r);
+  f.src = "../TSUMUGI.dc.html" + (hash || "");
+  await new Promise(r => f.onload = r);
+  await sleep(2200);
+}
+const langTrigger = () => D().querySelector('[data-panel="menu"] [aria-controls="tsumugi-lang"]');
+const hamburger = () => D().querySelector('[data-trigger="menu"]');
+const options = () => [...D().querySelectorAll("#tsumugi-lang button")];
+const panel = () => D().querySelector('[data-panel="menu"]');
+
+async function openMenu() { hamburger().click(); await sleep(500); }
+async function openLang() { langTrigger().click(); await sleep(400); }
+const esc = () => W().dispatchEvent(new (W().KeyboardEvent)("keydown", { key: "Escape", bubbles: true }));
+
+async function interaction() {
+  await load(390, 844, "#/");
+  if (S().lang() !== "ja") { S().setLang("ja"); await sleep(700); }
+  say("— INTERACTION (390×844) —");
+  await openMenu();
+  const t = langTrigger();
+  say("1 menu open: heading=" + txt(t.parentElement.firstElementChild) +
+      " current=" + txt(t) + " expanded=" + t.getAttribute("aria-expanded") +
+      " controls=" + t.getAttribute("aria-controls") +
+      " tapH=" + Math.round(t.getBoundingClientRect().height));
+  say("  INSTAGRAM present=" + /INSTAGRAM/.test(txt(panel())) + " (want false)");
+
+  await openLang();
+  say("2 expanded=" + langTrigger().getAttribute("aria-expanded") +
+      " caret=" + txt(langTrigger()).slice(-1) +
+      " options=[" + options().map(b => txt(b) + "|cur=" + b.getAttribute("aria-current")).join("  ") + "]" +
+      " optH=" + options().map(b => Math.round(b.getBoundingClientRect().height)).join("/"));
+
+  options().find(b => /English/.test(txt(b))).click(); await sleep(900);
+  say("3 JA→EN: store=" + S().lang() + " html[lang]=" + D().documentElement.lang +
+      " current=" + txt(langTrigger()) + " listOpen=" + !!D().querySelector("#tsumugi-lang") +
+      " menuOpen=" + !!panel() + " nav=" + [...D().querySelectorAll('[data-panel="menu"] nav a')].map(a => txt(a)).join("/"));
+
+  await openLang();
+  options().find(b => /日本語/.test(txt(b))).click(); await sleep(900);
+  say("4 EN→JA: store=" + S().lang() + " current=" + txt(langTrigger()) +
+      " listOpen=" + !!D().querySelector("#tsumugi-lang") + " menuOpen=" + !!panel());
+
+  await openLang();
+  const cur = S().lang();
+  options().find(b => b.getAttribute("aria-current") === "true").click(); await sleep(700);
+  say("5 re-pick current: lang unchanged=" + (S().lang() === cur) + " listOpen=" + !!D().querySelector("#tsumugi-lang"));
+
+  await openLang();
+  esc(); await sleep(500);
+  say("6 Escape: listOpen=" + !!D().querySelector("#tsumugi-lang") + " menuOpen=" + !!panel() +
+      " active=" + (D().activeElement ? D().activeElement.tagName + "/" + txt(D().activeElement).slice(0, 14) : "none") + " focusOnTrigger=" + (D().activeElement === langTrigger()) +
+      " bodyPos=" + D().body.style.position);
+
+  esc(); await sleep(500);
+  say("7 Escape again: menuOpen=" + !!panel() + " bodyPos=" + (D().body.style.position || "(unset)"));
+
+  await openMenu(); await openLang();
+  D().querySelector('[data-overlay="menu"]').click(); await sleep(600);
+  say("8 backdrop: menuOpen=" + !!panel() + " bodyPos=" + (D().body.style.position || "(unset)") +
+      " unlocked=" + (D().body.style.position !== "fixed"));
+
+  await openMenu();
+  say("9 reopen: listOpen=" + !!D().querySelector("#tsumugi-lang") + " (want false) current=" + txt(langTrigger()));
+
+  // keyboard reachability of the options
+  await openLang();
+  const t2 = langTrigger(); t2.focus();
+  const focusables = [...panel().querySelectorAll("a,button")].filter(e => e.offsetParent);
+  const idx = focusables.indexOf(t2);
+  say("10 keyboard: trigger tabIndex order " + (idx + 1) + "/" + focusables.length +
+      " next=[" + focusables.slice(idx + 1, idx + 3).map(e => txt(e)).join(" , ") + "]");
+}
+
+async function persistence() {
+  say("\n— PERSISTENCE —");
+  await load(390, 844, "#/");
+  if (S().lang() !== "en") { S().setLang("en"); await sleep(600); }
+  await openMenu(); await openLang();
+  options().find(b => /日本語/.test(txt(b))).click(); await sleep(900);
+  say("route change after switch: lang=" + S().lang());
+  W().location.hash = "#/shop"; await sleep(1500);
+  say("  on /shop lang=" + S().lang() + " html=" + D().documentElement.lang);
+  await load(390, 844, "#/shop");
+  say("  after reload lang=" + S().lang() + " html=" + D().documentElement.lang);
+  await openMenu();
+  say("  reflects current: " + txt(langTrigger()));
+  S().setLang("en"); await sleep(400);
+}
+
+async function responsive() {
+  say("\n— RESPONSIVE —");
+  for (const [w, h] of [[390, 844], [390, 700], [768, 1024], [900, 1200], [1024, 1200], [1440, 900]]) {
+    await load(w, h, "#/");
+    const compact = w < 1120;
+    let line = w + "×" + h + " compact=" + compact;
+    if (compact) {
+      await openMenu();
+      await openLang();
+      const t = langTrigger(), r = t.getBoundingClientRect();
+      const last = options()[options().length - 1].getBoundingClientRect();
+      const p = panel(), pr = p.getBoundingClientRect();
+      line += " heading+current visible=" + (r.top >= 0 && r.bottom <= h) +
+        " lastOption.bottom=" + Math.round(last.bottom) + "/" + h + " inView=" + (last.bottom <= h + 1) +
+        " panelScrollable=" + (p.scrollHeight > p.clientHeight) +
+        " scrollTop→" + (() => { p.scrollTop = 9999; return Math.round(p.scrollTop); })() +
+        " panelH=" + Math.round(pr.height) + " docOverflow=" + (D().documentElement.scrollWidth > w);
+      // does the nav overlap the language block?
+      const nav = [...D().querySelectorAll('[data-panel="menu"] nav a')].pop().getBoundingClientRect();
+      line += " navBottom=" + Math.round(nav.bottom) + " langTop=" + Math.round(r.top) +
+        " overlap=" + (nav.bottom > r.top);
+    } else {
+      line += " hamburger=" + !!hamburger() + " (want false)" +
+        " desktopNav=" + [...D().querySelectorAll("header nav a")].map(a => txt(a)).join("/") +
+        " headerLang=" + txt(D().querySelector("header button[aria-label]"));
+    }
+    say(line);
+  }
+}
+
+(async () => {
+  o.textContent = "";
+  try { await interaction(); await persistence(); await responsive(); say("\nDONE"); }
+  catch (e) { say("ERROR " + e.message + "\n" + e.stack); }
+})();
+</script></body></html>

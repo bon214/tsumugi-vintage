@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>TSUMUGI responsive QA</title>
+<style>
+  body { margin: 0; font: 11px/1.35 ui-monospace, monospace; background: #14140f; color: #e8e4da; display: flex; }
+  #wrap { flex: none; overflow: hidden; border-right: 2px solid #333; }
+  iframe { border: 0; display: block; background: #fff; transform-origin: 0 0; }
+  #log { flex: 1; padding: 10px 12px; white-space: pre-wrap; overflow: auto; height: 100vh; }
+  b { color: #ffd479; font-weight: 400; }
+</style>
+</head>
+<body>
+<div id="wrap"><iframe id="f" src="about:blank"></iframe></div>
+<pre id="log">running…</pre>
+<script>
+const F = document.getElementById("f"), WRAP = document.getElementById("wrap"), LOG = document.getElementById("log");
+let lines = [];
+const say = s => { lines.push(s); LOG.textContent = lines.join("\n"); };
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+const D = () => F.contentWindow.document;
+const W = () => F.contentWindow;
+const R = el => { const r = el.getBoundingClientRect(); return { t: Math.round(r.top), b: Math.round(r.bottom), l: Math.round(r.left), r: Math.round(r.right), w: Math.round(r.width), h: Math.round(r.height) }; };
+const txt = el => (el ? (el.innerText || el.textContent || "").replace(/\s+/g, " ").trim() : "");
+
+function size(w, h) {
+  const s = Math.min(1, 190 / w);
+  F.style.width = w + "px"; F.style.height = h + "px"; F.style.transform = "scale(" + s + ")";
+  WRAP.style.width = Math.round(w * s) + "px"; WRAP.style.height = Math.round(h * s) + "px";
+}
+async function load(w, h, hash) {
+  size(w, h);
+  await new Promise(res => { F.onload = res; F.src = "../TSUMUGI.dc.html?q=" + Date.now() + (hash || "#/"); });
+  await sleep(1900);
+}
+
+/* elements whose box escapes the viewport horizontally */
+function overflow() {
+  const w = W(), d = D(), iw = w.innerWidth;
+  const out = [];
+  d.querySelectorAll("main *, header *, footer *").forEach(el => {
+    const r = el.getBoundingClientRect();
+    if (r.width > 0 && (r.right > iw + 1.5 || r.left < -1.5)) {
+      out.push(el.tagName.toLowerCase() + "[" + Math.round(r.left) + "→" + Math.round(r.right) + "]<" + (el.parentElement ? el.parentElement.tagName.toLowerCase() : "?"));
+    }
+  });
+  return { iw, sw: d.documentElement.scrollWidth, bw: d.body.scrollWidth, out };
+}
+/* ancestors that would make position:fixed resolve against them, not the viewport */
+function fixedBlockers(el) {
+  const w = W(), hits = [];
+  let p = el && el.parentElement;
+  while (p && p !== D().documentElement) {
+    const c = w.getComputedStyle(p);
+    const why = [];
+    if (c.transform !== "none") why.push("transform");
+    if (c.filter !== "none") why.push("filter");
+    if (c.backdropFilter && c.backdropFilter !== "none") why.push("backdrop-filter");
+    if (c.perspective !== "none") why.push("perspective");
+    if (c.contain && /paint|layout|strict|content/.test(c.contain)) why.push("contain:" + c.contain);
+    if (c.willChange && c.willChange !== "auto") why.push("will-change:" + c.willChange);
+    if (why.length) hits.push(p.tagName.toLowerCase() + "{" + why.join(",") + "}");
+    p = p.parentElement;
+  }
+  return hits;
+}
+const click = el => el.dispatchEvent(new (W().MouseEvent)("click", { bubbles: true, cancelable: true, view: W() }));
+const esc = () => W().dispatchEvent(new (W().KeyboardEvent)("keydown", { key: "Escape", bubbles: true }));
+const hamburger = () => D().querySelector("header button[aria-label]");
+const CS = el => W().getComputedStyle(el);
+const fixedLayers = () => [...D().querySelectorAll("div")].filter(d => { const c = CS(d); return c.position === "fixed" && c.zIndex === "60"; });
+const menuOverlay = () => D().querySelector('[data-overlay="menu"]') || fixedLayers()[0];
+const filterOverlay = () => D().querySelector('[data-overlay="filters"]') || fixedLayers()[0];
+const stickyBar = () => [...D().querySelectorAll("main div")].find(d => CS(d).position === "sticky");
+const scrollerIn = root => root.querySelector("[data-scroll]") || [...root.querySelectorAll("div")].find(d => { const c = CS(d); return /auto|scroll/.test(c.overflowY) && d.scrollHeight > d.clientHeight; }) || [...root.querySelectorAll("div")].find(d => /auto|scroll/.test(CS(d).overflowY));
+
+async function tHero(w, h) {
+  await load(w, h, "#/");
+  const o = overflow();
+  const hero = D().querySelector("main section");
+  say("<b>HOME " + w + "×" + h + "</b>  iw=" + o.iw + " docScrollW=" + o.sw + " bodyScrollW=" + o.bw +
+      (o.sw > o.iw + 1 ? "  ✗ H-OVERFLOW +" + (o.sw - o.iw) : "  ✓ no h-overflow"));
+  say("  hero " + JSON.stringify(R(hero)) + "  offenders=" + (o.out.length ? o.out.slice(0, 5).join(" ") : "none"));
+}
+
+async function tMenu(w, h) {
+  await load(w, h, "#/");
+  try { W().focus(); } catch (e) { }
+  const hb = hamburger();
+  const who = () => { const a = D().activeElement; return a ? (a.tagName.toLowerCase() + (a.getAttribute("data-panel") ? "[data-panel=" + a.getAttribute("data-panel") + "]" : a.getAttribute("data-trigger") ? "[data-trigger=" + a.getAttribute("data-trigger") + "]" : "")) : "none"; };
+  say("<b>MENU " + w + "×" + h + "</b>  trigger=<" + hb.tagName.toLowerCase() + " label=\"" + hb.getAttribute("aria-label") + "\" expanded=" + hb.getAttribute("aria-expanded") + " trig=" + hb.getAttribute("data-trigger") + "> box=" + JSON.stringify(R(hb)) + " docFocus=" + D().hasFocus());
+  click(hb); await sleep(500);
+  const ov = menuOverlay();
+  if (!ov) { say("  ✗ overlay not found"); return; }
+  const panel = ov.querySelector('[data-panel="menu"]') || ov;
+  const cs = W().getComputedStyle(panel);
+  const kids = [...ov.querySelectorAll("a,button")];
+  const last = kids[kids.length - 1];
+  const ih = W().innerHeight;
+  say("  overlay " + JSON.stringify(R(ov)) + " ih=" + ih + " blockers=" + (fixedBlockers(ov).join(",") || "none"));
+  say("  panel   " + JSON.stringify(R(panel)) + " scrollH=" + panel.scrollHeight + " clientH=" + panel.clientHeight + " overflowY=" + cs.overflowY);
+  [...ov.children].forEach((ch, i) => {
+    const c2 = W().getComputedStyle(ch);
+    say("    ov.child[" + i + "] " + ch.tagName.toLowerCase() + " " + JSON.stringify(R(ch)) + " flex=" + c2.flex + " overflowY=" + c2.overflowY + " scrollH=" + ch.scrollHeight);
+  });
+  say("  last item \"" + txt(last) + "\" " + JSON.stringify(R(last)) +
+      (R(last).b > ih + 1 ? "  ✗ CLIPPED by " + (R(last).b - ih) : "  ✓ inside viewport"));
+  const overflowsPanel = panel.scrollHeight > panel.clientHeight + 1;
+  say("  panel scrollable=" + overflowsPanel + " tabindex=" + panel.getAttribute("tabindex") + " bodyPos=" + CS(D().body).position +
+      " expanded=" + hb.getAttribute("aria-expanded") + " focusIn=" + who() + " panelHasFocus=" + panel.contains(D().activeElement) + " docFocus=" + D().hasFocus());
+  // inside click must NOT close
+  click(panel); await sleep(350);
+  say("  click inside panel → open=" + !!menuOverlay());
+  // backdrop click must close
+  const ov2 = menuOverlay();
+  if (ov2) { click(ov2); await sleep(400); }
+  say("  click overlay backdrop → open=" + !!menuOverlay() + (menuOverlay() ? "  ✗ still open" : "  ✓ closed"));
+  // reopen, Escape, focus restore
+  click(hamburger()); await sleep(450);
+  say("  reopen → open=" + !!menuOverlay());
+  esc();
+  const samples = [];
+  for (const ms of [100, 200, 400, 700, 1000]) { await sleep(ms === 100 ? 100 : ms - samples.length * 0); samples.push(ms + ":" + who()); }
+  const act = D().activeElement;
+  const trig = D().querySelector('[data-trigger="menu"]');
+  say("  Escape → open=" + !!menuOverlay() + " focusSamples=" + samples.join(" ") + " triggerExists=" + !!trig +
+      (act && act === trig ? "  ✓ restored to trigger" : "  ✗ not on trigger"));
+}
+
+async function tShopGrid(w, h) {
+  await load(w, h, "#/shop");
+  const cards = [...D().querySelectorAll("main article")];
+  const o = overflow();
+  const rows = {};
+  cards.forEach(c => { const t = R(c).t; rows[t] = (rows[t] || 0) + 1; });
+  const cols = Math.max(...Object.values(rows));
+  say("<b>SHOP GRID " + w + "×" + h + "</b> cards=" + cards.length + " columns=" + cols + " docScrollW=" + o.sw + "/" + o.iw +
+      (o.sw > o.iw + 1 ? " ✗ overflow" : " ✓") + " offenders=" + (o.out.length ? o.out.slice(0, 4).join(" ") : "none"));
+  const c0 = cards[0];
+  if (c0) {
+    const img = c0.querySelector("div"), name = c0.querySelector('button[style*="EB Garamond"]');
+    const wish = c0.querySelector('button[aria-label]');
+    say("  card=" + JSON.stringify(R(c0)) + " img=" + JSON.stringify(R(img)) + " wish=" + JSON.stringify(R(wish)));
+    const rows2 = [...c0.querySelectorAll("span,button")].filter(e => txt(e) && e !== name);
+    say("  name \"" + txt(name) + "\" fs=" + CS(name).fontSize + " " + JSON.stringify(R(name)));
+    rows2.forEach(s => say("    \"" + txt(s).slice(0, 30) + "\" fs=" + CS(s).fontSize + " " + JSON.stringify(R(s)) + (s.scrollWidth > s.clientWidth + 1 ? " ✗ clipped" : "")));
+    // vertical overlap check across the first six cards
+    let bad = 0;
+    cards.slice(0, 6).forEach(c => {
+      const els = [...c.querySelectorAll("span,button")].filter(e => txt(e));
+      for (let i = 0; i < els.length; i++) for (let j = i + 1; j < els.length; j++) {
+        const a = els[i], b = els[j];
+        if (a.contains(b) || b.contains(a)) continue;          // nesting is not overlap
+        if (a.closest("[style*='aspect-ratio']") || b.closest("[style*='aspect-ratio']")) continue; // badges over the image
+        const ra = R(a), rb = R(b);
+        if (ra.t < rb.b - 1 && rb.t < ra.b - 1 && ra.l < rb.r - 1 && rb.l < ra.r - 1) bad++;
+      }
+    });
+    say("  first 6 cards: text overlaps=" + bad + (bad ? " ✗" : " ✓") + " cardsChecked=" + Math.min(6, cards.length));
+  }
+  const bar = stickyBar();
+  if (bar) say("  filter bar " + JSON.stringify(R(bar)) + " btns=" + [...bar.querySelectorAll("button")].map(b => txt(b) + R(b).h).join(" | "));
+}
+
+async function tFilterScroll(w, h) {
+  await load(w, h, "#/shop");
+  try { W().focus(); } catch (e) { }
+  const wi = W();
+  wi.scrollTo({ top: 2000, behavior: "instant" }); await sleep(600);
+  const y0 = Math.round(wi.scrollY);
+  const bar = stickyBar();
+  const fbtn = bar ? bar.querySelector("button") : null;
+  say("<b>FILTER SCROLL " + w + "×" + h + "</b> scrollY before=" + y0 + " docH=" + D().documentElement.scrollHeight + " bar=" + (fbtn ? "\"" + txt(fbtn) + "\"" : "NOT FOUND"));
+  click(fbtn); await sleep(500);
+  let ov = filterOverlay();
+  if (!ov) { say("  ✗ filter overlay not found"); return; }
+  const panel = ov.querySelector('[data-panel="filters"]') || ov.firstElementChild;
+  const scroller = scrollerIn(panel);
+  say("  overlay " + JSON.stringify(R(ov)) + " blockers=" + (fixedBlockers(ov).join(",") || "none"));
+  say("  panel " + JSON.stringify(R(panel)) + " header=\"" + txt(panel.firstElementChild).slice(0, 24) + "\" headerTop=" + R(panel.firstElementChild).t);
+  say("  scroller scrollTop=" + (scroller ? scroller.scrollTop : "n/a") + " scrollH=" + (scroller ? scroller.scrollHeight : "-") + "/" + (scroller ? scroller.clientHeight : "-") +
+      " bodyPos=" + wi.getComputedStyle(D().body).position + " bodyTop=" + wi.getComputedStyle(D().body).top + " winScrollY=" + Math.round(wi.scrollY));
+  // scroll inside the panel: background must not move
+  if (scroller) { scroller.scrollTop = 300; await sleep(250); }
+  say("  after panel scroll: scroller=" + (scroller ? scroller.scrollTop : "-") + " winScrollY=" + Math.round(wi.scrollY) +
+      " bodyTop=" + wi.getComputedStyle(D().body).top + " bodyRectTop=" + Math.round(D().body.getBoundingClientRect().top) +
+      " gridFirstCardTop=" + (D().querySelector("main article") ? R(D().querySelector("main article")).t : "-"));
+  // outside click closes + restores scroll
+  click(ov); await sleep(600);
+  const stillOpen = !!filterOverlay();
+  say("  outside click → open=" + stillOpen + " scrollY=" + Math.round(wi.scrollY) + (Math.abs(wi.scrollY - y0) < 3 ? " ✓ restored" : " ✗ expected " + y0));
+  // reopen + Escape
+  const bar2 = stickyBar();
+  if (bar2) click(bar2.querySelector("button"));
+  await sleep(450);
+  esc(); await sleep(900);
+  const openAfterEsc = !!filterOverlay();
+  const fa = D().activeElement;
+  say("  Escape → open=" + openAfterEsc + " scrollY=" + Math.round(wi.scrollY) + " bodyPos=" + wi.getComputedStyle(D().body).position +
+      " focus=" + (fa ? fa.tagName.toLowerCase() + "[" + (fa.getAttribute("data-trigger") || "") + "]" : "none") +
+      (fa === D().querySelector('[data-trigger="filters"]') ? " ✓ trigger" : " ✗"));
+}
+
+async function tAbout(w, h) {
+  await load(w, h, "#/about");
+  const o = overflow();
+  const imgs = [...D().querySelectorAll("main img")];
+  const founder = imgs.find(i => /RSeo|founder/i.test(i.getAttribute("src") + i.getAttribute("alt")));
+  say("<b>ABOUT " + w + "×" + h + "</b> docScrollW=" + o.sw + "/" + o.iw + (o.sw > o.iw + 1 ? " ✗" : " ✓") + " offenders=" + (o.out.length ? o.out.slice(0, 3).join(" ") : "none"));
+  if (!founder) { say("  ✗ founder image not found"); return; }
+  const sec = founder.closest("section");
+  const order = [...sec.querySelectorAll("span,p,img,h2,h3")].map(el => (el.tagName === "IMG" ? "[IMG]" : txt(el).slice(0, 26))).filter(Boolean);
+  say("  founder img " + JSON.stringify(R(founder)));
+  say("  section reading order: " + order.join(" › "));
+}
+
+async function tWidth(w, h) {
+  for (const hash of ["#/", "#/shop", "#/about"]) {
+    await load(w, h, hash);
+    const o = overflow();
+    const cards = D().querySelectorAll("main article");
+    const rows = {};
+    cards.forEach(c => { const t = R(c).t; rows[t] = (rows[t] || 0) + 1; });
+    const cols = cards.length ? Math.max(...Object.values(rows)) : "-";
+    say("  " + (w + "×" + h).padEnd(9) + hash.padEnd(12) + " sw=" + o.sw + "/" + o.iw + (o.sw > o.iw + 1 ? " ✗+" + (o.sw - o.iw) : " ✓") +
+        " cols=" + cols + (o.out.length ? "  OVF: " + o.out.slice(0, 2).join(" ") : ""));
+  }
+}
+
+async function tSort(w, h) {
+  await load(w, h, "#/shop");
+  const wi = W();
+  wi.scrollTo({ top: 1200, behavior: "instant" }); await sleep(400);
+  const y0 = Math.round(wi.scrollY);
+  const bar = stickyBar();
+  const sbtn = bar ? [...bar.querySelectorAll("button")][1] : null;
+  say("<b>SORT SHEET " + w + "×" + h + "</b> trigger=\"" + txt(sbtn) + "\" expanded=" + (sbtn && sbtn.getAttribute("aria-expanded")) + " scrollY=" + y0);
+  click(sbtn); await sleep(1200);
+  const ov = D().querySelector('[data-overlay="sort"]') || fixedLayers()[0];
+  if (!ov) { say("  ✗ sort sheet not found"); return; }
+  const panel = ov.querySelector('[data-panel="sort"]') || ov.firstElementChild;
+  say("  overlay " + JSON.stringify(R(ov)) + " ih=" + wi.innerHeight + " blockers=" + (fixedBlockers(ov).join(",") || "none"));
+  say("  sheet " + JSON.stringify(R(panel)) + " opts=" + panel.querySelectorAll("button").length + " bodyPos=" + CS(D().body).position +
+      (R(panel).b <= wi.innerHeight + 1 && R(panel).t >= 0 ? " ✓ in viewport" : " ✗ out of viewport"));
+  click(ov); await sleep(500);
+  say("  backdrop click → open=" + !!(D().querySelector('[data-overlay="sort"]')) + " scrollY=" + Math.round(wi.scrollY) + (Math.abs(wi.scrollY - y0) < 3 ? " ✓ restored" : " ✗"));
+}
+
+async function tMenuNav(w, h) {
+  await load(w, h, "#/");
+  try { W().focus(); } catch (e) { }
+  const wi = W();
+  wi.scrollTo({ top: 800, behavior: "instant" }); await sleep(400);
+  say("<b>MENU NAV " + w + "×" + h + "</b> scrollY=" + Math.round(wi.scrollY));
+  click(hamburger()); await sleep(500);
+  const ov = menuOverlay();
+  const link = ov ? ov.querySelector("nav a") : null;
+  say("  open=" + !!ov + " bodyPos=" + CS(D().body).position + " firstLink=\"" + txt(link) + "\"");
+  // language toggle inside the panel must not close it
+  const lang = ov ? [...ov.querySelectorAll("button")].find(b => /日本語|ENGLISH/.test(txt(b))) : null;
+  if (lang) { click(lang); await sleep(700); say("  lang toggle inside menu → open=" + !!menuOverlay() + " bodyPos=" + CS(D().body).position); }
+  const l2 = menuOverlay() ? menuOverlay().querySelector("nav a") : null;
+  if (l2) { click(l2); await sleep(1200); }
+  const scrollable = D().documentElement.scrollHeight > wi.innerHeight + 10;
+  wi.scrollTo({ top: 300, behavior: "instant" }); await sleep(300);
+  say("  nav click → open=" + !!menuOverlay() + " hash=" + wi.location.hash + " bodyPos=" + CS(D().body).position +
+      " bodyOverflow=" + CS(D().body).overflow + " pageScrollable=" + scrollable + " scrollTest=" + Math.round(wi.scrollY) +
+      (CS(D().body).position === "static" && Math.round(wi.scrollY) === 300 ? "  ✓ unlocked" : "  ✗ still locked"));
+}
+
+/* Reusable responsive QA harness. Edit QUEUE to pick tests, then reload.
+   Available: tHero, tMenu, tMenuNav, tShopGrid, tFilterScroll, tSort, tAbout, tWidth (w,h). */
+const QUEUE = [
+  [tHero, 390, 844],
+  [tMenu, 390, 844],
+  [tMenuNav, 390, 844],
+  [tShopGrid, 390, 844],
+  [tFilterScroll, 390, 844],
+  [tSort, 390, 844],
+  [tAbout, 390, 844],
+  [tWidth, 390, 700],
+  [tWidth, 768, 900],
+  [tWidth, 900, 900],
+  [tWidth, 1024, 900],
+  [tWidth, 1440, 900]
+];
+
+async function run() {
+  const errs = [];
+  window.addEventListener("error", e => errs.push(e.message));
+  for (const [fn, w, h] of QUEUE) {
+    try { await fn(w, h); } catch (e) { say("  ✗ TEST THREW: " + (e && e.message) + " @ " + String(e && e.stack).split("\n")[1]); }
+  }
+  say("DONE" + (errs.length ? "  page errors: " + errs.join(" | ") : "  no page errors"));
+  LOG.innerHTML = lines.join("\n");
+}
+run();
+</script>
+</body>
+</html>

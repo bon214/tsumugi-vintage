@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ページが見つかりません — TSUMUGI</title>
+<meta name="description" content="お探しのページは見つかりませんでした。">
+<meta name="robots" content="noindex,follow">
+<link rel="icon" href="./favicon.svg" type="image/svg+xml">
+<style>
+  html, body { margin: 0; height: 100%; }
+  body { background: #F8F7F4; color: #222222;
+         font-family: 'Hanken Grotesk', system-ui, -apple-system, sans-serif;
+         display: flex; align-items: center; justify-content: center; }
+  main { display: flex; flex-direction: column; gap: 18px; padding: 32px 24px; max-width: 34em; }
+  h1 { margin: 0; font-family: 'EB Garamond', Georgia, serif; font-size: clamp(25px, 3.2vw, 36px); font-weight: 400; line-height: 1.2; }
+  p { margin: 0; font-size: 14px; line-height: 1.9; color: #4A4740; }
+  .links { display: flex; gap: 20px; flex-wrap: wrap; }
+  a { color: #222222; font-size: 12px; letter-spacing: 0.18em; text-decoration: none;
+      border-bottom: 1px solid #C9C2B7; padding-bottom: 6px; min-height: 44px;
+      display: inline-flex; align-items: center; }
+  a:hover { border-bottom-color: #222222; }
+</style>
+<script>
+  /* GitHub Pages serves this file for any unknown path under the site. A deep
+     link that was meant for the hash router (…/repo/shop) is repaired by
+     forwarding to the entry point with the path converted to a hash route;
+     anything else simply lands on this page.
+
+     The base is derived from this document's own location, so it works from a
+     repository subpath without being told what the subpath is. */
+  (function () {
+    var parts = location.pathname.replace(/\/+$/, "").split("/");
+    var last = parts[parts.length - 1] || "";
+    var known = ["shop", "about", "journal", "contact", "cart", "account", "product", "feature", "news", "checkout"];
+    if (known.indexOf(last) >= 0) {
+      var base = location.pathname.slice(0, location.pathname.lastIndexOf("/") + 1);
+      location.replace(base + "index.html#/" + last);
+    }
+  })();
+</script>
+</head>
+<body>
+<main>
+  <h1>このページは見つかりませんでした</h1>
+  <p>お探しのページは移動または削除された可能性があります。<br>The page you were looking for could not be found.</p>
+  <div class="links">
+    <a href="./">TSUMUGI トップ / HOME</a>
+    <a href="./index.html#/shop">ONLINE SHOP</a>
+  </div>
+</main>
+</body>
+</html>

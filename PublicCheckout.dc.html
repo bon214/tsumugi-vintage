@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+      <div style="animation:fadeUp 400ms ease both">
+        <section style="padding:clamp(28px,5vh,60px) clamp(20px,4vw,64px) 0;display:flex;flex-direction:column;gap:18px;max-width:1080px;margin:0 auto;width:100%;box-sizing:border-box">
+          <span style="font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:0.2em;color:#9C978F">{{ vm.t.checkout }}</span>
+          <ol style="margin:0;padding:0;list-style:none;display:flex;gap:18px;flex-wrap:wrap;border-bottom:1px solid #E6E0D7;padding-bottom:16px">
+            <sc-for list="{{ vm.co.steps }}" as="stp" hint-placeholder-count="4">
+              <li style="display:flex;align-items:center;gap:8px">
+                <span aria-hidden="true" style="font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:0.14em;color:{{ stp.tone }}">{{ stp.n }}</span>
+                <span style="font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:0.14em;color:{{ stp.tone }};font-weight:{{ stp.weight }};white-space:nowrap">{{ stp.label }}</span>
+              </li>
+            </sc-for>
+          </ol>
+        </section>
+
+        <sc-if value="{{ vm.co.empty }}" hint-placeholder-val="{{ false }}">
+          <section style="padding:clamp(40px,8vh,90px) clamp(20px,4vw,64px) clamp(56px,9vh,110px);display:flex;flex-direction:column;gap:22px;align-items:flex-start;max-width:620px;margin:0 auto;width:100%;box-sizing:border-box">
+            <h1 style="margin:0;font-family:'EB Garamond',serif;font-size:clamp(24px,3vw,34px);font-weight:400;color:#222222">{{ vm.t.cartEmptyCheckout }}</h1>
+            <button type="button" onClick="{{ vm.co.onShop }}" style="border:1px solid #B8B1A6;background:transparent;font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:0.18em;padding:16px;min-height:48px;white-space:nowrap;cursor:pointer;color:#222222" style-hover="border-color:#222222">{{ vm.t.browseArchive }}</button>
+          </section>
+        </sc-if>
+
+        <sc-if value="{{ vm.co.isInformation }}" hint-placeholder-val="{{ true }}">
+          <section style="padding:clamp(28px,5vh,52px) clamp(20px,4vw,64px) clamp(56px,9vh,110px);display:grid;grid-template-columns:{{ vm.checkoutCols }};gap:clamp(28px,4vw,56px);max-width:1080px;margin:0 auto;width:100%;box-sizing:border-box;align-items:start">
+            <form onSubmit="{{ vm.co.onContinueDelivery }}" style="min-width:0;display:flex;flex-direction:column;gap:24px">
+              <h1 style="margin:0;font-family:'EB Garamond',serif;font-size:clamp(24px,3vw,34px);font-weight:400;color:#222222">{{ vm.t.contactInfo }}</h1>
+              <sc-if value="{{ vm.co.prefilled }}" hint-placeholder-val="{{ false }}">
+                <p style="margin:0;font-size:13px;line-height:1.8;color:#6D7761">{{ vm.co.prefillNote }}</p>
+              </sc-if>
+              <sc-if value="{{ vm.co.hasErrors }}" hint-placeholder-val="{{ false }}">
+                <p role="alert" style="margin:0;padding:12px 14px;background:#F6EAE7;border-left:2px solid #A2493C;font-size:13px;line-height:1.6;color:#7A392E">{{ vm.t.fixErrors }}</p>
+              </sc-if>
+              <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,220px),1fr));gap:16px">
+                <sc-for list="{{ vm.co.fields }}" as="f" hint-placeholder-count="7">
+                  <div style="display:flex;flex-direction:column;gap:6px;min-width:0">
+                    <label for="{{ f.id }}" style="font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:0.16em;color:#6D7761">{{ f.label }}</label>
+                    <input id="{{ f.id }}" type="{{ f.type }}" value="{{ f.value }}" onChange="{{ f.onInput }}" autoComplete="{{ f.auto }}" placeholder="{{ f.placeholder }}" aria-invalid="{{ f.invalid }}" aria-describedby="{{ f.describedBy }}" style="border:1px solid {{ f.border }};background:#FCFBF9;padding:13px 14px;font-size:15px;min-height:48px;font-family:inherit;color:#222222" style-focus="border-color:#6D7761;background:#FFFFFF">
+                    <sc-if value="{{ f.hasError }}" hint-placeholder-val="{{ false }}">
+                      <span id="{{ f.errId }}" style="font-size:12px;color:#A2493C">{{ f.error }}</span>
+                    </sc-if>
+                  </div>
+                </sc-for>
+                <div style="display:flex;flex-direction:column;gap:6px;min-width:0">
+                  <label for="{{ vm.co.prefectureField.id }}" style="font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:0.16em;color:#6D7761">{{ vm.co.prefectureField.label }}</label>
+                  <select id="{{ vm.co.prefectureField.id }}" value="{{ vm.co.prefectureField.value }}" onChange="{{ vm.co.prefectureField.onChange }}" autoComplete="address-level1" aria-invalid="{{ vm.co.prefectureField.invalid }}" aria-describedby="{{ vm.co.prefectureField.describedBy }}" style="border:1px solid {{ vm.co.prefectureField.border }};background:#FCFBF9;padding:13px 14px;font-size:15px;min-height:48px;font-family:inherit;color:#222222" style-focus="border-color:#6D7761">
+                    <sc-for list="{{ vm.co.prefectureField.options }}" as="o" hint-placeholder-count="10">
+                      <option value="{{ o.v }}">{{ o.t }}</option>
+                    </sc-for>
+                  </select>
+                  <sc-if value="{{ vm.co.prefectureField.hasError }}" hint-placeholder-val="{{ false }}">
+                    <span id="{{ vm.co.prefectureField.errId }}" style="font-size:12px;color:#A2493C">{{ vm.co.prefectureField.error }}</span>
+                  </sc-if>
+                </div>
+              </div>
+              <label style="display:flex;align-items:center;gap:11px;min-height:44px;font-size:13px;color:#4A4740;cursor:pointer">
+                <input type="checkbox" checked="{{ vm.co.marketing }}" onChange="{{ vm.co.onMarketing }}" style="width:20px;height:20px;accent-color:#6D7761;cursor:pointer">
+                {{ vm.t.marketingConsent }}
+              </label>
+              <div style="display:flex;gap:16px;flex-wrap:wrap;align-items:center;padding-top:6px">
+                <button type="submit" style="border:none;background:#222222;color:#F8F7F4;font-family:'IBM Plex Mono',monospace;font-size:12px;letter-spacing:0.18em;padding:19px 26px;min-height:54px;white-space:nowrap;cursor:pointer" style-hover="background:#3A3A36">{{ vm.t.continueDelivery }}</button>
+                <button type="button" onClick="{{ vm.co.onBackToCart }}" style="border:none;background:transparent;font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:0.16em;padding:12px 0;min-height:48px;white-space:nowrap;cursor:pointer;color:#6D7761" style-hover="color:#222222">{{ vm.t.backToCart }}</button>
+              </div>
+            </form>
+            <aside style="min-width:0;display:flex;flex-direction:column;gap:16px;padding:22px;background:#F1EEE7">
+              <span style="font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:0.2em;color:#6D7761">{{ vm.t.orderSummary }}</span>
+              <sc-for list="{{ vm.co.lines }}" as="ln" hint-placeholder-count="1">
+                <div style="display:flex;gap:12px;align-items:center;padding-bottom:12px;border-bottom:1px solid #DFD6C9">
+                  <img loading="lazy" decoding="async" src="{{ ln.thumb }}" alt="{{ ln.alt }}" style="width:48px;height:62px;object-fit:cover;background:#E4DCD1;flex:0 0 48px">
+                  <span style="flex:1;min-width:0;display:flex;flex-direction:column;gap:3px">
+                    <span style="font-size:13px;color:#222222;overflow-wrap:anywhere">{{ ln.name }}</span>
+                    <span style="font-size:12px;color:#6D7761">{{ ln.qty }}</span>
+                  </span>
+                  <span style="font-size:13px;color:#222222;white-space:nowrap">{{ ln.price }}</span>
+                </div>
+              </sc-for>
+              <div style="display:flex;justify-content:space-between;font-size:13px;color:#4A4740"><span>{{ vm.t.subtotal }}</span><span>{{ vm.co.subtotal }}</span></div>
+              <div style="display:flex;justify-content:space-between;font-size:13px;color:#4A4740"><span>{{ vm.t.shippingFee }}</span><span>{{ vm.co.shippingLabel }}</span></div>
+              <div style="display:flex;justify-content:space-between;align-items:baseline;padding-top:12px;border-top:1px solid #DFD6C9"><span style="font-size:13px;color:#222222">{{ vm.t.total }}</span><span style="font-family:'EB Garamond',serif;font-size:clamp(19px,2vw,23px);color:#222222">{{ vm.co.total }}</span></div>
+            </aside>
+          </section>
+        </sc-if>
+
+        <sc-if value="{{ vm.co.isDelivery }}" hint-placeholder-val="{{ false }}">
+          <section style="padding:clamp(28px,5vh,52px) clamp(20px,4vw,64px) clamp(56px,9vh,110px);display:flex;flex-direction:column;gap:26px;max-width:720px;margin:0 auto;width:100%;box-sizing:border-box">
+            <h1 style="margin:0;font-family:'EB Garamond',serif;font-size:clamp(24px,3vw,34px);font-weight:400;color:#222222">{{ vm.t.stepDelivery }}</h1>
+            <fieldset style="border:none;margin:0;padding:0;display:flex;flex-direction:column;gap:12px">
+              <legend style="font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:0.16em;color:#6D7761;padding-bottom:10px">{{ vm.t.deliveryMethod }}</legend>
+              <sc-for list="{{ vm.co.deliveryOptions }}" as="d" hint-placeholder-count="2">
+                <label style="display:flex;gap:13px;align-items:flex-start;padding:17px;border:1px solid {{ d.border }};min-height:44px;cursor:pointer;background:#FCFBF9">
+                  <input type="radio" name="co-delivery" checked="{{ d.checked }}" onChange="{{ d.onSelect }}" style="width:19px;height:19px;margin-top:2px;accent-color:#6D7761;flex:0 0 19px;cursor:pointer">
+                  <span style="display:flex;flex-direction:column;gap:4px;min-width:0">
+                    <span style="font-size:15px;color:#222222">{{ d.label }}</span>
+                    <span style="font-size:12px;line-height:1.6;color:#6D7761">{{ d.note }}</span>
+                  </span>
+                </label>
+              </sc-for>
+            </fieldset>
+            <fieldset style="border:none;margin:0;padding:0;display:flex;flex-direction:column;gap:12px">
+              <legend style="font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:0.16em;color:#6D7761;padding-bottom:10px">{{ vm.t.paymentMethod }}</legend>
+              <sc-for list="{{ vm.co.paymentOptions }}" as="pm" hint-placeholder-count="2">
+                <label style="display:flex;gap:13px;align-items:flex-start;padding:17px;border:1px solid {{ pm.border }};min-height:44px;cursor:pointer;background:#FCFBF9">
+                  <input type="radio" name="co-payment" checked="{{ pm.checked }}" onChange="{{ pm.onSelect }}" style="width:19px;height:19px;margin-top:2px;accent-color:#6D7761;flex:0 0 19px;cursor:pointer">
+                  <span style="display:flex;flex-direction:column;gap:4px;min-width:0">
+                    <span style="font-size:15px;color:#222222">{{ pm.label }}</span>
+                    <span style="font-size:12px;line-height:1.6;color:#6D7761">{{ pm.note }}</span>
+                  </span>
+                </label>
+              </sc-for>
+            </fieldset>
+            <sc-if value="{{ vm.co.showCard }}" hint-placeholder-val="{{ true }}">
+              <div style="display:flex;flex-direction:column;gap:14px;padding:20px;background:#F1EEE7">
+                <span style="font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:0.16em;color:#6D7761">{{ vm.t.simulatedPayment }}</span>
+                <p role="note" style="margin:0;font-size:12px;line-height:1.65;color:#7A392E">{{ vm.t.noPaymentProcessed }}</p>
+                <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,180px),1fr));gap:13px">
+                  <div style="display:flex;flex-direction:column;gap:6px;min-width:0">
+                    <label for="co-card-num" style="font-size:12px;color:#6D7761">{{ vm.t.cardNumberDemo }}</label>
+                    <input id="co-card-num" value="{{ vm.co.card.number }}" onChange="{{ vm.co.onCardNumber }}" autoComplete="off" inputMode="numeric" placeholder="4242 4242 4242 4242" style="border:1px solid #D9D1C4;background:#FFFFFF;padding:12px 13px;font-size:13px;min-height:46px;font-family:'IBM Plex Mono',monospace" style-focus="border-color:#6D7761">
+                  </div>
+                  <div style="display:flex;flex-direction:column;gap:6px;min-width:0">
+                    <label for="co-card-name" style="font-size:12px;color:#6D7761">{{ vm.t.cardNameDemo }}</label>
+                    <input id="co-card-name" value="{{ vm.co.card.name }}" onChange="{{ vm.co.onCardName }}" autoComplete="off" placeholder="{{ vm.t.phCardName }}" style="border:1px solid #D9D1C4;background:#FFFFFF;padding:12px 13px;font-size:13px;min-height:46px;font-family:inherit" style-focus="border-color:#6D7761">
+                  </div>
+                  <div style="display:flex;flex-direction:column;gap:6px;min-width:0">
+                    <label for="co-card-exp" style="font-size:12px;color:#6D7761">{{ vm.t.cardExpiryDemo }}</label>
+                    <input id="co-card-exp" value="{{ vm.co.card.expiry }}" onChange="{{ vm.co.onCardExpiry }}" autoComplete="off" placeholder="12/30" style="border:1px solid #D9D1C4;background:#FFFFFF;padding:12px 13px;font-size:13px;min-height:46px;font-family:'IBM Plex Mono',monospace" style-focus="border-color:#6D7761">
+                  </div>
+                </div>
+              </div>
+            </sc-if>
+            <div style="display:flex;gap:16px;flex-wrap:wrap;align-items:center">
+              <button type="button" onClick="{{ vm.co.onContinueReview }}" style="border:none;background:#222222;color:#F8F7F4;font-family:'IBM Plex Mono',monospace;font-size:12px;letter-spacing:0.18em;padding:19px 26px;min-height:54px;white-space:nowrap;cursor:pointer" style-hover="background:#3A3A36">{{ vm.t.continueReview }}</button>
+              <button type="button" onClick="{{ vm.co.onBackInformation }}" style="border:none;background:transparent;font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:0.16em;padding:12px 0;min-height:48px;white-space:nowrap;cursor:pointer;color:#6D7761" style-hover="color:#222222">{{ vm.t.backToInformation }}</button>
+            </div>
+          </section>
+        </sc-if>
+
+        <sc-if value="{{ vm.co.isReview }}" hint-placeholder-val="{{ false }}">
+          <section style="padding:clamp(28px,5vh,52px) clamp(20px,4vw,64px) clamp(56px,9vh,110px);display:grid;grid-template-columns:{{ vm.checkoutCols }};gap:clamp(28px,4vw,56px);max-width:1080px;margin:0 auto;width:100%;box-sizing:border-box;align-items:start">
+            <div style="min-width:0;display:flex;flex-direction:column;gap:24px">
+              <h1 style="margin:0;font-family:'EB Garamond',serif;font-size:clamp(24px,3vw,34px);font-weight:400;color:#222222">{{ vm.t.stepReview }}</h1>
+              <sc-for list="{{ vm.co.reviewBlocks }}" as="b" hint-placeholder-count="3">
+                <div style="display:flex;flex-direction:column;gap:9px;padding-bottom:20px;border-bottom:1px solid #E6E0D7">
+                  <div style="display:flex;justify-content:space-between;gap:14px;align-items:baseline">
+                    <span style="font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:0.16em;color:#6D7761">{{ b.label }}</span>
+                    <button type="button" onClick="{{ b.onEdit }}" style="border:none;background:transparent;font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:0.14em;padding:8px 0;min-height:44px;white-space:nowrap;cursor:pointer;color:#6D7761;text-decoration:underline;text-underline-offset:3px" style-hover="color:#222222">{{ b.editLabel }}</button>
+                  </div>
+                  <sc-for list="{{ b.rows }}" as="row" hint-placeholder-count="2">
+                    <span style="font-size:13px;line-height:1.7;color:#33322E;overflow-wrap:anywhere">{{ row }}</span>
+                  </sc-for>
+                </div>
+              </sc-for>
+              <sc-if value="{{ vm.co.hasCoError }}" hint-placeholder-val="{{ false }}">
+                <p role="alert" style="margin:0;padding:13px 15px;background:#FBF0EE;border-left:2px solid #A2493C;font-size:13px;line-height:1.7;color:#8A3F33;text-wrap:pretty">{{ vm.co.coError }}</p>
+              </sc-if>
+              <div style="display:flex;gap:16px;flex-wrap:wrap;align-items:center">
+                <button type="button" onClick="{{ vm.co.onPlace }}" disabled="{{ vm.co.placing }}" style="border:none;background:#222222;color:#F8F7F4;font-family:'IBM Plex Mono',monospace;font-size:12px;letter-spacing:0.18em;padding:19px 26px;min-height:54px;white-space:nowrap;cursor:pointer" style-hover="background:#3A3A36">{{ vm.co.placeLabel }}</button>
+                <button type="button" onClick="{{ vm.co.onBackDelivery }}" style="border:none;background:transparent;font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:0.16em;padding:12px 0;min-height:48px;white-space:nowrap;cursor:pointer;color:#6D7761" style-hover="color:#222222">{{ vm.t.backToDelivery }}</button>
+              </div>
+            </div>
+            <aside style="min-width:0;display:flex;flex-direction:column;gap:16px;padding:22px;background:#F1EEE7">
+              <span style="font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:0.2em;color:#6D7761">{{ vm.t.orderSummary }}</span>
+              <sc-for list="{{ vm.co.lines }}" as="ln" hint-placeholder-count="1">
+                <div style="display:flex;gap:12px;align-items:center;padding-bottom:12px;border-bottom:1px solid #DFD6C9">
+                  <img loading="lazy" decoding="async" src="{{ ln.thumb }}" alt="{{ ln.alt }}" style="width:48px;height:62px;object-fit:cover;background:#E4DCD1;flex:0 0 48px">
+                  <span style="flex:1;min-width:0;display:flex;flex-direction:column;gap:3px">
+                    <span style="font-size:13px;color:#222222;overflow-wrap:anywhere">{{ ln.name }}</span>
+                    <span style="font-size:12px;color:#6D7761">{{ ln.qty }}</span>
+                  </span>
+                  <span style="font-size:13px;color:#222222;white-space:nowrap">{{ ln.price }}</span>
+                </div>
+              </sc-for>
+              <div style="display:flex;justify-content:space-between;font-size:13px;color:#4A4740"><span>{{ vm.t.subtotal }}</span><span>{{ vm.co.subtotal }}</span></div>
+              <div style="display:flex;justify-content:space-between;font-size:13px;color:#4A4740"><span>{{ vm.t.shippingFee }}</span><span>{{ vm.co.shippingLabel }}</span></div>
+              <div style="display:flex;justify-content:space-between;align-items:baseline;padding-top:12px;border-top:1px solid #DFD6C9"><span style="font-size:13px;color:#222222">{{ vm.t.total }}</span><span style="font-family:'EB Garamond',serif;font-size:clamp(19px,2vw,23px);color:#222222">{{ vm.co.total }}</span></div>
+            </aside>
+          </section>
+        </sc-if>
+
+        <sc-if value="{{ vm.co.receiptLost }}" hint-placeholder-val="{{ false }}">
+          <section style="padding:clamp(40px,8vh,90px) clamp(20px,4vw,64px) clamp(56px,9vh,110px);display:flex;flex-direction:column;gap:20px;align-items:flex-start;max-width:620px;margin:0 auto;width:100%;box-sizing:border-box">
+            <h1 style="margin:0;font-family:'EB Garamond',serif;font-size:clamp(25px,3.2vw,36px);font-weight:400;line-height:1.2;color:#222222;text-wrap:pretty">{{ vm.t.receiptLostHead }}</h1>
+            <p style="margin:0;font-size:15px;line-height:1.9;color:#4A4740;text-wrap:pretty">{{ vm.t.receiptLostBody }}</p>
+            <button type="button" onClick="{{ vm.co.onShop }}" style="border:1px solid #B8B1A6;background:transparent;font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:0.18em;padding:17px 22px;min-height:52px;white-space:nowrap;cursor:pointer;color:#222222" style-hover="border-color:#222222">{{ vm.t.continueShopping }}</button>
+          </section>
+        </sc-if>
+
+        <sc-if value="{{ vm.co.isComplete }}" hint-placeholder-val="{{ false }}">
+          <section style="padding:clamp(40px,8vh,90px) clamp(20px,4vw,64px) clamp(56px,9vh,110px);display:flex;flex-direction:column;gap:24px;align-items:flex-start;max-width:640px;margin:0 auto;width:100%;box-sizing:border-box">
+            <h1 style="margin:0;font-family:'EB Garamond',serif;font-size:clamp(25px,3.2vw,36px);font-weight:400;line-height:1.2;color:#222222;text-wrap:pretty">{{ vm.t.orderComplete }}</h1>
+            <p style="margin:0;font-size:15px;line-height:1.9;color:#4A4740;text-wrap:pretty">{{ vm.t.orderCompleteBody }}</p>
+            <div style="display:flex;flex-direction:column;gap:7px;padding:20px;background:#F1EEE7;width:100%;box-sizing:border-box">
+              <span style="font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:0.2em;color:#6D7761">{{ vm.t.yourOrderNumber }}</span>
+              <span style="font-family:'IBM Plex Mono',monospace;font-size:20px;letter-spacing:0.02em;color:#222222;overflow-wrap:anywhere">{{ vm.co.orderNumber }}</span>
+            </div>
+            <div role="status" style="display:flex;flex-direction:column;gap:5px;padding:16px 18px;border:1px solid #E0D8CB;width:100%;box-sizing:border-box">
+              <span style="font-size:13px;color:#4A4740;overflow-wrap:anywhere">{{ vm.t.confirmEmailSent }} {{ vm.co.completeEmail }}</span>
+              <span style="font-size:12px;color:#9C978F">{{ vm.t.confirmEmailNote }}</span>
+            </div>
+            <button type="button" onClick="{{ vm.co.onShop }}" style="border:1px solid #B8B1A6;background:transparent;font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:0.18em;padding:17px 22px;min-height:52px;white-space:nowrap;cursor:pointer;color:#222222" style-hover="border-color:#222222">{{ vm.t.continueShopping }}</button>
+          </section>
+        </sc-if>
+      </div></x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;vm&quot;:{&quot;editor&quot;:null,&quot;tsType&quot;:&quot;object&quot;}}">
+/* Checkout view — information, delivery, review and complete steps.
+   Presentational only: every value and handler arrives in the `vm` prop built
+   by TSUMUGI.dc.html, which keeps all state, business logic and listeners. */
+class Component extends DCLogic {
+  renderVals() { return {}; }
+}
+</script>
+</body>
+</html>

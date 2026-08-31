@@ -1,0 +1,478 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<title>DC differential — interpreted vs compiled</title>
+<!-- Differential verification.
+
+     Fixtures prove the compiler against cases someone thought to write. This
+     page proves it against the real thing: the same application, at the same
+     route, in the same viewport, rendered twice — once by the authoring
+     runtime (support.js, new Function, .dc.html fetched per screen) and once
+     by the compiled modules — and compares the resulting DOM node by node.
+
+     WHAT IS NORMALISED, AND WHY (each of these is an intended difference
+     between the two runtimes, not a defect the comparison is hiding):
+       · .sc-interp — the span the authoring runtime wraps every resolved hole
+         in so the editor can click it. Unwrapped, not dropped: its text is
+         still compared.
+       · classes beginning "sc" — sc-host, sc-host-x, sc-streaming-*, and the
+         per-runtime pseudo-state class names, which are generated with
+         different schemes on the two sides. The pseudo-state RULES are
+         compared separately, at the bottom of this file.
+       · a wrapper <div style="display:contents"> — the authoring runtime puts
+         one around every child mount; the compiler does not emit it because
+         it is inert. Unwrapped on the A side.
+       · data-dc-tpl / data-sc-name / data-dc-line — editor plumbing.
+       · trailing digits in id / for / aria-controls / aria-labelledby /
+         aria-describedby — React generates instance-unique ids and the two
+         trees are separate React roots.
+     Everything else — tag order, text, every other attribute, ARIA, inline
+     style declarations, value/checked, disabled — is compared exactly, and any
+     difference is a FAIL. -->
+<style>
+  body { margin: 0; font: 12px/1.6 ui-monospace, SFMono-Regular, monospace; background: #14140f; color: #e8e6df }
+  header { padding: 14px 18px; border-bottom: 1px solid #3a382f; position: sticky; top: 0; background: #14140f; z-index: 5 }
+  h1 { margin: 0 0 6px; font-size: 13px; letter-spacing: .14em; text-transform: uppercase }
+  #summary { white-space: pre-wrap }
+  .pass { color: #9fd67f } .fail { color: #ff8f7a } .skip { color: #c9c2b7 }
+  #out { padding: 14px 18px; white-space: pre-wrap }
+  .frames { position: fixed; left: -20000px; top: 0 }
+  iframe { border: 0; width: 1440px; height: 900px; background: #fff }
+</style>
+</head>
+<body>
+<header>
+  <h1>DC differential — interpreted (support.js) vs compiled (generated/)</h1>
+  <div id="summary" class="skip">starting…</div>
+</header>
+<div id="out"></div>
+<div class="frames">
+  <iframe id="a" title="authoring runtime"></iframe>
+  <iframe id="b" title="compiled runtime"></iframe>
+</div>
+
+<script>
+const out = document.getElementById("out");
+const summary = document.getElementById("summary");
+const say = (s, cls) => { const d = document.createElement("div"); if (cls) d.className = cls; d.textContent = s; out.appendChild(d); };
+const wait = (ms) => new Promise((r) => setTimeout(r, ms));
+
+/* ---------------------------------------------------------- normalisation */
+
+const DROP_ATTR = new Set(["data-dc-tpl", "data-sc-name", "data-dc-line", "data-omelette-chrome"]);
+const ID_ATTR = new Set(["id", "for", "aria-controls", "aria-labelledby", "aria-describedby"]);
+
+const normClass = (v) => (v || "").split(/\s+/)
+  .filter((c) => c && !/^sc/i.test(c)).sort().join(" ");
+
+const normStyle = (v) => {
+  if (!v) return "";
+  const decls = [];
+  let depth = 0, quote = "", start = 0;
+  for (let i = 0; i < v.length; i++) {
+    const c = v[i];
+    if (quote) { if (c === quote) quote = ""; }
+    else if (c === "'" || c === '"') quote = c;
+    else if (c === "(") depth++;
+    else if (c === ")") depth = Math.max(0, depth - 1);
+    else if (c === ";" && !depth) { decls.push(v.slice(start, i)); start = i + 1; }
+  }
+  decls.push(v.slice(start));
+  return decls.map((d) => d.trim().replace(/\s*:\s*/, ":").replace(/\s+/g, " "))
+    .filter(Boolean).sort().join(";");
+};
+
+const normId = (v) => String(v || "").replace(/\d+/g, "#");
+
+/* An inert wrapper the authoring runtime adds around a child mount. */
+const isContentsWrapper = (el) =>
+  el.tagName === "DIV" && /display:\s*contents/.test(el.getAttribute("style") || "")
+  && !el.attributes.length === false && el.attributes.length <= 3;
+
+const isInterp = (el) => /(^|\s)sc-interp(\s|$)/.test(el.className || "");
+
+function serialise(root) {
+  const lines = [];
+  (function walk(node, path) {
+    for (const child of node.childNodes) {
+      if (child.nodeType === 3) {
+        const t = child.nodeValue.replace(/\s+/g, " ").trim();
+        if (t) lines.push(path + "#text|" + t);
+        continue;
+      }
+      if (child.nodeType !== 1) continue;
+      const el = child;
+      if (/(^|\s)sc-logic-error(\s|$)/.test(el.className || "")) continue;
+      if (isInterp(el) || isContentsWrapper(el)) { walk(el, path); continue; }
+
+      const attrs = [];
+      for (const a of el.attributes) {
+        if (DROP_ATTR.has(a.name)) continue;
+        if (a.name === "class") { const c = normClass(a.value); if (c) attrs.push("class=" + c); continue; }
+        if (a.name === "style") { const s = normStyle(a.value); if (s) attrs.push("style=" + s); continue; }
+        if (ID_ATTR.has(a.name)) { attrs.push(a.name + "=" + normId(a.value)); continue; }
+        attrs.push(a.name + "=" + a.value);
+      }
+      /* Live form state, which is a property rather than an attribute. */
+      if ("value" in el && (el.tagName === "INPUT" || el.tagName === "TEXTAREA" || el.tagName === "SELECT")) {
+        attrs.push("«value»=" + el.value);
+        if (el.type === "checkbox" || el.type === "radio") attrs.push("«checked»=" + el.checked);
+        attrs.push("«disabled»=" + el.disabled);
+      }
+      attrs.sort();
+      const tag = el.tagName.toLowerCase();
+      const here = path + "/" + tag;
+      lines.push(here + "|" + attrs.join(" "));
+      walk(el, here);
+    }
+  })(root, "");
+  return lines;
+}
+
+function diff(a, b) {
+  const problems = [];
+  const n = Math.max(a.length, b.length);
+  for (let i = 0; i < n; i++) {
+    if (a[i] !== b[i]) {
+      problems.push({ line: i, interpreted: a[i] ?? "«missing»", compiled: b[i] ?? "«missing»" });
+      if (problems.length >= 6) break;
+    }
+  }
+  return problems;
+}
+
+/* ------------------------------------------------------------- frame setup */
+
+function watchConsole(win, sink) {
+  const wrap = (kind) => {
+    const orig = win.console[kind].bind(win.console);
+    win.console[kind] = (...args) => { sink.push(kind + ": " + args.map(String).join(" ").slice(0, 200)); orig(...args); };
+  };
+  wrap("error"); wrap("warn");
+  win.addEventListener("error", (e) => sink.push("uncaught: " + e.message));
+  win.addEventListener("unhandledrejection", (e) => sink.push("rejection: " + (e.reason && e.reason.message || e.reason)));
+}
+
+async function load(frame, url, sink) {
+  await new Promise((resolve) => {
+    frame.onload = () => resolve();
+    frame.src = url;
+  });
+  /* Patch as early as the document exists; support.js boots on DOMContentLoaded,
+     so a first-render error still lands in the sink for the authoring side. */
+  watchConsole(frame.contentWindow, sink);
+  for (let i = 0; i < 100; i++) {
+    const root = frame.contentDocument.getElementById("dc-root");
+    if (root && root.children.length) break;
+    await wait(100);
+  }
+  await settle(frame);
+  await wait(450);
+}
+
+/* The hero rotates every 7 s, so two frames mounted seconds apart sit on
+   different slides. Both are driven back to slide 01 immediately before a
+   home-route comparison; the click restarts the 7 s timer, so the snapshot
+   that follows is taken well inside it. */
+async function syncHero(frame) {
+  const root = rootOf(frame);
+  const counter = [...root.querySelectorAll("*")].find((el) =>
+    el.children.length === 0 && /^\s*\d{2}\s*\/\s*\d{2}\s*$/.test(el.textContent || ""));
+  if (!counter) return "no hero counter";
+  const next = [...root.querySelectorAll("button")]
+    .find((b) => /next|次/i.test(b.getAttribute("aria-label") || ""));
+  if (!next) return "no hero next button";
+  for (let i = 0; i < 8; i++) {
+    if (/^\s*01\s*\//.test(counter.textContent || "")) return "synced";
+    next.click();
+    await wait(160);
+  }
+  return "could not reach slide 01";
+}
+
+const rootOf = (frame) => frame.contentDocument.getElementById("dc-root");
+
+/* The authoring runtime fetches each screen's .dc.html on first visit and shows
+   a sized placeholder until it arrives. Comparing during that window measures
+   the loader, not the compiler, so both sides are given until the placeholders
+   are gone. The compiled side never has any — that is the point of it. */
+async function settle(frame) {
+  for (let i = 0; i < 60; i++) {
+    const root = rootOf(frame);
+    const pending = root && root.querySelector('[class*="sc-streaming"], .sc-placeholder');
+    if (!pending) break;
+    await wait(100);
+  }
+  await wait(250);
+}
+
+async function goto(frame, hash) {
+  frame.contentWindow.location.hash = hash;
+  await wait(400);
+  await settle(frame);
+  await quiesce(frame);
+}
+
+/* Waits until a frame's DOM stops changing.
+
+   Some screens keep mutating after the route settles — the console's guest
+   read-only lock is imperative DOM work scheduled off a MutationObserver, so
+   it lands several hundred ms after render. Navigating the two frames one
+   after the other therefore sampled them at different points in that window
+   and reported a difference where there was none. Both frames are now driven
+   to a stable DOM before anything is compared. */
+async function quiesce(frame, maxMs = 6000) {
+  let prev = null, stable = 0;
+  const started = Date.now();
+  while (Date.now() - started < maxMs) {
+    const now = serialise(rootOf(frame)).join("\n");
+    if (now === prev) { if (++stable >= 4) return true; }
+    else { stable = 0; prev = now; }
+    await wait(250);
+  }
+  return false;
+}
+
+/* The console's guest lock is imperative DOM work driven by a debounced
+   MutationObserver, so it lands as much as a second after the route renders —
+   later than a general "DOM stopped changing" check will wait, because the DOM
+   is genuinely still in between. Admin comparisons therefore wait for the lock
+   itself: both frames are held until each has disabled more than the single
+   button that is disabled by the template, and the count has stopped rising.
+   Returns what it saw so the caller can assert on it rather than assume. */
+async function awaitGuestLock(frame, maxMs = 6000) {
+  const started = Date.now();
+  let last = -1, stable = 0;
+  while (Date.now() - started < maxMs) {
+    const d = frame.contentDocument;
+    const n = d.querySelectorAll("main button[disabled], main input[disabled]").length;
+    if (n === last && n > 1) { if (++stable >= 3) break; }
+    else { stable = 0; last = n; }
+    await wait(200);
+  }
+  return last;
+}
+
+/* Both frames navigate together, then both are allowed to settle, so neither
+   is sampled while the other is still working. */
+async function gotoBoth(a, b, hash) {
+  a.contentWindow.location.hash = hash;
+  b.contentWindow.location.hash = hash;
+  await wait(400);
+  await Promise.all([settle(a), settle(b)]);
+  await Promise.all([quiesce(a), quiesce(b)]);
+}
+
+/* ------------------------------------------------ pseudo-state rule compare */
+
+function pseudoBodies(doc) {
+  const bodies = new Set();
+  for (const sheet of doc.styleSheets) {
+    let rules;
+    try { rules = sheet.cssRules; } catch { continue; }
+    for (const r of rules) {
+      if (!r.selectorText || !/:(hover|focus|active|focus-visible)/.test(r.selectorText)) continue;
+      /* Only the generated per-element rules: they select a single generated
+         class, never an element or a hand-written class. */
+      if (!/^\.[A-Za-z0-9_-]+:(hover|focus|active|focus-visible)$/.test(r.selectorText.trim())) continue;
+      const body = [...r.style].map((p) => p + ":" + r.style.getPropertyValue(p).trim()).sort().join(";");
+      if (body) bodies.add(body);
+    }
+  }
+  return bodies;
+}
+
+/* --------------------------------------------------------------- the cases */
+
+const PUBLIC_CASES = [
+  { hash: "#/", label: "home (hero, featured, journal strip)" },
+  { hash: "#/shop", label: "shop — full catalogue" },
+  { hash: "#/product/1", label: "product detail" },
+  { hash: "#/product/999", label: "product — not found (error state)" },
+  { hash: "#/journal", label: "journal index" },
+  { hash: "#/journal/august-arrivals-2026", label: "article" },
+  { hash: "#/about", label: "about" },
+  { hash: "#/contact", label: "contact (form controls)" },
+  { hash: "#/cart", label: "cart — empty state" },
+  { hash: "#/checkout", label: "checkout — step 1 (inputs, value/checked)" },
+  { hash: "#/auth", label: "sign-in (pre-auth)" },
+  { hash: "#/account", label: "account (gated)" },
+];
+
+const WIDTH_CASES = [
+  { hash: "#/", width: 390 }, { hash: "#/shop", width: 390 }, { hash: "#/product/1", width: 390 },
+  { hash: "#/", width: 768 }, { hash: "#/shop", width: 768 },
+];
+
+const results = [];
+const consoleA = [], consoleB = [];
+
+function record(name, problems, extra) {
+  const ok = problems.length === 0;
+  results.push({ name, ok, problems, ...extra });
+  say((ok ? "PASS  " : "FAIL  ") + name + (extra && extra.nodes != null ? `   (${extra.nodes} nodes)` : ""), ok ? "pass" : "fail");
+  for (const p of problems) {
+    say("        line " + p.line + "\n          interpreted: " + p.interpreted + "\n          compiled   : " + p.compiled, "fail");
+  }
+}
+
+async function compare(a, b, name) {
+  const A = serialise(rootOf(a)), B = serialise(rootOf(b));
+  record(name, diff(A, B), { nodes: A.length });
+  return A.length;
+}
+
+async function run() {
+  const a = document.getElementById("a"), b = document.getElementById("b");
+
+  say("— storefront ————————————————————————————————");
+  await load(a, "../TSUMUGI.dc.html", consoleA);
+  await load(b, "./prod-host.html", consoleB);
+
+  for (const c of PUBLIC_CASES) {
+    await gotoBoth(a, b, c.hash);
+    if (c.hash === "#/") { await syncHero(a); await syncHero(b); }
+    await compare(a, b, c.hash.padEnd(34) + c.label);
+  }
+
+  say("\n— viewport widths ———————————————————————————");
+  for (const c of WIDTH_CASES) {
+    a.style.width = b.style.width = c.width + "px";
+    a.contentWindow.dispatchEvent(new Event("resize"));
+    b.contentWindow.dispatchEvent(new Event("resize"));
+    await gotoBoth(a, b, c.hash);
+    if (c.hash === "#/") { await syncHero(a); await syncHero(b); }
+    await compare(a, b, (c.hash + " @" + c.width + "px").padEnd(34) + "responsive layout");
+  }
+  a.style.width = b.style.width = "1440px";
+  a.contentWindow.dispatchEvent(new Event("resize"));
+  b.contentWindow.dispatchEvent(new Event("resize"));
+  await wait(300);
+
+  say("\n— interaction (event handlers must produce the same result) ——");
+  await goto(a, "#/shop"); await goto(b, "#/shop");
+  /* Event-handler parity. The assertion is that the two runtimes REACT the
+     same way, not that any particular control routes: if a click changes
+     nothing on both sides, that is agreement. What would be a failure is the
+     two sides diverging — a different resulting DOM, or one navigating while
+     the other does not. */
+  async function clickCase(pick, label) {
+    const ea = pick(a), eb = pick(b);
+    if (!ea || !eb) {
+      record(label.padEnd(34) + "control not found on " + (!ea && !eb ? "either side" : !ea ? "interpreted side" : "compiled side"),
+        [{ line: -1, interpreted: ea ? "found" : "«missing»", compiled: eb ? "found" : "«missing»" }], {});
+      return;
+    }
+    const hashA0 = a.contentWindow.location.hash, hashB0 = b.contentWindow.location.hash;
+    ea.click(); eb.click();
+    await wait(500);
+    await Promise.all([settle(a), settle(b)]);
+    await Promise.all([quiesce(a), quiesce(b)]);
+    const hashA = a.contentWindow.location.hash, hashB = b.contentWindow.location.hash;
+    if (hashA !== hashB) {
+      record(label.padEnd(34) + "route diverged", [{ line: -1, interpreted: hashA, compiled: hashB }], {});
+      return;
+    }
+    const moved = hashA !== hashA0 || hashB !== hashB0;
+    await compare(a, b, label.padEnd(34) + (moved ? "→ " + hashA : "in-place state change"));
+  }
+
+  const byText = (re) => (f) => [...rootOf(f).querySelectorAll("button")]
+    .find((el) => re.test((el.innerText || "") + " " + (el.getAttribute("aria-label") || "")));
+  const byHref = (i) => (f) => [...rootOf(f).querySelectorAll('a[href^="#/"]')]
+    .filter((el) => !/^#\/(shop|about|journal|contact|)$/.test(el.getAttribute("href")))[i];
+
+  await clickCase(byHref(0), "click first in-app shop link");
+  await gotoBoth(a, b, "#/shop");
+  await clickCase(byText(/cart|カート/i), "click cart button");
+  await gotoBoth(a, b, "#/shop");
+  await clickCase(byText(/search|検索/i), "click search button");
+  await gotoBoth(a, b, "#/shop");
+  await clickCase(byText(/並び替え|sort/i), "click sort control");
+
+  await gotoBoth(a, b, "#/contact");
+  const firstInput = (f) => rootOf(f).querySelector("input[type='text'], input:not([type]), input[type='email'], textarea");
+  const ia = firstInput(a), ib = firstInput(b);
+  if (ia && ib) {
+    for (const [win, el] of [[a.contentWindow, ia], [b.contentWindow, ib]]) {
+      const setter = Object.getOwnPropertyDescriptor(win.HTMLInputElement.prototype, "value")
+        || Object.getOwnPropertyDescriptor(win.HTMLTextAreaElement.prototype, "value");
+      setter.set.call(el, "紬 テスト入力");
+      el.dispatchEvent(new win.Event("input", { bubbles: true }));
+    }
+    await wait(400);
+    await compare(a, b, "type into contact field".padEnd(34) + "controlled input round-trip");
+  } else say("SKIP  no contact input found", "skip");
+
+  say("\n— pseudo-state CSS ——————————————————————————");
+  const pa = pseudoBodies(a.contentDocument), pb = pseudoBodies(b.contentDocument);
+  const onlyA = [...pa].filter((x) => !pb.has(x));
+  const onlyB = [...pb].filter((x) => !pa.has(x));
+  /* Containment, not equality: the authoring runtime inserts a pseudo rule the
+     first time a component needing it renders, so its sheet holds only what
+     this session visited. The compiled sheet is the whole application's, built
+     ahead of time. Every rule the interpreted run produced must appear in it;
+     the reverse is expected and is not a failure. */
+  record(`pseudo rules: every interpreted rule present in the compiled sheet `
+    + `(interpreted ${pa.size} this session, compiled ${pb.size} total, ${onlyB.length} not yet exercised)`,
+    onlyA.slice(0, 5).map((x, i) => ({ line: i, interpreted: x, compiled: "«absent from compiled sheet»" })), {});
+
+  say("\n— console —————————————————————————————————");
+  record(`console: interpreted ${consoleA.length}, compiled ${consoleB.length}`,
+    consoleB.length ? consoleB.slice(0, 5).map((m, i) => ({ line: i, interpreted: "—", compiled: m })) : [], {});
+  if (consoleA.length) say("        (authoring side, informational: " + consoleA.slice(0, 3).join(" | ") + ")", "skip");
+
+  say("\n— admin console ——————————————————————————————");
+  await load(a, "../TSUMUGI%20Admin.dc.html", consoleA);
+  await load(b, "./prod-host-admin.html", consoleB);
+  await compare(a, b, "admin #/admin (pre-auth)".padEnd(34) + "sign-in screen");
+
+  const guest = (f) => [...rootOf(f).querySelectorAll("button")]
+    .find((el) => /ゲスト|guest|デモ|demo/i.test(el.textContent || ""));
+  const ga = guest(a), gb = guest(b);
+  if (ga && gb) {
+    ga.click(); gb.click();
+    await wait(1200);
+    await Promise.all([settle(a), settle(b)]);
+    await Promise.all([quiesce(a), quiesce(b)]);
+    await Promise.all([awaitGuestLock(a), awaitGuestLock(b)]);
+    await compare(a, b, "admin after guest sign-in".padEnd(34) + "authenticated dashboard");
+    for (const h of ["#/admin/orders", "#/admin/products", "#/admin/customers",
+                     "#/admin/news", "#/admin/featured", "#/admin/specials"]) {
+      await gotoBoth(a, b, h);
+      await Promise.all([awaitGuestLock(a), awaitGuestLock(b)]);
+      await compare(a, b, ("admin " + h).padEnd(34) + "console screen");
+    }
+  } else say("SKIP  no guest sign-in button found — admin post-auth not compared", "skip");
+
+  say("\n— guest read-only lock (security-relevant) ————————");
+  const locked = (f) => {
+    const d = f.contentDocument;
+    return { disabled: d.querySelectorAll("main button[disabled]").length,
+             total: d.querySelectorAll("main button").length };
+  };
+  await gotoBoth(a, b, "#/admin/products");
+  await Promise.all([awaitGuestLock(a), awaitGuestLock(b)]);
+  const la = locked(a), lb = locked(b);
+  record(`guest lock on #/admin/products (interpreted ${la.disabled}/${la.total}, `
+    + `compiled ${lb.disabled}/${lb.total} buttons disabled)`,
+    la.disabled === lb.disabled && la.disabled > 1 ? []
+      : [{ line: -1, interpreted: la.disabled + "/" + la.total, compiled: lb.disabled + "/" + lb.total }], {});
+
+  const failed = results.filter((r) => !r.ok);
+  summary.className = failed.length ? "fail" : "pass";
+  summary.textContent = failed.length
+    ? `${failed.length} of ${results.length} comparisons FAILED: ` + failed.map((f) => f.name.trim().split("  ")[0]).join(", ")
+    : `${results.length} comparisons, 0 differences. Interpreted and compiled render the same DOM.`;
+  window.__DIFF = { results, consoleA, consoleB };
+}
+
+run().catch((e) => {
+  summary.className = "fail";
+  summary.textContent = "harness error: " + (e && e.stack || e);
+  window.__DIFF = { error: String(e && e.message || e) };
+});
+</script>
+</body>
+</html>

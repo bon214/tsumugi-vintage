@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>TSUMUGI targeted re-probe</title>
+<style>
+  body { margin: 0; font: 13px/1.45 ui-monospace, monospace; background: #14140f; color: #e8e4da; display: flex; }
+  #wrap { flex: none; overflow: hidden; border-right: 2px solid #333; }
+  iframe { border: 0; display: block; background: #fff; transform-origin: 0 0; }
+  #log { flex: 1; padding: 10px 12px; white-space: pre-wrap; overflow: auto; height: 100vh; }
+</style>
+</head>
+<body>
+<div id="wrap"><iframe id="f" src="about:blank"></iframe></div>
+<pre id="log">running…</pre>
+<script>
+const F = document.getElementById("f"), WRAP = document.getElementById("wrap"), LOG = document.getElementById("log");
+let lines = [];
+const say = s => { lines.push(s); LOG.textContent = lines.join("\n"); };
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+const D = () => F.contentWindow.document;
+const W = () => F.contentWindow;
+const CS = el => W().getComputedStyle(el);
+const txt = el => (el ? (el.innerText || el.textContent || "").replace(/\s+/g, " ").trim() : "");
+const click = el => el && el.dispatchEvent(new (W().MouseEvent)("click", { bubbles: true, cancelable: true, view: W() }));
+const S = () => W().TSUMUGI_STORE;
+function size(w, h) {
+  const s = Math.min(1, 190 / w);
+  F.style.width = w + "px"; F.style.height = h + "px"; F.style.transform = "scale(" + s + ")";
+  WRAP.style.width = Math.round(w * s) + "px"; WRAP.style.height = Math.round(h * s) + "px";
+}
+async function load(file, w, h, hash) {
+  size(w, h);
+  await new Promise(res => { F.onload = res; F.src = "../" + file + "?q=" + Date.now() + (hash || ""); });
+  await sleep(2100);
+}
+function setInput(el, v) {
+  const proto = el.tagName === "SELECT" ? W().HTMLSelectElement.prototype : W().HTMLInputElement.prototype;
+  Object.getOwnPropertyDescriptor(proto, "value").set.call(el, v);
+  el.dispatchEvent(new (W().Event)("input", { bubbles: true }));
+  el.dispatchEvent(new (W().Event)("change", { bubbles: true }));
+}
+const errEls = () => [...D().querySelectorAll("span,div,p")].filter(e => !e.querySelector("span,div,p") && txt(e) && /rgb\(162, 73, 60\)/.test(CS(e).color));
+
+/* A. JA admin product validation — find the save control by role, not by English */
+async function tJaProducts() {
+  await load("TSUMUGI%20Admin.dc.html", 1180, 900, "#/admin/products/new");
+  const st = S(), before = st.lang();
+  st.setLang("ja"); await sleep(400);
+  if (!st.session()) { st.login("admin@tsumugi.archive", "tsumugi-demo", false); await sleep(900); }
+  W().location.hash = "#/admin/products/new"; await sleep(1800);
+  const btns = [...D().querySelectorAll("button")].map(b => txt(b)).filter(Boolean);
+  say("<b>ADMIN PRODUCTS JA</b> signedIn=" + !!st.session() + " buttons=[" + btns.join(" / ") + "]");
+  const save = [...D().querySelectorAll("button")].find(b => /保存|下書き|公開/.test(txt(b)));
+  say("  save candidate=\"" + txt(save) + "\"");
+  click(save); await sleep(1000);
+  say("  empty-form errors: " + (errEls().map(e => txt(e)).join(" | ") || "NONE"));
+  const skuIn = [...D().querySelectorAll("input")].find(i => /sku/i.test(i.id + i.name + (i.getAttribute("aria-label") || "")));
+  const ex = st.products()[0];
+  if (skuIn && ex) {
+    setInput(skuIn, ex.sku); await sleep(500);
+    click([...D().querySelectorAll("button")].find(b => /保存|下書き|公開/.test(txt(b)))); await sleep(1000);
+    say("  duplicate SKU \"" + ex.sku + "\" → " + (errEls().map(e => txt(e)).filter(t => /SKU|使用/.test(t)).join(" | ") || "NO SKU ERROR"));
+  }
+  const leak = /A product name is required|A SKU is required|A brand or maker/.test(D().body.innerText);
+  say("  english validation leak in JA=" + leak + (leak ? " ✗" : " ✓"));
+  st.setLang(before);
+}
+
+/* B. Checkout prefecture — trigger real validation, keep the same step */
+async function tCheckout(w) {
+  await load("TSUMUGI.dc.html", w, 900, "#/");
+  const st = S();
+  const p = st.products()[0];
+  W().location.hash = "#/product/" + p.id; await sleep(1500);
+  click([...D().querySelectorAll("main button")].find(b => /ADD TO CART|カートに入れる/i.test(txt(b)))); await sleep(800);
+  W().location.hash = "#/checkout/information"; await sleep(1700);
+  const sel = () => D().querySelector("#co-prefecture");
+  const btns = [...D().querySelectorAll("main button")].map(b => txt(b)).filter(Boolean);
+  say("<b>CHECKOUT " + w + "</b> hash=" + W().location.hash + " select=" + !!sel() + " buttons=[" + btns.slice(0, 8).join(" / ") + "]");
+  say("  valid state: aria-invalid=" + sel().getAttribute("aria-invalid") + " aria-describedby=" + (sel().getAttribute("aria-describedby") || "(absent)"));
+  const submit = [...D().querySelectorAll("main button")].filter(b => !/^(戻る|BACK|EDIT|編集)/.test(txt(b))).pop();
+  say("  submitting via \"" + txt(submit) + "\"");
+  click(submit); await sleep(1100);
+  const s2 = sel();
+  const db = s2 && s2.getAttribute("aria-describedby");
+  const tgt = db ? D().getElementById(db) : null;
+  say("  after submit: hash=" + W().location.hash + " selectStillThere=" + !!s2 + " aria-invalid=" + (s2 && s2.getAttribute("aria-invalid")) +
+      " aria-describedby=" + (db || "(absent)") + " target=" + (tgt ? "\"" + txt(tgt) + "\" id=" + tgt.id : "MISSING") +
+      (db && tgt ? " ✓ resolves" : " ✗"));
+  const errSpans = [...D().querySelectorAll("[id$='-err']")].map(e => e.id + ":\"" + txt(e).slice(0, 24) + "\"");
+  say("  error spans present: " + (errSpans.join(" | ") || "none"));
+  // now fill it and confirm the reference goes away
+  if (s2) { setInput(s2, "Tokyo"); await sleep(800); }
+  const s3 = sel();
+  say("  after choosing a prefecture: value=\"" + (s3 ? s3.value : "-") + "\" aria-invalid=" + (s3 && s3.getAttribute("aria-invalid")) +
+      " aria-describedby=" + ((s3 && s3.getAttribute("aria-describedby")) || "(absent)") + (s3 && !s3.getAttribute("aria-describedby") ? " ✓ no dangling ref" : ""));
+}
+
+/* C. Founder image — scroll it into view, then confirm it decodes */
+async function tFounderImg(w) {
+  await load("TSUMUGI.dc.html", w, 900, "#/about");
+  const img = [...D().querySelectorAll("main img")].find(i => /RSeo/i.test(i.getAttribute("src") || ""));
+  if (!img) { say("<b>FOUNDER IMG " + w + "</b> ✗ img element missing"); return; }
+  const y = img.getBoundingClientRect().top + W().scrollY - 200;
+  W().scrollTo({ top: y, behavior: "instant" });
+  await sleep(2200);
+  let decoded = "n/a";
+  try { await img.decode(); decoded = "ok"; } catch (e) { decoded = "FAILED: " + e.message; }
+  let status = "n/a";
+  try { const r = await W().fetch(img.src, { method: "GET" }); status = r.status + " " + r.headers.get("content-type"); } catch (e) { status = "fetch error " + e.message; }
+  say("<b>FOUNDER IMG " + w + "</b> src=\"" + img.getAttribute("src") + "\" resolved=" + img.src.split("/").slice(-2).join("/") +
+      " complete=" + img.complete + " natural=" + img.naturalWidth + "×" + img.naturalHeight + " decode=" + decoded + " fetch=" + status +
+      (img.naturalWidth > 0 ? " ✓ loads" : " ✗ broken"));
+  say("  alt=\"" + img.getAttribute("alt") + "\"");
+}
+
+(async () => {
+  const errs = [];
+  window.addEventListener("error", e => errs.push(e.message));
+  for (const fn of [() => tJaProducts(), () => tCheckout(390), () => tCheckout(1440), () => tFounderImg(390), () => tFounderImg(1440)]) {
+    try { await fn(); } catch (e) { say("  ✗ THREW: " + (e && e.message) + " @ " + String(e && e.stack).split("\n")[1]); }
+  }
+  say("DONE" + (errs.length ? "  harness errors: " + errs.join(" | ") : "  no harness errors"));
+})();
+</script>
+</body>
+</html>

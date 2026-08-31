@@ -1,0 +1,531 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>QA — security regression suite (not referenced by production)</title>
+<style>
+  body { font: 12.5px/1.6 ui-monospace, SFMono-Regular, monospace; padding: 18px; background: #F8F7F4; color: #222; }
+  h1 { font: 600 15px/1.4 system-ui, sans-serif; margin: 0 0 4px; }
+  p.sub { margin: 0 0 16px; color: #6D7761; font: 12px/1.6 system-ui, sans-serif; }
+  table { border-collapse: collapse; width: 100%; margin-bottom: 20px; background: #fff; }
+  caption { text-align: left; font: 600 12px/2 system-ui, sans-serif; letter-spacing: .08em; text-transform: uppercase; color: #6D7761; }
+  th, td { border: 1px solid #E3DFD7; padding: 6px 9px; text-align: left; vertical-align: top; }
+  th { background: #F4F2EC; font-weight: 600; }
+  td.v { width: 62px; font-weight: 600; }
+  .pass { color: #2F6B4F; } .fail { color: #A2493C; } .skip { color: #8C887F; }
+  #summary { padding: 10px 14px; border: 1px solid #D8D3C9; background: #fff; margin-bottom: 18px; font: 600 13px/1.7 system-ui, sans-serif; }
+</style>
+</head>
+<body>
+<h1>TSUMUGI — security regression suite</h1>
+<p class="sub">Runs against the local provider. Each case asserts a refusal, not a UI state.
+Storage is snapshotted before the run and restored after it, so the suite leaves no data behind.</p>
+<div id="summary">running…</div>
+<div id="out"></div>
+<div id="stage" style="position:fixed;left:-99999px;top:0;width:1280px;height:900px"></div>
+
+<script>
+const PUBLIC = "../TSUMUGI.dc.html";
+const ADMIN  = "../TSUMUGI%20Admin.dc.html";
+const wait = ms => new Promise(r => setTimeout(r, ms));
+
+/* ---------- storage isolation ---------- */
+function snapshot() {
+  const s = { local: {}, session: {} };
+  for (let i = 0; i < localStorage.length; i++) {
+    const k = localStorage.key(i);
+    if (k && k.indexOf("tsumugi.") === 0) s.local[k] = localStorage.getItem(k);
+  }
+  for (let i = 0; i < sessionStorage.length; i++) {
+    const k = sessionStorage.key(i);
+    if (k && k.indexOf("tsumugi.") === 0) s.session[k] = sessionStorage.getItem(k);
+  }
+  return s;
+}
+function restore(s) {
+  const drop = (store, keep) => {
+    const now = [];
+    for (let i = 0; i < store.length; i++) {
+      const k = store.key(i);
+      if (k && k.indexOf("tsumugi.") === 0) now.push(k);
+    }
+    now.forEach(k => { if (!(k in keep)) store.removeItem(k); });
+    Object.keys(keep).forEach(k => store.setItem(k, keep[k]));
+  };
+  drop(localStorage, s.local);
+  drop(sessionStorage, s.session);
+}
+
+/* ---------- frame plumbing (armed once, guarded, cleaned up) ---------- */
+function frame(src, run, w, h) {
+  return new Promise(resolve => {
+    const f = document.createElement("iframe");
+    let started = false, settled = false;
+    const done = r => {
+      if (settled) return; settled = true;
+      clearTimeout(guard);
+      try { f.onload = null; } catch (e) { }
+      f.remove(); resolve(r);
+    };
+    const guard = setTimeout(() => done({ _error: "timeout" }), 40000);
+    f.style.width = (w || 1280) + "px"; f.style.height = (h || 900) + "px";
+    f.src = src;
+    document.getElementById("stage").appendChild(f);
+    f.onload = async () => {
+      if (started) return; started = true;
+      let r;
+      try { r = await run(f.contentWindow, f.contentDocument, f); }
+      catch (e) { r = { _error: String(e && e.message || e) }; }
+      done(r);
+    };
+  });
+}
+
+const results = [];
+function group(name) { results.push({ group: name, rows: [] }); return results[results.length - 1]; }
+function check(g, name, pass, detail) {
+  g.rows.push({ name, pass: pass === "skip" ? "skip" : !!pass, detail: detail == null ? "" : String(detail) });
+}
+
+/* ======================================================================
+   1 · AUTHORIZATION — admin mutations must be refused off the staff path
+   ====================================================================== */
+async function authzSuite(win) {
+  const g = group("Authorization · store-level refusal");
+  const S = win.TSUMUGI_STORE, A = win.TSUMUGI_AUTH;
+
+  /* signed out */
+  await A.signOut(); await wait(250);
+  const newsBefore = JSON.stringify(S.news().slice(0, 3));
+  const prodBefore = S.products()[0].name;
+
+  S.saveNews({ id: 11, title: "PWNED-BY-SIGNED-OUT", body: "<p>x</p>" });
+  check(g, "signed-out visitor cannot saveNews",
+    JSON.stringify(S.news().slice(0, 3)) === newsBefore, S.roleOf());
+
+  S.saveProduct(Object.assign({}, S.products()[0], { name: "PWNED-PRODUCT" }));
+  check(g, "signed-out visitor cannot saveProduct", S.products()[0].name === prodBefore);
+
+  S.deleteProducts([S.products()[0].id]);
+  check(g, "signed-out visitor cannot deleteProducts", S.products()[0].name === prodBefore);
+
+  check(g, "signed-out roleOf() is default-deny (not owner)",
+    S.roleOf() === "denied" || S.roleOf() === "customer", S.roleOf());
+  check(g, "signed-out isStaffSession() false", S.isStaffSession() === false);
+  check(g, "signed-out can('reset') false", S.can("reset") === false);
+  check(g, "public/admin API groups are declared",
+    Array.isArray(S.PUBLIC_API) && Array.isArray(S.ADMIN_API) && S.ADMIN_API.length > 20,
+    "admin=" + (S.ADMIN_API || []).length);
+
+  /* anonymous demo guest */
+  await A.signInAsGuest(); await wait(400);
+  check(g, "guest session is not staff", S.isStaffSession() === false, S.roleOf());
+  check(g, "guest cannot read real orders", S.can("orders.view") === false);
+  check(g, "guest cannot read real customers", S.can("customers.view") === false);
+  check(g, "guest cannot read customer PII", S.can("customers.pii") === false);
+  check(g, "guest cannot edit content", S.can("content.edit") === false);
+  S.setNewsStatus([11], "archived");
+  check(g, "guest cannot setNewsStatus", S.getNews(11).status !== "archived", S.getNews(11).status);
+  S.reset && S.reset();
+  check(g, "guest cannot reset the store", S.products().length > 5);
+
+  /* staff: owner may, editor may not exceed its role */
+  await A.signOut(); await wait(200);
+  const r = await A.signIn(S.DEMO.email, S.DEMO.password);
+  await wait(400);
+  check(g, "owner sign-in succeeds", !!(r && r.ok), r && r.code);
+  check(g, "owner isStaffSession() true", S.isStaffSession() === true, S.roleOf());
+  const ok = S.saveNews({ id: 11, title: S.getNews(11).title, body: "<p>owner edit</p>" });
+  check(g, "owner may saveNews", ok !== null);
+
+  S.setRole("editor"); await wait(150);
+  check(g, "editor role applied", S.roleOf() === "editor", S.roleOf());
+  check(g, "editor cannot access settings", S.can("settings") === false);
+  check(g, "editor cannot delete customers", S.can("customers.delete") === false);
+  const before = S.settings().storeName;
+  S.saveSettings({ storeName: "PWNED-SETTINGS" });
+  check(g, "editor cannot saveSettings", S.settings().storeName === before);
+  S.setRole("owner"); await wait(100);
+  await A.signOut(); await wait(150);
+  return g;
+}
+
+/* ======================================================================
+   2 · XSS — the sanitizer, on every path
+   ====================================================================== */
+/* Payload strings are assembled from fragments so this file never contains a
+   literal closing script tag. Writing them inline terminated the harness's own
+   <script> element: the parser ended the script early and dumped the rest of
+   the suite into the document as markup — which then executed, loaded remote
+   images and honoured a <base> tag. The bug was in the test, not the
+   sanitizer, but it is exactly the class of mistake the sanitizer exists for. */
+const S_OPEN = "<" + "script>";
+const S_CLOSE = "<" + "/" + "script>";
+const SCRIPT = S_OPEN + "window.__qsFire&&window.__qsFire()" + S_CLOSE;
+
+const XSS_CASES = [
+  ['<img src=x onerror=alert(1)>',                 /onerror/i],
+  ['<a href="javascript:alert(1)">go</a>',         /javascript:/i],
+  ['<a href="JaVaScRiPt&#x3a;alert(1)">go</a>',    /javascript/i],
+  ['<a href="java\u0000script:alert(1)">go</a>',   /javascript/i],
+  ['<svg onload=alert(1)><circle r=9></svg>',      /<svg|onload/i],
+  ['<iframe srcdoc="' + SCRIPT + '">',             /<iframe|srcdoc/i],
+  [SCRIPT,                                        /<script/i],
+  ['<style>body{background:url(javascript:1)}</style>', /<style/i],
+  ['<object data="data:text/html,' + SCRIPT + '">',    /<object/i],
+  ['<embed src=x>',                                 /<embed/i],
+  ['<form action=x><input name=y></form>',          /<form|<input/i],
+  ['<div onclick="alert(1)">t</div>',                /onclick/i],
+  ['<p style="background:url(javascript:1)">t</p>',  /style=/i],
+  ['<a href="data:text/html;base64,PHNjcmlwdD4=">x</a>', /data:text\/html/i],
+  ['<img src="data:text/html,' + SCRIPT + '">',     /data:text\/html/i],
+  ['<base href="//evil.invalid/">',                  /<base/i],
+  ['<!--<img src=x onerror=alert(1)>-->',            /onerror/i],
+  ['<math><mtext>' + SCRIPT + '</mtext></math>',     /<script|<math/i],
+  ['<a href="//evil.invalid/x">protocol relative</a>', /evil\.invalid/i],
+  ['<a href="https://ok.invalid" target="_self" onmouseover="alert(1)">x</a>', /onmouseover/i],
+  ['<template><img src=x onerror=alert(1)></template>', /onerror/i],
+  ['<noscript><img src=x onerror=alert(1)></noscript>', /onerror/i]
+];
+/* Legitimate editorial markup that must survive. Remote URLs use .invalid so
+   the suite makes no outbound request while proving the attribute is kept. */
+const KEEP_CASES = [
+  ['<p>plain paragraph</p>',                        /<p>/],
+  ['<h2>heading</h2><h3>sub</h3>',                  /<h2>/],
+  ['<strong>bold</strong> and <em>italic</em>',      /<strong>/],
+  ['<blockquote>quoted</blockquote>',                /<blockquote>/],
+  ['<ul><li>one</li><li>two</li></ul>',              /<li>/],
+  ['<ol start="3"><li>three</li></ol>',              /<ol/],
+  ['<a href="https://example.invalid/a">link</a>',   /href="https:\/\/example\.invalid\/a"/],
+  ['<a href="/shop">relative</a>',                   /href="\/shop"/],
+  ['<a href="mailto:shop@example.invalid">mail</a>', /mailto:/],
+  ['<img src="https://example.invalid/a.jpg" alt="cloth">', /<img/],
+  ['<figure><img src="/a.png" alt=""><figcaption>c</figcaption></figure>', /<figcaption>/]
+];
+
+async function xssSuite(win) {
+  const g = group("XSS · sanitizer allowlist");
+  const P = win.TSUMUGI_SANITIZE;
+  check(g, "sanitizer module present", !!P);
+  if (!P) return g;
+
+  XSS_CASES.forEach(([payload, forbidden]) => {
+    const out = P.html(payload);
+    check(g, "neutralised: " + payload.slice(0, 42), !forbidden.test(out), out.slice(0, 60));
+  });
+  KEEP_CASES.forEach(([payload, wanted]) => {
+    const out = P.html(payload);
+    check(g, "preserved: " + payload.slice(0, 42), wanted.test(out), out.slice(0, 60));
+  });
+
+  /* External links get rel="noopener noreferrer". */
+  check(g, 'external link gets rel="noopener noreferrer"',
+    /noopener noreferrer/.test(P.html('<a href="https://example.com">x</a>')));
+
+  /* Executed-in-DOM proof. A payload that merely "looks removed" in a string is
+     not proof, so the sanitizer's own output is inserted into a live document
+     inside the same origin and given time to misbehave. The counter is set on
+     the frame's own window (not the parent) so no cross-origin read is needed. */
+  const doc = win.document;
+  win.__qsFire = () => { win.__qsFired = (win.__qsFired || 0) + 1; };
+  win.__qsFired = 0;
+  const host = doc.createElement("div");
+  host.style.cssText = "position:fixed;left:-99999px;top:0";
+  doc.body.appendChild(host);
+  host.innerHTML = P.html('<img src=x onerror="window.__qsFire&&window.__qsFire()">'
+    + '<svg onload="window.__qsFire&&window.__qsFire()"></svg>'
+    + '<iframe srcdoc="' + SCRIPT + '"></iframe>'
+    + '<body onload="window.__qsFire&&window.__qsFire()">');
+  await wait(700);
+  check(g, "sanitized output executes nothing when inserted live",
+    win.__qsFired === 0, "handlers fired: " + win.__qsFired);
+  check(g, "sanitized output contains no iframe/script node",
+    !host.querySelector("iframe, script, svg, object, embed"),
+    host.innerHTML.slice(0, 60));
+  host.remove();
+
+  /* Round-trip through the store: what is stored must already be clean. */
+  const S = win.TSUMUGI_STORE, A = win.TSUMUGI_AUTH;
+  await A.signIn(S.DEMO.email, S.DEMO.password); await wait(350);
+  S.saveNews({ id: 11, title: S.getNews(11).title, body: '<p>ok</p><img src=x onerror=alert(1)>' + SCRIPT });
+  const stored = String(S.getNews(11).body || "");
+  check(g, "store sanitizes on save (no onerror in storage)", !/onerror/i.test(stored), stored.slice(0, 80));
+  check(g, "store sanitizes on save (no script in storage)", !/<script/i.test(stored));
+  check(g, "store keeps legitimate markup on save", /<p>ok<\/p>/.test(stored));
+  await A.signOut(); await wait(150);
+  return g;
+}
+
+/* ======================================================================
+   3 · ORDERS — validation, stock, double submit, receipt privacy
+   ====================================================================== */
+async function orderSuite(win) {
+  const g = group("Orders · server-side validation");
+  const S = win.TSUMUGI_STORE;
+  await win.TSUMUGI_AUTH.signOut(); await wait(200);
+
+  const live = S.products().find(p => p.status === "published" && p.stock > 0);
+  const draft = S.products().find(p => p.status === "draft")
+             || S.products().find(p => p.status === "archived");
+  const info = { email: "qa@example.invalid", firstName: "QA", lastName: "Runner", phone: "0300000000",
+                 postalCode: "150-0002", prefecture: "Tokyo", city: "Shibuya", address: "1-1-1" };
+  const place = items => S.placeOrder({ items, info, deliveryMethod: "Standard shipping", paymentMethod: "Demo credit card" });
+
+  check(g, "empty cart refused", place([]).code === "empty_cart");
+  check(g, "qty 0 refused", place([{ productId: live.id, qty: 0 }]).code === "bad_qty");
+  check(g, "negative qty refused", place([{ productId: live.id, qty: -3 }]).code === "bad_qty");
+  check(g, "fractional qty refused", place([{ productId: live.id, qty: 1.5 }]).code === "bad_qty");
+  check(g, "NaN qty refused", place([{ productId: live.id, qty: NaN }]).code === "bad_qty");
+  check(g, "string-number qty refused", place([{ productId: live.id, qty: "3abc" }]).code === "bad_qty");
+  check(g, "exponent qty refused", place([{ productId: live.id, qty: 1e9 }]).code === "bad_qty");
+  check(g, "huge qty refused", place([{ productId: live.id, qty: 999 }]).code === "qty_limit");
+  check(g, "boolean qty refused", place([{ productId: live.id, qty: true }]).code === "bad_qty");
+  check(g, "unknown product refused", place([{ productId: 99999999, qty: 1 }]).code === "unknown_product");
+  check(g, "duplicate line refused",
+    place([{ productId: live.id, qty: 1 }, { productId: live.id, qty: 1 }]).code === "duplicate_line");
+  if (draft) {
+    check(g, "draft/archived product refused",
+      place([{ productId: draft.id, qty: 1 }]).code === "not_purchasable", draft.status);
+  } else { check(g, "draft/archived product refused", "skip", "no non-published product in seed"); }
+
+  /* Price tampering: a payload price must be ignored. */
+  const tampered = S.placeOrder({
+    items: [{ productId: live.id, qty: 1, price: 1, name: "FAKE", thumb: "" }],
+    info, subtotal: 1, total: 1, paymentStatus: "Paid",
+    deliveryMethod: "Standard shipping", paymentMethod: "Demo credit card"
+  });
+  check(g, "order accepted for a live piece", tampered.ok === true, tampered.code);
+  if (tampered.ok) {
+    const o = S.getOrder(tampered.orderId);
+    check(g, "payload price ignored — catalogue price used", o.items[0].price === live.price,
+      "payload 1 vs stored " + o.items[0].price);
+    check(g, "payload total ignored", o.total === live.price * 1, "stored " + o.total);
+    check(g, "payload paymentStatus ignored (stays Pending)", o.paymentStatus === "Pending", o.paymentStatus);
+    check(g, "receipt token issued", typeof tampered.receiptToken === "string" && tampered.receiptToken.length >= 16);
+    check(g, "receipt resolves to the customer projection", !!S.receiptOrder(tampered.receiptToken));
+    const view = S.receiptOrder(tampered.receiptToken) || {};
+    check(g, "receipt projection has no internal notes", !("notes" in view) && !("history" in view));
+    check(g, "unknown receipt token resolves to nothing", S.receiptOrder("deadbeef".repeat(4)) === null);
+  }
+
+  /* Stock: the piece that just sold cannot be sold again. */
+  const sold = S.getProduct(live.id);
+  check(g, "stock decremented, never negative", sold.stock >= 0, "stock=" + sold.stock);
+  if (sold.stock === 0) {
+    check(g, "sold-out piece marked soldout", sold.status === "soldout", sold.status);
+    const again = place([{ productId: live.id, qty: 1 }]);
+    check(g, "sold-out piece cannot be ordered again",
+      again.code === "not_purchasable" || again.code === "out_of_stock", again.code);
+  }
+
+  /* Two overlapping calls: the second must be refused, not queued, and must not
+     recurse. The re-entrant call is made from inside placeOrder's own catalogue
+     read, which is the shape a stale handler or a double-tapped submit takes. */
+  const other = S.products().find(p => p.status === "published" && p.stock > 0 && p.id !== live.id);
+  if (other) {
+    let inner = null;
+    let reentered = false;
+    const original = S.getProduct;
+    S.getProduct = function (id) {
+      const r = original.apply(S, arguments);
+      /* Guard set BEFORE the nested call, so the test cannot recurse even if
+         the implementation forgets to. */
+      if (!reentered && id === other.id) {
+        reentered = true;
+        inner = place([{ productId: other.id, qty: 1 }]);
+      }
+      return r;
+    };
+    const outer = place([{ productId: other.id, qty: 1 }]);
+    S.getProduct = original;
+    check(g, "re-entrant (double) submit refused", inner && inner.code === "in_flight",
+      inner ? inner.code : "not re-entered");
+    check(g, "outer submit still succeeded", outer.ok === true, outer.code);
+    if (outer.ok) {
+      const dupes = S.all().orders.filter(o => (o.items || []).some(i => i.productId === other.id));
+      check(g, "no duplicate order rows for one piece", dupes.length === 1, "rows=" + dupes.length);
+    }
+  } else { check(g, "re-entrant (double) submit refused", "skip", "needs two live pieces"); }
+
+  /* Order ownership: a guessed number must not hand over an order. */
+  const someone = S.all().orders.find(o => o.customerId && o.email);
+  check(g, "myOrder() denies an order you do not own",
+    S.myOrder ? S.myOrder(someone.id) === null : "skip", "signed out");
+  return g;
+}
+
+/* ======================================================================
+   4 · SCOPE — a failed sign-in must leave no session in the other scope
+   ====================================================================== */
+async function scopeSuite(win) {
+  const g = group("Scope · no cross-scope session residue");
+  const S = win.TSUMUGI_STORE, A = win.TSUMUGI_AUTH, C = win.TSUMUGI_CUSTOMER_AUTH;
+
+  await A.signOut(); await wait(200);
+  const demoCust = { email: "haruto.sato@example.com", password: "demo-customer" };
+
+  /* Customer credentials into the console. */
+  const r1 = await A.signIn(demoCust.email, demoCust.password); await wait(400);
+  check(g, "customer credentials refused by the console", !(r1 && r1.ok), r1 && r1.code);
+  check(g, "…and leave no admin session", A.status() !== "authenticated", A.status());
+  check(g, "…and leave no staff role", S.isStaffSession() === false, S.roleOf());
+
+  await A.signOut(); await wait(150);
+
+  /* Staff credentials into the storefront sign-in. */
+  const r2 = await C.signIn(S.DEMO.email, S.DEMO.password); await wait(400);
+  check(g, "staff credentials refused by the storefront", !(r2 && r2.ok), r2 && r2.code);
+  check(g, "…and leave no customer session", C.status() !== "authenticated", C.status());
+  check(g, "…and leave no admin session either", A.status() !== "authenticated", A.status());
+
+  await A.signOut(); await wait(150);
+
+  /* Real customer sign-in works and is not staff. */
+  const r3 = await C.signIn(demoCust.email, demoCust.password); await wait(450);
+  check(g, "customer sign-in succeeds on the storefront", !!(r3 && r3.ok), r3 && r3.code);
+  check(g, "customer session is not staff", S.isStaffSession() === false, S.roleOf());
+  check(g, "customer cannot reach console permissions", S.can("content.edit") === false);
+  const t = S.news()[0] && S.news()[0].title;
+  S.saveNews({ id: S.news()[0].id, title: "PWNED-BY-CUSTOMER" });
+  check(g, "customer cannot saveNews", S.news()[0].title === t);
+
+  /* Recovery capability is reported honestly by the local provider. */
+  const rec = await C.updatePassword("longenoughpassword");
+  check(g, "local provider reports recovery unsupported rather than faking it",
+    rec && rec.ok === false && rec.code === "unsupported", rec && rec.code);
+  check(g, "isRecovering() false with no recovery session", C.isRecovering() === false);
+
+  await C.signOut(); await wait(150);
+  return g;
+}
+
+/* ======================================================================
+   5 · SEO / metadata + layout, on the public shell
+   ====================================================================== */
+async function publicSuite() {
+  const g = group("Public shell · metadata, layout, i18n");
+  const routes = [["home", ""], ["shop", "#/shop"], ["about", "#/about"],
+                  ["journal", "#/journal"], ["contact", "#/contact"], ["cart", "#/cart"]];
+  for (const [name, hash] of routes) {
+    const r = await frame(PUBLIC + hash, async (win, doc) => {
+      await wait(1500);
+      return {
+        title: doc.title,
+        desc: (doc.querySelector('meta[name="description"]') || {}).content || "",
+        canonical: (doc.querySelector('link[rel="canonical"]') || {}).href || "",
+        favicon: !!doc.querySelector('link[rel="icon"]'),
+        ovf: doc.documentElement.scrollWidth - win.innerWidth,
+        painted: !!doc.querySelector("main")
+      };
+    });
+    check(g, name + " · title is not a URL",
+      !!r.title && !/\.dc\.html|^https?:|^file:/.test(r.title), r.title);
+    check(g, name + " · description present", (r.desc || "").length > 20);
+    check(g, name + " · canonical present", !!r.canonical);
+    check(g, name + " · favicon declared", r.favicon === true);
+    check(g, name + " · renders", r.painted === true);
+  }
+  /* Distinct titles per route. */
+  const titles = {};
+  for (const [name, hash] of routes) {
+    const r = await frame(PUBLIC + hash, async (win, doc) => { await wait(1300); return { t: doc.title }; });
+    titles[name] = r.t;
+  }
+  check(g, "route titles are distinct", new Set(Object.values(titles)).size >= 5,
+    Object.values(titles).join(" | "));
+
+  /* No horizontal scroll at the four widths. */
+  for (const [w, h] of [[390, 844], [768, 1024], [1024, 800], [1440, 900]]) {
+    const r = await frame(PUBLIC, async (win, doc) => {
+      await wait(1500);
+      return { ovf: doc.documentElement.scrollWidth - win.innerWidth };
+    }, w, h);
+    check(g, "no horizontal overflow at " + w + "px", r.ovf <= 1, "overflow " + r.ovf);
+  }
+
+  /* Language switch still works, and honest demo copy is present. */
+  const lang = await frame(PUBLIC + "#/contact", async (win, doc) => {
+    await wait(1600);
+    const S = win.TSUMUGI_STORE;
+    const before = doc.documentElement.lang;
+    S.setLang(S.lang() === "ja" ? "en" : "ja");
+    await wait(900);
+    const body = doc.body.textContent || "";
+    return { before, after: doc.documentElement.lang, demoWording: /demo|デモ/i.test(body) };
+  });
+  check(g, "language switch changes document language", lang.before !== lang.after,
+    lang.before + " → " + lang.after);
+  check(g, "contact page states it is a demo", lang.demoWording === true);
+  return g;
+}
+
+/* ---------------------------------------------------------------- render */
+function render() {
+  const out = document.getElementById("out");
+  let pass = 0, fail = 0, skip = 0;
+  out.innerHTML = "";
+  results.forEach(g => {
+    const t = document.createElement("table");
+    t.innerHTML = "<caption>" + g.group + "</caption>"
+      + "<tr><th>result</th><th>assertion</th><th>observed</th></tr>"
+      + g.rows.map(r => {
+        if (r.pass === "skip") skip++; else if (r.pass) pass++; else fail++;
+        const cls = r.pass === "skip" ? "skip" : r.pass ? "pass" : "fail";
+        const label = r.pass === "skip" ? "SKIP" : r.pass ? "PASS" : "FAIL";
+        return '<tr><td class="v ' + cls + '">' + label + "</td><td>"
+          + r.name.replace(/[<>&]/g, c => ({ "<": "&lt;", ">": "&gt;", "&": "&amp;" }[c]))
+          + '</td><td class="skip">' + String(r.detail).replace(/[<>&]/g, c => ({ "<": "&lt;", ">": "&gt;", "&": "&amp;" }[c])) + "</td></tr>";
+      }).join("");
+    out.appendChild(t);
+  });
+  document.getElementById("summary").textContent =
+    "PASS " + pass + " · FAIL " + fail + " · SKIP " + skip
+    + "  — groups: " + results.length
+    + (fail === 0 ? "  — all assertions held" : "  — SEE FAILURES ABOVE");
+  document.getElementById("summary").style.color = fail === 0 ? "#2F6B4F" : "#A2493C";
+  window.__SECQA = { pass, fail, skip, groups: results.map(g => g.group), results };
+}
+
+(async () => {
+  const snap = snapshot();
+  try {
+    /* Suites 1–4 share one admin frame so a session applies across them.
+
+       Each suite is awaited in its OWN try/catch and a thrown suite records a
+       visible FAIL row. Previously they were awaited in sequence inside one try:
+       when an early suite threw, the remaining suites never ran, the frame
+       runner swallowed the error, and the summary reported "all assertions
+       held" for a run that had silently skipped two whole groups. A suite that
+       cannot run is a failure, not an absence. */
+    const r = await frame(ADMIN, async (win) => {
+      await wait(1400);
+      const suites = [
+        ["Authorization · store-level refusal", authzSuite],
+        ["XSS · sanitizer allowlist", xssSuite],
+        ["Orders · server-side validation", orderSuite],
+        ["Scope · no cross-scope session residue", scopeSuite]
+      ];
+      for (const [name, fn] of suites) {
+        try {
+          await fn(win);
+        } catch (e) {
+          const g = results.find(x => x.group === name) || group(name);
+          check(g, "suite ran to completion", false, String(e && e.message || e));
+        }
+      }
+      return {};
+    });
+    if (r && r._error) {
+      check(group("harness · admin frame"), "admin frame loaded and ran", false, r._error);
+    }
+    await publicSuite();
+  } catch (e) {
+    check(group("harness"), "suite runner completed", false, String(e && e.message || e));
+  } finally {
+    restore(snap);
+  }
+  render();
+})();
+</script>
+</body>
+</html>

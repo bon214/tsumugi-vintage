@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>TSUMUGI checkout submit probe</title>
+<style>
+  body { margin: 0; font: 13px/1.45 ui-monospace, monospace; background: #14140f; color: #e8e4da; display: flex; }
+  #wrap { flex: none; overflow: hidden; border-right: 2px solid #333; }
+  iframe { border: 0; display: block; background: #fff; transform-origin: 0 0; }
+  #log { flex: 1; padding: 10px 12px; white-space: pre-wrap; overflow: auto; height: 100vh; }
+</style>
+</head>
+<body>
+<div id="wrap"><iframe id="f" src="about:blank"></iframe></div>
+<pre id="log">running…</pre>
+<script>
+const F = document.getElementById("f"), LOG = document.getElementById("log"), WRAP = document.getElementById("wrap");
+let lines = [];
+const say = s => { lines.push(s); LOG.textContent = lines.join("\n"); };
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+const D = () => F.contentWindow.document;
+const W = () => F.contentWindow;
+const txt = el => (el ? (el.innerText || el.textContent || "").replace(/\s+/g, " ").trim() : "");
+const click = el => el && el.dispatchEvent(new (W().MouseEvent)("click", { bubbles: true, cancelable: true, view: W() }));
+const S = () => W().TSUMUGI_STORE;
+function size(w, h) { const s = Math.min(1, 190 / w); F.style.width = w + "px"; F.style.height = h + "px"; F.style.transform = "scale(" + s + ")"; WRAP.style.width = Math.round(w * s) + "px"; WRAP.style.height = Math.round(h * s) + "px"; }
+async function load(w, h, hash) { size(w, h); await new Promise(res => { F.onload = res; F.src = "../TSUMUGI.dc.html?q=" + Date.now() + (hash || ""); }); await sleep(2200); }
+function setVal(el, v) {
+  const proto = el.tagName === "SELECT" ? W().HTMLSelectElement.prototype : W().HTMLInputElement.prototype;
+  Object.getOwnPropertyDescriptor(proto, "value").set.call(el, v);
+  el.dispatchEvent(new (W().Event)("input", { bubbles: true }));
+  el.dispatchEvent(new (W().Event)("change", { bubbles: true }));
+}
+(async () => {
+  try {
+    await load(390, 900, "#/");
+    const st = S();
+    if (st.lang() !== "en") { st.setLang("en"); await sleep(600); }
+    const p = st.products().find(x => x.status === "published" && Number(x.stock) > 0);
+    W().location.hash = "#/product/" + p.id; await sleep(1600);
+    click([...D().querySelectorAll("main button")].find(b => /ADD TO CART/i.test(txt(b)))); await sleep(900);
+    W().location.hash = "#/checkout/information"; await sleep(2000);
+    const vals = { "co-email": "reader@example.com", "co-firstName": "Aki", "co-lastName": "Tanaka", "co-postalCode": "150-0001", "co-city": "Shibuya", "co-address": "1-2-3 Jingumae", "co-phone": "03-5843-0000" };
+    Object.keys(vals).forEach(id => { const el = D().getElementById(id); if (el) setVal(el, vals[id]); });
+    await sleep(800);
+    const form = D().querySelector("main form");
+    say("<b>SUBMIT PROBE</b> href=" + W().location.href.split("/").pop() + " form=" + !!form + " inputs=" + D().querySelectorAll("main input").length);
+    // route A: dispatch a real submit event (what Enter and the button produce)
+    form.dispatchEvent(new (W().Event)("submit", { bubbles: true, cancelable: true }));
+    await sleep(1200);
+    const sel = () => D().querySelector("#co-prefecture");
+    say("  after submit EVENT: href=" + W().location.href.split("?").pop().slice(0, 60) + " selectPresent=" + !!sel() +
+        " aria-invalid=" + (sel() && sel().getAttribute("aria-invalid")) + " describedby=" + ((sel() && sel().getAttribute("aria-describedby")) || "(absent)"));
+    const db = sel() && sel().getAttribute("aria-describedby");
+    const tgt = db ? D().getElementById(db) : null;
+    say("  error target=" + (tgt ? "\"" + txt(tgt) + "\" id=" + tgt.id : "MISSING") + (db && tgt ? " ✓ resolves" : " ✗"));
+    say("  alert=\"" + txt([...D().querySelectorAll('[role="alert"]')][0]) + "\" errSpans=[" + [...D().querySelectorAll("[id$='-err']")].map(e => e.id).join(",") + "]");
+    const ids = [...D().querySelectorAll("[id]")].map(e => e.id), dup = ids.filter((v, i) => ids.indexOf(v) !== i);
+    say("  dupIds=" + (dup.join(",") || "none"));
+    // now choose a prefecture: the reference must disappear
+    if (sel()) { const opt = [...sel().options].find(o => o.value); setVal(sel(), opt.value); await sleep(1000); }
+    say("  after choosing \"" + (sel() ? sel().value : "-") + "\": aria-invalid=" + (sel() && sel().getAttribute("aria-invalid")) +
+        " describedby=" + ((sel() && sel().getAttribute("aria-describedby")) || "(absent)") + (sel() && !sel().getAttribute("aria-describedby") ? " ✓ removed" : " ✗ stale"));
+    // route B: the actual button click, to confirm no navigation happens any more
+    const before = W().location.href;
+    click([...D().querySelectorAll("main button")].find(b => /CONTINUE/i.test(txt(b))));
+    await sleep(1500);
+    say("  button click → navigated=" + (W().location.href !== before) + " hash=" + W().location.hash + " mainInputs=" + D().querySelectorAll("main input").length +
+        " querystring=" + (W().location.search.indexOf("co-") >= 0 ? "HAS FORM PARAMS ✗" : "clean ✓"));
+  } catch (e) { say("  ✗ THREW: " + e.message + " @ " + String(e.stack).split("\n")[1]); }
+  say("DONE");
+})();
+</script>
+</body>
+</html>

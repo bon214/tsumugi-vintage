@@ -1,0 +1,1246 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
+<link href="https://fonts.googleapis.com/css2?family=EB+Garamond:wght@400;500&amp;family=Hanken+Grotesk:wght@300;400;500;600&amp;family=IBM+Plex+Mono:wght@400;500&amp;display=swap" rel="stylesheet">
+<link rel="preconnect" href="https://images.unsplash.com" crossorigin="">
+<script src="./auth-config.js"></script>
+<script src="./tsumugi-supabase.js"></script>
+<script src="./tsumugi-sanitize.js"></script>
+<script src="./tsumugi-data.js"></script>
+<script src="./tsumugi-repository.js"></script>
+<script src="./tsumugi-images.js"></script>
+<script src="./tsumugi-i18n-public.js"></script>
+<script src="./tsumugi-i18n-admin.js"></script>
+<script src="./tsumugi-i18n-orders.js"></script>
+<script src="./tsumugi-i18n-content.js"></script>
+<script src="./tsumugi-i18n.js"></script>
+<script src="./tsumugi-auth.js"></script>
+<style>
+  body { margin: 0; background: #F6F5F2; color: #232220; font-family: 'Hanken Grotesk', system-ui, sans-serif; -webkit-font-smoothing: antialiased; }
+  * { box-sizing: border-box; }
+  a { color: #6D7761; text-decoration: none; }
+  a:hover { color: #232220; }
+  button, input, select, textarea { font-family: inherit; font-size: inherit; color: inherit; }
+  :focus-visible { outline: 2px solid #6D7761; outline-offset: 2px; }
+  ::selection { background: #E3E7DC; }
+  input::placeholder, textarea::placeholder { color: #A8A49B; }
+  @keyframes admFade { from { opacity: 0; } to { opacity: 1; } }
+  @keyframes admRise { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+  @keyframes admToast { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
+  @keyframes admDrawer { from { transform: translateX(-100%); } to { transform: none; } }
+  @keyframes admSpin { to { transform: rotate(360deg); } }
+  @keyframes admPulse { 0%,100% { opacity: 1; } 50% { opacity: 0.45; } }
+  [data-adm-scroll]::-webkit-scrollbar { height: 10px; width: 10px; }
+  [data-adm-scroll]::-webkit-scrollbar-thumb { background: #D8D3C9; border-radius: 6px; }
+  [data-adm-editor] h2 { font-family: 'EB Garamond', serif; font-size: 24px; font-weight: 500; margin: 20px 0 8px; }
+  [data-adm-editor] h3 { font-size: 15px; font-weight: 600; letter-spacing: 0.02em; margin: 18px 0 6px; }
+  [data-adm-editor] p { margin: 0 0 12px; line-height: 1.75; }
+  [data-adm-editor] blockquote { margin: 16px 0; padding: 4px 0 4px 16px; border-left: 2px solid #C9CBBE; color: #55534C; font-family: 'EB Garamond', serif; font-size: 18px; }
+  [data-adm-editor] ul, [data-adm-editor] ol { margin: 0 0 12px; padding-left: 20px; line-height: 1.8; }
+  [data-adm-editor] hr { border: none; border-top: 1px solid #E3DFD7; margin: 20px 0; }
+  [data-adm-editor] a { color: #6D7761; text-decoration: underline; }
+  [data-adm-editor] img { max-width: 100%; height: auto; display: block; margin: 12px 0; }
+  [data-adm-editor]:focus { outline: none; }
+  /* Japanese runs must not inherit the Latin eyebrow tracking. */
+  html[lang="ja"] main *, html[lang="ja"] header *, html[lang="ja"] [role="note"] *,
+  html[lang="ja"] [role="dialog"] *, html[lang="ja"] [role="alertdialog"] *,
+  html[lang="ja"] [role="status"] *, html[lang="ja"] [role="toolbar"] * { letter-spacing: 0.02em !important; }
+</style>
+</helmet>
+
+<sc-if value="{{ booting }}" hint-placeholder-val="{{ false }}">
+  <div style="min-height:100vh;display:grid;place-items:center;background:#F6F5F2">
+    <div style="display:flex;flex-direction:column;align-items:center;gap:14px">
+      <div style="width:22px;height:22px;border:2px solid #DBD6CC;border-top-color:#6D7761;border-radius:50%;animation:admSpin 700ms linear infinite"></div>
+      <span style="font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:0.24em;color:#8C887F">{{ t.kLoadingAdmin }}</span>
+    </div>
+  </div>
+</sc-if>
+
+<sc-if value="{{ showLogin }}" hint-placeholder-val="{{ false }}">
+  <dc-import name="AdminLogin" email="{{ loginEmail }}" password="{{ loginPassword }}" remember="{{ loginRemember }}" error="{{ loginError }}" busy="{{ loginBusy }}" guest-busy="{{ guestBusy }}" show-demo="{{ showDemoCreds }}" demo-email="{{ demoEmail }}" on-email="{{ onLoginEmail }}" on-password="{{ onLoginPassword }}" on-remember="{{ onLoginRemember }}" on-submit="{{ onLoginSubmit }}" on-guest="{{ onGuestEnter }}" on-fill-demo="{{ fillDemo }}" hint-size="100%,100vh"></dc-import>
+</sc-if>
+
+<sc-if value="{{ showApp }}" hint-placeholder-val="{{ true }}">
+  <div style="min-height:100vh;display:flex;background:#F6F5F2">
+
+    <sc-if value="{{ showSidebar }}" hint-placeholder-val="{{ true }}">
+      <aside style="width:236px;flex:0 0 236px;background:#FFFFFF;border-right:1px solid #E3DFD7;position:sticky;top:0;height:100vh;display:flex;flex-direction:column">
+        <div style="padding:20px 18px 18px;border-bottom:1px solid #EDEAE3;display:flex;flex-direction:column;gap:4px">
+          <span style="font-family:'EB Garamond',serif;font-size:19px;letter-spacing:0.22em;color:#232220">TSUMUGI</span>
+          <span style="font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:0.24em;color:#8C887F">{{ t.kAdminConsole }}</span>
+        </div>
+        <nav aria-label="{{ t.kAdminSections }}" style="flex:1;overflow-y:auto;padding:12px 10px;display:flex;flex-direction:column;gap:2px">
+          <sc-for list="{{ navItems }}" as="n" hint-placeholder-count="5">
+            <a href="{{ n.href }}" onClick="{{ n.onClick }}" aria-current="{{ n.current }}" style="display:flex;align-items:center;gap:11px;padding:10px 12px;min-height:44px;font-size:14px;border-radius:3px;transition:background 140ms ease,color 140ms ease;background:{{ n.bg }};color:{{ n.fg }};font-weight:{{ n.weight }}" style-hover="background:#F1EFE9;color:#232220">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="flex:0 0 16px"><path d="{{ n.d }}"></path></svg>
+              <span style="flex:1;min-width:0">{{ n.label }}</span>
+              <sc-if value="{{ n.badge }}" hint-placeholder-val="{{ false }}">
+                <span style="font-family:'IBM Plex Mono',monospace;font-size:11px;background:#EEF0EA;color:#5C6650;padding:2px 6px;border-radius:9px">{{ n.badge }}</span>
+              </sc-if>
+            </a>
+          </sc-for>
+        </nav>
+        <div style="border-top:1px solid #EDEAE3;padding:12px 10px;display:flex;flex-direction:column;gap:2px">
+          <a href="./" style="display:flex;align-items:center;gap:11px;padding:10px 12px;min-height:44px;font-size:14px;color:#55534C;border-radius:3px" style-hover="background:#F1EFE9;color:#232220">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="flex:0 0 16px"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6M15 3h6v6M10 14 21 3"></path></svg>
+            <span>{{ t.kViewStore }}</span>
+          </a>
+          <button type="button" onClick="{{ onLogout }}" style="display:flex;align-items:center;gap:11px;padding:10px 12px;min-height:44px;font-size:14px;color:#55534C;background:transparent;border:none;border-radius:3px;cursor:pointer;text-align:left;width:100%" style-hover="background:#FBF0EE;color:#A2493C">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="flex:0 0 16px"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"></path></svg>
+            <span>{{ t.kLogout }}</span>
+          </button>
+        </div>
+      </aside>
+    </sc-if>
+
+    <div style="flex:1;min-width:0;display:flex;flex-direction:column">
+
+      <header style="position:sticky;top:0;z-index:30;background:rgba(246,245,242,0.95);backdrop-filter:blur(8px);border-bottom:1px solid #E3DFD7">
+        <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;padding:10px clamp(16px,2.4vw,28px);min-height:60px">
+          <sc-if value="{{ isCompact }}" hint-placeholder-val="{{ false }}">
+            <button type="button" onClick="{{ openDrawer }}" aria-label="{{ t.kOpenNavigation }}" style="border:1px solid #DAD5CB;background:#FFFFFF;width:44px;height:44px;display:grid;place-items:center;cursor:pointer;border-radius:3px;flex:0 0 44px" style-hover="border-color:#6D7761">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#232220" stroke-width="1.6" stroke-linecap="round" aria-hidden="true"><path d="M3 6h18M3 12h18M3 18h18"></path></svg>
+            </button>
+          </sc-if>
+          <nav aria-label="{{ t.kBreadcrumb }}" style="flex:1 1 180px;min-width:120px;display:flex;align-items:center;gap:7px;overflow:hidden">
+            <sc-for list="{{ crumbs }}" as="c" hint-placeholder-count="2">
+              <button type="button" onClick="{{ c.onClick }}" disabled="{{ c.last }}" style="flex:0 0 auto;max-width:14ch;border:none;background:transparent;padding:6px 2px;min-height:28px;font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:0.13em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;cursor:{{ c.cursor }};color:{{ c.color }}" style-hover="color:#232220">{{ c.label }}</button>
+              <sc-if value="{{ c.sep }}" hint-placeholder-val="{{ true }}">
+                <span aria-hidden="true" style="flex:0 0 auto;font-family:'IBM Plex Mono',monospace;font-size:11px;color:#BFBAB1">/</span>
+              </sc-if>
+            </sc-for>
+            <sc-if value="{{ isGuest }}" hint-placeholder-val="{{ false }}">
+              <span style="flex:0 0 auto;margin-left:5px;display:inline-flex;align-items:center;gap:6px;font-family:'IBM Plex Mono',monospace;font-size:10.5px;letter-spacing:0.16em;padding:5px 10px;background:#9A7A32;color:#FFFFFF;white-space:nowrap">
+                <span aria-hidden="true" style="width:5px;height:5px;border-radius:50%;background:#FFFFFF;opacity:0.9"></span>
+                <span>{{ guestChip }}</span>
+              </span>
+            </sc-if>
+          </nav>
+          <div style="display:flex;align-items:center;gap:8px;position:relative;margin-left:auto">
+            <button type="button" onClick="{{ toggleLang }}" aria-label="{{ t.switchLang }}" style="border:1px solid #DAD5CB;background:#FFFFFF;padding:0 12px;min-height:44px;min-width:44px;font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:0.14em;color:#55534C;white-space:nowrap;cursor:pointer" style-hover="border-color:#6D7761;color:#6D7761">{{ langLabel }}</button>
+            <button type="button" onClick="{{ toggleNotifs }}" aria-label="{{ t.kNotifications2 }}" aria-expanded="{{ notifsOpen }}" style="position:relative;border:1px solid #DAD5CB;background:#FFFFFF;width:44px;height:44px;display:grid;place-items:center;cursor:pointer;border-radius:3px" style-hover="border-color:#6D7761">
+              <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#3F3D38" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9M13.7 21a2 2 0 0 1-3.4 0"></path></svg>
+              <sc-if value="{{ hasNotifs }}" hint-placeholder-val="{{ true }}">
+                <span aria-hidden="true" style="position:absolute;top:-5px;right:-5px;min-width:17px;height:17px;padding:0 4px;background:#6D7761;color:#FFFFFF;border-radius:9px;font-family:'IBM Plex Mono',monospace;font-size:11px;display:grid;place-items:center">{{ notifCount }}</span>
+              </sc-if>
+            </button>
+            <sc-if value="{{ isGuest }}" hint-placeholder-val="{{ false }}">
+              
+            </sc-if>
+            <button type="button" onClick="{{ toggleAccount }}" aria-expanded="{{ accountOpen }}" style="display:flex;align-items:center;gap:9px;border:1px solid #DAD5CB;background:#FFFFFF;padding:5px 10px 5px 6px;min-height:44px;cursor:pointer;border-radius:3px" style-hover="border-color:#6D7761">
+              <span aria-hidden="true" style="width:28px;height:28px;border-radius:50%;background:#EEF0EA;color:#5C6650;display:grid;place-items:center;font-family:'IBM Plex Mono',monospace;font-size:11px">{{ initials }}</span>
+              <sc-if value="{{ isWide }}" hint-placeholder-val="{{ true }}">
+                <span style="font-size:13px;color:#3F3D38;white-space:nowrap">{{ userName }}</span>
+              </sc-if>
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#8C887F" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"></path></svg>
+            </button>
+
+            <sc-if value="{{ notifsOpen }}" hint-placeholder-val="{{ false }}">
+              <div role="dialog" aria-label="{{ t.kNotifications2 }}" style="position:absolute;top:48px;right:0;width:min(340px,86vw);background:#FFFFFF;border:1px solid #E3DFD7;box-shadow:0 12px 34px rgba(40,36,28,0.12);z-index:50;animation:admRise 160ms ease both">
+                <div style="padding:12px 16px;border-bottom:1px solid #EDEAE3;display:flex;align-items:center;justify-content:space-between">
+                  <span style="font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:0.2em;color:#8C887F">{{ t.kNotifications }}</span>
+                  <button type="button" onClick="{{ closeMenus }}" aria-label="{{ t.kCloseNotifications }}" style="border:none;background:transparent;cursor:pointer;color:#8C887F;font-size:16px;line-height:1;padding:6px">×</button>
+                </div>
+                <div style="max-height:320px;overflow-y:auto" data-adm-scroll="1">
+                  <sc-if value="{{ noNotifs }}" hint-placeholder-val="{{ false }}">
+                    <p style="margin:0;padding:26px 16px;text-align:center;font-size:13px;color:#8C887F">{{ t.kNothingNeedsAttention }}</p>
+                  </sc-if>
+                  <sc-for list="{{ notifs }}" as="n" hint-placeholder-count="3">
+                    <button type="button" onClick="{{ n.onClick }}" style="display:flex;gap:11px;align-items:flex-start;width:100%;text-align:left;border:none;border-bottom:1px solid #F2F0EA;background:transparent;padding:13px 16px;cursor:pointer" style-hover="background:#FAF9F6">
+                      <span aria-hidden="true" style="margin-top:5px;width:7px;height:7px;border-radius:50%;flex:0 0 7px;background:{{ n.dot }}"></span>
+                      <span style="display:flex;flex-direction:column;gap:3px;min-width:0">
+                        <span style="font-size:13.5px;color:#232220;line-height:1.4">{{ n.title }}</span>
+                        <span style="font-size:12px;color:#8C887F">{{ n.meta }}</span>
+                      </span>
+                    </button>
+                  </sc-for>
+                </div>
+              </div>
+            </sc-if>
+
+            <sc-if value="{{ accountOpen }}" hint-placeholder-val="{{ false }}">
+              <div role="menu" aria-label="{{ t.kAccount }}" style="position:absolute;top:48px;right:0;width:250px;background:#FFFFFF;border:1px solid #E3DFD7;box-shadow:0 12px 34px rgba(40,36,28,0.12);z-index:50;animation:admRise 160ms ease both">
+                <div style="padding:14px 16px;border-bottom:1px solid #EDEAE3;display:flex;flex-direction:column;gap:3px">
+                  <span style="font-size:14px;font-weight:500">{{ userName }}</span>
+                  <span style="font-size:12px;color:#8C887F">{{ userEmail }}</span>
+                  <span style="font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:0.16em;color:#6D7761;margin-top:4px">{{ userRole }}</span>
+                </div>
+                <button type="button" role="menuitem" onClick="{{ goSettings }}" style="display:block;width:100%;text-align:left;border:none;background:transparent;padding:12px 16px;min-height:44px;font-size:13.5px;white-space:nowrap;cursor:pointer" style-hover="background:#F5F3EE">{{ t.kSettings }}</button>
+                <a role="menuitem" href="./" style="display:block;padding:12px 16px;min-height:44px;font-size:13.5px;color:#232220" style-hover="background:#F5F3EE">{{ t.kViewStore2 }}</a>
+                <div style="padding:12px 16px;border-top:1px solid #EDEAE3;display:flex;flex-direction:column;gap:8px">
+                  <span style="font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:0.16em;color:#8C887F">{{ t.activeRole }}</span>
+                  <span style="font-size:13.5px;color:#3F3D38">{{ roleLabel }}</span>
+                  <sc-if value="{{ canSwitchRole }}" hint-placeholder-val="{{ true }}">
+                    <label for="adm-role" style="font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:0.16em;color:#8C887F;padding-top:4px">{{ t.switchRole }}</label>
+                    <select id="adm-role" value="{{ roleValue }}" onChange="{{ onRoleChange }}" style="border:1px solid #DAD5CB;background:#FCFBF9;padding:9px 10px;font-size:13px;min-height:44px" style-focus="border-color:#6D7761">
+                      <sc-for list="{{ roleOptions }}" as="r" hint-placeholder-count="5">
+                        <option value="{{ r.v }}">{{ r.t }}</option>
+                      </sc-for>
+                    </select>
+                  </sc-if>
+                  <sc-if value="{{ cannotSwitchRole }}" hint-placeholder-val="{{ false }}">
+                    <span style="font-size:11.5px;line-height:1.55;color:#8C887F">{{ t.roleNoManage }}</span>
+                    <button type="button" onClick="{{ onExitSimulation }}" style="align-self:flex-start;border:1px solid #DAD5CB;background:#FFFFFF;padding:8px 12px;min-height:40px;font-size:12.5px;white-space:nowrap;cursor:pointer" style-hover="border-color:#6D7761;color:#6D7761">{{ t.exitSimulation }}</button>
+                  </sc-if>
+                </div>
+                <button type="button" role="menuitem" onClick="{{ onLogout }}" style="display:block;width:100%;text-align:left;border:none;border-top:1px solid #EDEAE3;background:transparent;padding:12px 16px;min-height:44px;font-size:13.5px;color:#A2493C;cursor:pointer" style-hover="background:#FBF0EE">{{ t.kLogout }}</button>
+              </div>
+            </sc-if>
+          </div>
+        </div>
+
+        <div style="display:flex;align-items:flex-end;justify-content:space-between;gap:16px;flex-wrap:wrap;padding:0 clamp(16px,2.4vw,28px) 16px">
+          <div style="display:flex;flex-direction:column;gap:4px;min-width:0">
+            <h1 style="margin:0;font-size:clamp(20px,2.2vw,25px);line-height:1.28;font-weight:600;letter-spacing:-0.015em;text-wrap:pretty">{{ pageTitle }}</h1>
+            <p style="margin:0;font-size:13px;line-height:1.5;color:#77736B;text-wrap:pretty">{{ pageSubtitle }}</p>
+          </div>
+          <div style="display:flex;align-items:center;gap:16px;flex-wrap:wrap">
+          <button type="button" onClick="{{ goPublicStore }}" style="border:none;background:transparent;padding:4px 0;min-height:36px;font-size:12.5px;color:#6D7761;white-space:nowrap;cursor:pointer;text-decoration:underline;text-underline-offset:3px" style-hover="color:#3F3D38">{{ t.viewPublicStore }}</button>
+          <sc-if value="{{ hasPrimaryAction }}" hint-placeholder-val="{{ true }}">
+            <button type="button" onClick="{{ onPrimaryAction }}" style="display:flex;align-items:center;gap:8px;border:none;background:#6D7761;color:#FFFFFF;padding:11px 18px;min-height:44px;font-size:13.5px;font-weight:500;letter-spacing:0.03em;cursor:pointer;transition:background 160ms ease" style-hover="background:#59614F" style-active="background:#4C5344">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"></path></svg>
+              <span style="white-space:nowrap">{{ primaryActionLabel }}</span>
+            </button>
+          </sc-if>
+          </div>
+        </div>
+      </header>
+
+      <sc-if value="{{ isGuest }}" hint-placeholder-val="{{ false }}">
+        <div role="note" style="display:flex;align-items:baseline;gap:6px 14px;flex-wrap:wrap;padding:10px clamp(16px,2.4vw,28px);background:#F7F5F1;border-bottom:1px solid #E3DFD7;border-left:3px solid #9A7A32">
+          <span style="font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:0.16em;color:#8A6E2E;white-space:nowrap">{{ guestNoticeHead }}</span>
+          <span style="font-size:12.5px;line-height:1.6;color:#55534C">{{ readOnlyNotice }}</span>
+        </div>
+      </sc-if>
+
+      <main style="flex:1;min-width:0;padding:clamp(16px,2.4vw,28px);animation:admFade 220ms ease both">
+
+        <sc-if value="{{ isDashboard }}" hint-placeholder-val="{{ true }}">
+          <div style="display:flex;flex-direction:column;gap:22px">
+
+            <section aria-labelledby="adm-attention" style="background:#FFFFFF;border:1px solid #E3DFD7">
+              <div style="padding:14px 16px;border-bottom:1px solid #EDEAE3;display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+                <h2 id="adm-attention" style="margin:0;font-size:14px;font-weight:600">{{ t.needsAttention }}</h2>
+                <span style="font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:0.12em;color:#8C887F">{{ attentionCountLabel }}</span>
+              </div>
+              <sc-if value="{{ noAttention }}" hint-placeholder-val="{{ false }}">
+                <p style="margin:0;padding:20px 16px;font-size:13.5px;color:#77736B">{{ t.nothingNeedsAttention }}</p>
+              </sc-if>
+              <ul style="margin:0;padding:0;list-style:none">
+                <sc-for list="{{ attention }}" as="a" hint-placeholder-count="4">
+                  <li style="border-bottom:1px solid #F4F2ED">
+                    <button type="button" onClick="{{ a.onClick }}" style="width:100%;display:flex;align-items:center;gap:13px;border:none;background:transparent;padding:13px 16px;min-height:56px;text-align:left;cursor:pointer" style-hover="background:#FBFAF6">
+                      <span aria-hidden="true" style="width:9px;height:9px;border-radius:50%;background:{{ a.tone }};flex:0 0 9px"></span>
+                      <span style="flex:1;min-width:0;display:flex;flex-direction:column;gap:3px">
+                        <span style="font-size:14px;color:#232220">{{ a.label }}</span>
+                        <span style="font-size:12.5px;color:#77736B">{{ a.note }}</span>
+                      </span>
+                      <span style="font-family:'IBM Plex Mono',monospace;font-size:17px;color:{{ a.tone }};white-space:nowrap">{{ a.count }}</span>
+                      <span aria-hidden="true" style="font-size:15px;color:#A8A398">→</span>
+                    </button>
+                  </li>
+                </sc-for>
+              </ul>
+            </section>
+            <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(178px,1fr));gap:12px">
+              <sc-for list="{{ stats }}" as="s" hint-placeholder-count="8">
+                <button type="button" onClick="{{ s.onClick }}" style="text-align:left;background:#FFFFFF;border:1px solid #E3DFD7;padding:15px 16px;display:flex;flex-direction:column;gap:7px;cursor:pointer;transition:border-color 140ms ease,transform 140ms ease" style-hover="border-color:#C3C7B7">
+                  <span style="font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:0.14em;color:#6E6A62">{{ s.label }}</span>
+                  <span style="font-size:27px;font-weight:500;letter-spacing:-0.02em;line-height:1;color:{{ s.tone }}">{{ s.value }}</span>
+                  <span style="font-size:12px;color:#77736B">{{ s.note }}</span>
+                </button>
+              </sc-for>
+            </div>
+
+            <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,380px),1fr));gap:16px;align-items:start">
+              <section style="background:#FFFFFF;border:1px solid #E3DFD7;display:flex;flex-direction:column">
+                <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;padding:14px 16px;border-bottom:1px solid #EDEAE3">
+                  <h2 style="margin:0;font-size:14px;font-weight:600">{{ t.kRecentlyUpdatedProducts }}</h2>
+                  <button type="button" onClick="{{ goProducts }}" style="border:none;background:transparent;font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:0.16em;color:#6D7761;cursor:pointer;padding:6px 0">{{ t.kAll }}</button>
+                </div>
+                <div style="display:flex;flex-direction:column">
+                  <sc-for list="{{ recentProducts }}" as="p" hint-placeholder-count="5">
+                    <button type="button" onClick="{{ p.onClick }}" style="display:flex;align-items:center;gap:12px;padding:11px 16px;border:none;border-bottom:1px solid #F2F0EA;background:transparent;cursor:pointer;text-align:left;width:100%" style-hover="background:#FAF9F6">
+                      <sc-if value="{{ p.hasThumb }}" hint-placeholder-val="{{ true }}">
+                        <img loading="lazy" decoding="async" src="{{ p.thumb }}" alt="{{ p.alt }}" style="width:38px;height:48px;object-fit:cover;background:#EDE9E2;flex:0 0 38px;filter:saturate(0.9)">
+                      </sc-if>
+                      <sc-if value="{{ p.noThumb }}" hint-placeholder-val="{{ false }}">
+                        <span role="img" aria-label="{{ t.kNoPhotographYet }}" style="width:38px;height:48px;flex:0 0 38px;display:grid;place-items:center;background:#EDE9E2;color:#A8A398;font-family:'IBM Plex Mono',monospace;font-size:8px;letter-spacing:0.08em;text-align:center;line-height:1.3">{{ t.kNo }}<br>{{ t.kImg }}</span>
+                      </sc-if>
+                      <span style="flex:1;min-width:0;display:flex;flex-direction:column;gap:3px">
+                        <span style="font-size:13.5px;color:#232220;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ p.name }}</span>
+                        <span style="font-family:'IBM Plex Mono',monospace;font-size:12px;color:#77736B">{{ p.meta }}</span>
+                      </span>
+                      <span style="flex:0 0 auto;font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:0.08em;padding:3px 8px;border-radius:2px;background:{{ p.badgeBg }};color:{{ p.badgeFg }}">{{ p.badge }}</span>
+                    </button>
+                  </sc-for>
+                </div>
+              </section>
+
+              <section style="background:#FFFFFF;border:1px solid #E3DFD7;display:flex;flex-direction:column">
+                <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;padding:14px 16px;border-bottom:1px solid #EDEAE3">
+                  <h2 style="margin:0;font-size:14px;font-weight:600">{{ t.kLowStockAndSoldOut }}</h2>
+                  <span style="font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:0.14em;color:#9A7A32">{{ lowStockLabel }}</span>
+                </div>
+                <sc-if value="{{ noLowStock }}" hint-placeholder-val="{{ false }}">
+                  <p style="margin:0;padding:30px 16px;text-align:center;font-size:13px;color:#8C887F">{{ t.kEveryPublishedPieceIsInStock }}</p>
+                </sc-if>
+                <div style="display:flex;flex-direction:column">
+                  <sc-for list="{{ lowStock }}" as="p" hint-placeholder-count="4">
+                    <div style="display:flex;align-items:center;gap:12px;padding:11px 16px;border-bottom:1px solid #F2F0EA">
+                      <span style="flex:1;min-width:0;display:flex;flex-direction:column;gap:3px">
+                        <span style="font-size:13.5px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ p.name }}</span>
+                        <span style="font-family:'IBM Plex Mono',monospace;font-size:12px;color:#77736B">{{ p.sku }}</span>
+                      </span>
+                      <span style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:{{ p.stockTone }}">{{ p.stockLabel }}</span>
+                      <button type="button" onClick="{{ p.onClick }}" style="border:1px solid #DAD5CB;background:#FFFFFF;padding:7px 11px;min-height:36px;font-size:12px;white-space:nowrap;cursor:pointer;border-radius:2px" style-hover="border-color:#6D7761;color:#6D7761">{{ t.kEdit }}</button>
+                    </div>
+                  </sc-for>
+                </div>
+              </section>
+
+              <section style="background:#FFFFFF;border:1px solid #E3DFD7;display:flex;flex-direction:column">
+                <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;padding:14px 16px;border-bottom:1px solid #EDEAE3">
+                  <h2 style="margin:0;font-size:14px;font-weight:600">{{ t.kRecentlyRegisteredCustomers }}</h2>
+                  <button type="button" onClick="{{ goCustomers }}" style="border:none;background:transparent;font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:0.16em;color:#6D7761;cursor:pointer;padding:6px 0">{{ t.kAll }}</button>
+                </div>
+                <div style="display:flex;flex-direction:column">
+                  <sc-for list="{{ recentCustomers }}" as="c" hint-placeholder-count="5">
+                    <button type="button" onClick="{{ c.onClick }}" style="display:flex;align-items:center;gap:12px;padding:11px 16px;border:none;border-bottom:1px solid #F2F0EA;background:transparent;cursor:pointer;text-align:left;width:100%" style-hover="background:#FAF9F6">
+                      <span aria-hidden="true" style="width:30px;height:30px;border-radius:50%;flex:0 0 30px;background:#F1EFE9;color:#6E6A62;display:grid;place-items:center;font-family:'IBM Plex Mono',monospace;font-size:11px">{{ c.initials }}</span>
+                      <span style="flex:1;min-width:0;display:flex;flex-direction:column;gap:2px">
+                        <span style="font-size:13.5px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ c.name }}</span>
+                        <span style="font-family:'IBM Plex Mono',monospace;font-size:12px;color:#77736B">{{ c.id }} · {{ c.registered }}</span>
+                      </span>
+                      <span style="flex:0 0 auto;font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:0.08em;padding:3px 8px;border-radius:2px;background:{{ c.badgeBg }};color:{{ c.badgeFg }}">{{ c.status }}</span>
+                    </button>
+                  </sc-for>
+                </div>
+              </section>
+
+              <section style="background:#FFFFFF;border:1px solid #E3DFD7;display:flex;flex-direction:column">
+                <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;padding:14px 16px;border-bottom:1px solid #EDEAE3">
+                  <h2 style="margin:0;font-size:14px;font-weight:600">{{ t.kContentAwaitingPublication }}</h2>
+                  <button type="button" onClick="{{ goNews }}" style="border:none;background:transparent;font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:0.16em;color:#6D7761;cursor:pointer;padding:6px 0">{{ t.kAll }}</button>
+                </div>
+                <sc-if value="{{ noPending }}" hint-placeholder-val="{{ false }}">
+                  <p style="margin:0;padding:30px 16px;text-align:center;font-size:13px;color:#8C887F">{{ t.kNoDraftsOrScheduledPosts }}</p>
+                </sc-if>
+                <div style="display:flex;flex-direction:column">
+                  <sc-for list="{{ pendingNews }}" as="n" hint-placeholder-count="2">
+                    <div style="display:flex;align-items:center;gap:12px;padding:11px 16px;border-bottom:1px solid #F2F0EA">
+                      <span style="flex:1;min-width:0;display:flex;flex-direction:column;gap:3px">
+                        <span style="font-size:13.5px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ n.title }}</span>
+                        <span style="font-family:'IBM Plex Mono',monospace;font-size:12px;color:#77736B">{{ n.meta }}</span>
+                      </span>
+                      <button type="button" onClick="{{ n.onEdit }}" style="border:1px solid #DAD5CB;background:#FFFFFF;padding:7px 11px;min-height:36px;font-size:12px;white-space:nowrap;cursor:pointer;border-radius:2px" style-hover="border-color:#6D7761;color:#6D7761">{{ t.kOpen }}</button>
+                      <sc-if value="{{ n.canPublish }}" hint-placeholder-val="{{ true }}">
+                        <button type="button" onClick="{{ n.onPublish }}" style="border:none;background:#6D7761;color:#FFFFFF;padding:7px 11px;min-height:36px;font-size:12px;white-space:nowrap;cursor:pointer;border-radius:2px" style-hover="background:#59614F">{{ t.kPublish }}</button>
+                      </sc-if>
+                    </div>
+                  </sc-for>
+                </div>
+              </section>
+            </div>
+
+            <section style="background:#FFFFFF;border:1px solid #E3DFD7">
+              <div style="padding:14px 16px;border-bottom:1px solid #EDEAE3">
+                <h2 style="margin:0;font-size:14px;font-weight:600">{{ t.kRecentAdministrativeActivity }}</h2>
+              </div>
+              <ul style="margin:0;padding:0;list-style:none">
+                <sc-for list="{{ activity }}" as="a" hint-placeholder-count="6">
+                  <li style="display:flex;align-items:flex-start;gap:12px;padding:11px 16px;border-bottom:1px solid #F2F0EA">
+                    <span aria-hidden="true" style="margin-top:6px;width:6px;height:6px;border-radius:50%;flex:0 0 6px;background:{{ a.dot }}"></span>
+                    <span style="flex:1;min-width:0;font-size:13.5px;line-height:1.5">{{ a.text }}</span>
+                    <span style="font-family:'IBM Plex Mono',monospace;font-size:12px;color:#6E6A62;white-space:nowrap">{{ a.who }}</span>
+                    <span style="font-family:'IBM Plex Mono',monospace;font-size:12px;color:#77736B;white-space:nowrap">{{ a.when }}</span>
+                  </li>
+                </sc-for>
+              </ul>
+            </section>
+          </div>
+        </sc-if>
+
+        <sc-if value="{{ isOrders }}" hint-placeholder-val="{{ false }}">
+          <dc-import name="AdminOrders" view="{{ view }}" entity-id="{{ entityId }}" nav="{{ nav }}" compact="{{ isCompact }}" tick="{{ tick }}" hint-size="100%,620px"></dc-import>
+        </sc-if>
+
+        <sc-if value="{{ isProducts }}" hint-placeholder-val="{{ false }}">
+          <dc-import name="AdminProducts" view="{{ view }}" entity-id="{{ entityId }}" nav="{{ nav }}" compact="{{ isCompact }}" tick="{{ tick }}" hint-size="100%,620px"></dc-import>
+        </sc-if>
+
+        <sc-if value="{{ isCustomers }}" hint-placeholder-val="{{ false }}">
+          <dc-import name="AdminCustomers" view="{{ view }}" entity-id="{{ entityId }}" nav="{{ nav }}" compact="{{ isCompact }}" tick="{{ tick }}" hint-size="100%,620px"></dc-import>
+        </sc-if>
+
+        <sc-if value="{{ isNews }}" hint-placeholder-val="{{ false }}">
+          <dc-import name="AdminNews" view="{{ view }}" entity-id="{{ entityId }}" nav="{{ nav }}" compact="{{ isCompact }}" tick="{{ tick }}" hint-size="100%,620px"></dc-import>
+        </sc-if>
+
+        <sc-if value="{{ isFeatured }}" hint-placeholder-val="{{ false }}">
+          <dc-import name="AdminFeatured" view="{{ view }}" entity-id="{{ entityId }}" nav="{{ nav }}" compact="{{ isCompact }}" tick="{{ tick }}" hint-size="100%,520px"></dc-import>
+        </sc-if>
+
+        <sc-if value="{{ isSpecials }}" hint-placeholder-val="{{ false }}">
+          <dc-import name="AdminSpecials" view="{{ view }}" entity-id="{{ entityId }}" nav="{{ nav }}" compact="{{ isCompact }}" tick="{{ tick }}" hint-size="100%,560px"></dc-import>
+        </sc-if>
+
+        <sc-if value="{{ isSettings }}" hint-placeholder-val="{{ false }}">
+          <div style="display:flex;flex-direction:column;gap:16px;max-width:960px">
+          <sc-if value="{{ settingsLocked }}" hint-placeholder-val="{{ false }}">
+            <p role="note" style="margin:0;background:#F7F5F1;border-left:3px solid #9A7A32;padding:11px 13px;font-size:13px;line-height:1.6;color:#55534C">{{ readOnlyNotice }}</p>
+          </sc-if>
+          <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,340px),1fr));gap:16px;align-items:start">
+            <section style="background:#FFFFFF;border:1px solid #E3DFD7">
+              <div style="padding:14px 16px;border-bottom:1px solid #EDEAE3"><h2 style="margin:0;font-size:14px;font-weight:600">{{ t.kStoreDetails }}</h2></div>
+              <div style="padding:16px;display:flex;flex-direction:column;gap:14px">
+                <div style="display:flex;flex-direction:column;gap:6px">
+                  <label for="set-name" style="font-size:12px;font-weight:500;color:#55534C">{{ t.kStoreName }}</label>
+                  <input id="set-name" disabled="{{ settingsLocked }}" value="{{ setStoreName }}" onChange="{{ onSetStoreName }}" style="border:1px solid #DAD5CB;background:#FCFBF9;padding:10px 12px;font-size:14px;min-height:44px" style-focus="border-color:#6D7761;background:#FFFFFF">
+                </div>
+                <div style="display:flex;flex-direction:column;gap:6px">
+                  <label for="set-tag" style="font-size:12px;font-weight:500;color:#55534C">{{ t.kTagline }}</label>
+                  <input id="set-tag" disabled="{{ settingsLocked }}" value="{{ setTagline }}" onChange="{{ onSetTagline }}" style="border:1px solid #DAD5CB;background:#FCFBF9;padding:10px 12px;font-size:14px;min-height:44px" style-focus="border-color:#6D7761;background:#FFFFFF">
+                </div>
+                <div style="display:flex;flex-direction:column;gap:6px">
+                  <label for="set-email" style="font-size:12px;font-weight:500;color:#55534C">{{ t.kContactEmail }}</label>
+                  <input id="set-email" disabled="{{ settingsLocked }}" type="email" value="{{ setEmail }}" onChange="{{ onSetEmail }}" style="border:1px solid #DAD5CB;background:#FCFBF9;padding:10px 12px;font-size:14px;min-height:44px" style-focus="border-color:#6D7761;background:#FFFFFF">
+                </div>
+                <div style="display:flex;flex-direction:column;gap:6px">
+                  <label for="set-phone" style="font-size:12px;font-weight:500;color:#55534C">{{ t.kTelephone }}</label>
+                  <input id="set-phone" disabled="{{ settingsLocked }}" value="{{ setPhone }}" onChange="{{ onSetPhone }}" style="border:1px solid #DAD5CB;background:#FCFBF9;padding:10px 12px;font-size:14px;min-height:44px" style-focus="border-color:#6D7761;background:#FFFFFF">
+                </div>
+                <div style="display:flex;flex-direction:column;gap:6px">
+                  <label for="set-addr" style="font-size:12px;font-weight:500;color:#55534C">{{ t.kStudioAddress }}</label>
+                  <input id="set-addr" disabled="{{ settingsLocked }}" value="{{ setAddress }}" onChange="{{ onSetAddress }}" style="border:1px solid #DAD5CB;background:#FCFBF9;padding:10px 12px;font-size:14px;min-height:44px" style-focus="border-color:#6D7761;background:#FFFFFF">
+                </div>
+              </div>
+            </section>
+
+            <section style="background:#FFFFFF;border:1px solid #E3DFD7">
+              <div style="padding:14px 16px;border-bottom:1px solid #EDEAE3"><h2 style="margin:0;font-size:14px;font-weight:600">{{ t.kConsolePreferences }}</h2></div>
+              <div style="padding:16px;display:flex;flex-direction:column;gap:14px">
+                <div style="display:flex;flex-direction:column;gap:7px">
+                  <span style="font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:0.18em;color:#8C887F">{{ t.language }}</span>
+                  <div style="display:flex;gap:8px;flex-wrap:wrap">
+                    <button type="button" onClick="{{ setLangEn }}" style="border:1px solid #DAD5CB;background:#FFFFFF;padding:9px 14px;min-height:44px;font-size:13.5px;color:#3F3D38;white-space:nowrap;cursor:pointer" style-hover="border-color:#6D7761;color:#6D7761">{{ langEnMark }} English</button>
+                    <button type="button" onClick="{{ setLangJa }}" style="border:1px solid #DAD5CB;background:#FFFFFF;padding:9px 14px;min-height:44px;font-size:13.5px;color:#3F3D38;white-space:nowrap;cursor:pointer" style-hover="border-color:#6D7761;color:#6D7761">{{ langJaMark }} 日本語</button>
+                  </div>
+                  <span style="font-size:12px;color:#8C887F">{{ t.langHint }}</span>
+                </div>
+                <div style="display:flex;flex-direction:column;gap:6px">
+                  <label for="set-per" style="font-size:12px;font-weight:500;color:#55534C">{{ t.kRowsPerPage }}</label>
+                  <select id="set-per" disabled="{{ settingsLocked }}" value="{{ setPerPage }}" onChange="{{ onSetPerPage }}" style="border:1px solid #DAD5CB;background:#FCFBF9;padding:10px 12px;font-size:14px;min-height:44px" style-focus="border-color:#6D7761">
+                    <option value="10">10</option>
+                    <option value="20">20</option>
+                    <option value="50">50</option>
+                  </select>
+                </div>
+                <div style="display:flex;flex-direction:column;gap:6px">
+                  <label for="set-low" style="font-size:12px;font-weight:500;color:#55534C">{{ t.kLowStockThreshold }}</label>
+                  <input id="set-low" disabled="{{ settingsLocked }}" type="number" min="0" max="10" value="{{ setLowStock }}" onChange="{{ onSetLowStock }}" style="border:1px solid #DAD5CB;background:#FCFBF9;padding:10px 12px;font-size:14px;min-height:44px" style-focus="border-color:#6D7761;background:#FFFFFF">
+                  <span style="font-size:11.5px;color:#8C887F">{{ t.kPublishedPiecesAtOrBelowThisQuanti }}</span>
+                </div>
+                <label style="display:flex;align-items:center;gap:10px;font-size:13.5px;cursor:pointer;min-height:44px">
+                  <input type="checkbox" disabled="{{ settingsLocked }}" checked="{{ setNotifyDrafts }}" onChange="{{ onSetNotifyDrafts }}" style="width:16px;height:16px;accent-color:#6D7761">
+                  <span>{{ t.kNotifyMeAboutUnpublishedDrafts }}</span>
+                </label>
+                <label style="display:flex;align-items:center;gap:10px;font-size:13.5px;cursor:pointer;min-height:44px">
+                  <input type="checkbox" disabled="{{ settingsLocked }}" checked="{{ setNotifyLowStock }}" onChange="{{ onSetNotifyLowStock }}" style="width:16px;height:16px;accent-color:#6D7761">
+                  <span>{{ t.kNotifyMeAboutLowStock }}</span>
+                </label>
+              </div>
+            </section>
+
+            <section style="background:#FFFFFF;border:1px solid #E3DFD7">
+              <div style="padding:14px 16px;border-bottom:1px solid #EDEAE3"><h2 style="margin:0;font-size:14px;font-weight:600">{{ t.kAccount }}</h2></div>
+              <div style="padding:16px;display:flex;flex-direction:column;gap:12px">
+                <div style="display:flex;align-items:center;gap:12px">
+                  <span aria-hidden="true" style="width:42px;height:42px;border-radius:50%;background:#EEF0EA;color:#5C6650;display:grid;place-items:center;font-family:'IBM Plex Mono',monospace;font-size:13px">{{ initials }}</span>
+                  <span style="display:flex;flex-direction:column;gap:2px">
+                    <span style="font-size:14px;font-weight:500">{{ userName }}</span>
+                    <span style="font-size:12.5px;color:#8C887F">{{ userEmail }}</span>
+                  </span>
+                </div>
+                <p style="margin:0;font-size:12.5px;line-height:1.6;color:#77736B">{{ t.kThisIsAPrototypeSessionAuthenticat }}</p>
+                <button type="button" onClick="{{ onLogout }}" style="align-self:flex-start;border:1px solid #DAD5CB;background:#FFFFFF;padding:10px 16px;min-height:44px;font-size:13.5px;white-space:nowrap;cursor:pointer" style-hover="border-color:#A2493C;color:#A2493C">{{ t.kSignOut }}</button>
+              </div>
+            </section>
+
+          </div>
+          </div>
+        </sc-if>
+
+        <sc-if value="{{ isDenied }}" hint-placeholder-val="{{ false }}">
+          <section role="region" aria-labelledby="adm-denied-title" style="max-width:560px;background:#FFFFFF;border:1px solid #E7CFC9">
+            <div style="padding:20px 22px;border-bottom:1px solid #F3E6E2;display:flex;align-items:center;gap:11px">
+              <span aria-hidden="true" style="width:26px;height:26px;flex:0 0 26px;border-radius:50%;background:#FBF0EE;color:#8A3F33;display:grid;place-items:center;font-size:14px;font-weight:600">!</span>
+              <h2 id="adm-denied-title" style="margin:0;font-size:16px;font-weight:600;color:#8A3F33">{{ t.noAccessTitle }}</h2>
+            </div>
+            <div style="padding:20px 22px;display:flex;flex-direction:column;gap:16px">
+              <p role="alert" style="margin:0;font-size:13.5px;line-height:1.7;color:#3F3D38">{{ t.noAccessBody }}</p>
+              <dl style="margin:0;display:grid;grid-template-columns:auto 1fr;gap:7px 18px;font-size:12.5px">
+                <dt style="font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:0.12em;color:#8C887F">{{ t.yourRoleIs }}</dt>
+                <dd style="margin:0;color:#232220;font-weight:500">{{ roleLabel }}</dd>
+                <dt style="font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:0.12em;color:#8C887F">{{ t.accessRequires }}</dt>
+                <dd style="margin:0;color:#232220;font-weight:500">{{ deniedPermLabel }}</dd>
+              </dl>
+              <button type="button" onClick="{{ goDashboard }}" style="align-self:flex-start;border:none;background:#6D7761;color:#FFFFFF;padding:11px 18px;min-height:44px;font-size:13.5px;font-weight:500;white-space:nowrap;cursor:pointer" style-hover="background:#59614F">{{ t.backToDashboard }}</button>
+            </div>
+          </section>
+        </sc-if>
+
+      </main>
+    </div>
+  </div>
+
+  <sc-if value="{{ drawerOpen }}" hint-placeholder-val="{{ false }}">
+    <div style="position:fixed;inset:0;z-index:60;display:flex">
+      <div onClick="{{ closeDrawer }}" style="position:absolute;inset:0;background:rgba(35,34,32,0.4);animation:admFade 180ms ease both"></div>
+      <nav aria-label="{{ t.kAdminSections }}" role="dialog" aria-modal="true" style="position:relative;width:264px;max-width:82vw;background:#FFFFFF;height:100%;display:flex;flex-direction:column;animation:admDrawer 220ms cubic-bezier(0.2,0.7,0.3,1) both">
+        <div style="padding:18px;border-bottom:1px solid #EDEAE3;display:flex;align-items:flex-start;justify-content:space-between;gap:12px">
+          <span style="display:flex;flex-direction:column;gap:4px">
+            <span style="font-family:'EB Garamond',serif;font-size:19px;letter-spacing:0.22em">TSUMUGI</span>
+            <span style="font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:0.24em;color:#8C887F">{{ t.kAdminConsole }}</span>
+          </span>
+          <button type="button" onClick="{{ closeDrawer }}" aria-label="{{ t.kCloseNavigation }}" style="border:none;background:transparent;font-size:22px;line-height:1;color:#77736B;cursor:pointer;padding:6px;min-height:44px;min-width:44px">×</button>
+        </div>
+        <div style="flex:1;overflow-y:auto;padding:12px 10px;display:flex;flex-direction:column;gap:2px">
+          <sc-for list="{{ navItems }}" as="n" hint-placeholder-count="5">
+            <a href="{{ n.href }}" onClick="{{ n.onClick }}" style="display:flex;align-items:center;gap:11px;padding:12px;min-height:48px;font-size:15px;border-radius:3px;background:{{ n.bg }};color:{{ n.fg }};font-weight:{{ n.weight }}" style-hover="background:#F1EFE9">
+              <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="flex:0 0 17px"><path d="{{ n.d }}"></path></svg>
+              <span style="flex:1;min-width:0">{{ n.label }}</span>
+            </a>
+          </sc-for>
+        </div>
+        <div style="border-top:1px solid #EDEAE3;padding:12px 10px;display:flex;flex-direction:column;gap:2px">
+          <a href="./" style="display:flex;align-items:center;gap:11px;padding:12px;min-height:48px;font-size:15px;color:#55534C;border-radius:3px" style-hover="background:#F1EFE9">
+            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="flex:0 0 17px"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6M15 3h6v6M10 14 21 3"></path></svg>
+            <span>{{ t.kViewStore }}</span>
+          </a>
+          <button type="button" onClick="{{ onLogout }}" style="display:flex;align-items:center;gap:11px;padding:12px;min-height:48px;font-size:15px;color:#A2493C;background:transparent;border:none;border-radius:3px;cursor:pointer;text-align:left;width:100%" style-hover="background:#FBF0EE">
+            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="flex:0 0 17px"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"></path></svg>
+            <span>{{ t.kLogout }}</span>
+          </button>
+        </div>
+      </nav>
+    </div>
+  </sc-if>
+</sc-if>
+
+<sc-if value="{{ confirmOpen }}" hint-placeholder-val="{{ false }}">
+  <div style="position:fixed;inset:0;z-index:90;display:grid;place-items:center;padding:20px;background:rgba(35,34,32,0.42);animation:admFade 160ms ease both">
+    <div role="alertdialog" aria-modal="true" aria-labelledby="adm-confirm-title" aria-describedby="adm-confirm-body" ref="{{ confirmRef }}" style="width:100%;max-width:420px;background:#FFFFFF;border:1px solid #E3DFD7;box-shadow:0 20px 60px rgba(40,36,28,0.2);animation:admRise 200ms ease both">
+      <div style="padding:20px 22px 0">
+        <h2 id="adm-confirm-title" style="margin:0 0 8px;font-size:17px;font-weight:600">{{ confirmTitle }}</h2>
+        <p id="adm-confirm-body" style="margin:0;font-size:13.5px;line-height:1.65;color:#55534C">{{ confirmBody }}</p>
+      </div>
+      <div style="display:flex;gap:10px;justify-content:flex-end;padding:20px 22px 22px;flex-wrap:wrap">
+        <button type="button" onClick="{{ onConfirmCancel }}" style="border:1px solid #DAD5CB;background:#FFFFFF;padding:10px 18px;min-height:44px;font-size:13.5px;white-space:nowrap;cursor:pointer" style-hover="border-color:#8C887F">{{ confirmCancelLabel }}</button>
+        <button type="button" onClick="{{ onConfirmAccept }}" ref="{{ confirmBtnRef }}" style="border:none;padding:10px 18px;min-height:44px;font-size:13.5px;font-weight:500;color:#FFFFFF;cursor:pointer;background:{{ confirmTone }}">{{ confirmAcceptLabel }}</button>
+      </div>
+    </div>
+  </div>
+</sc-if>
+
+<div aria-live="polite" style="position:fixed;right:16px;bottom:16px;z-index:95;display:flex;flex-direction:column;gap:9px;align-items:flex-end;pointer-events:none">
+  <sc-for list="{{ toasts }}" as="tst" hint-placeholder-count="0">
+    <div role="status" style="pointer-events:auto;display:flex;align-items:flex-start;gap:11px;min-width:250px;max-width:min(380px,88vw);background:#FFFFFF;border:1px solid #E3DFD7;border-left:3px solid {{ tst.tone }};box-shadow:0 10px 30px rgba(40,36,28,0.14);padding:13px 15px;animation:admToast 200ms ease both">
+      <span style="flex:1;min-width:0;font-size:13.5px;line-height:1.5;color:#232220">{{ tst.message }}</span>
+      <button type="button" onClick="{{ tst.onClose }}" aria-label="{{ aDismissNotification }}" style="border:none;background:transparent;color:#A8A49B;font-size:16px;line-height:1;cursor:pointer;padding:0 2px">×</button>
+    </div>
+  </sc-for>
+</div>
+
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:1440,&quot;height&quot;:960}}">
+const ICONS = {
+  dashboard: "M3 3h7v7H3zM14 3h7v5h-7zM14 12h7v9h-7zM3 14h7v7H3z",
+  orders: "M4 7h16l-1.2 12.2a1 1 0 0 1-1 .8H6.2a1 1 0 0 1-1-.8zM9 7V5.5a3 3 0 0 1 6 0V7",
+  products: "M3.3 7.2 12 3l8.7 4.2v9.6L12 21l-8.7-4.2zM3.3 7.2 12 11.5l8.7-4.3M12 11.5V21",
+  customers: "M17 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2M9.5 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8M22 21v-2a4 4 0 0 0-3-3.9M16 3.1a4 4 0 0 1 0 7.8",
+  news: "M4 4h13a2 2 0 0 1 2 2v12a2 2 0 0 0 2 2H5a1 1 0 0 1-1-1zM8 8h7M8 12h7M8 16h4",
+  featured: "M3 5h18v11H3zM3 19h18M8 13l3-3 3 3 2-2",
+  specials: "M3 4h8v16H3zM13 4h8v7h-8zM13 13h8v7h-8",
+  settings: "M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6M19.4 15a1.6 1.6 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.6 1.6 0 0 0-2.7 1.1V21a2 2 0 1 1-4 0v-.1A1.6 1.6 0 0 0 7.9 19.4a1.6 1.6 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.6 1.6 0 0 0-1.1-2.7H2a2 2 0 1 1 0-4h.1A1.6 1.6 0 0 0 3.7 7.9a1.6 1.6 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.6 1.6 0 0 0 1.8.3H8a1.6 1.6 0 0 0 1-1.5V2a2 2 0 1 1 4 0v.1a1.6 1.6 0 0 0 2.7 1.1l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.6 1.6 0 0 0-.3 1.8V8a1.6 1.6 0 0 0 1.5 1H22a2 2 0 1 1 0 4h-.1a1.6 1.6 0 0 0-1.5 1"
+};
+const T2 = new Proxy({}, {
+  get: (_, key) => {
+    const I = window.TSUMUGI_I18N, S = window.TSUMUGI_STORE;
+    const d = I ? I.t(S && S.lang ? S.lang() : "en") : {};
+    return d[key];
+  }
+});
+const BADGE = {
+  published: ["#EEF0EA", "#4F5C42", "kPublished2"],
+  draft: ["#F1EFE9", "#6E6A62", "kDraft2"],
+  soldout: ["#FBF0EE", "#8A3F33", "kSoldOut2"],
+  archived: ["#EDEDF0", "#5D5B66", "kArchived2"],
+  scheduled: ["#F6EFDF", "#7E6224", "kScheduled"],
+  Active: ["#EEF0EA", "#4F5C42", "kActive2"],
+  Inactive: ["#F1EFE9", "#6E6A62", "kInactive2"],
+  VIP: ["#EDE7F1", "#5C4A72", "VIP"],
+  Blocked: ["#FBF0EE", "#8A3F33", "kBlocked2"]
+};
+const TONE = { success: "#6D7761", error: "#A2493C", warning: "#9A7A32", info: "#55534C" };
+/* Route-level permission map — direct URL access is checked against this, not just the nav. */
+const SECTION_PERM = {
+  orders: "orders.view", products: "products.view", customers: "customers.view",
+  news: "content.view", featured: "content.view", specials: "content.view", settings: "settings.view"
+};
+const PERM_LABEL = {
+  "orders.view": "permOrdersView", "products.view": "permProductsView",
+  "customers.view": "permCustomersView", "content.view": "permContentView",
+  settings: "permSettings", "settings.view": "permSettings"
+};
+const ROLE_KEY = { owner: "roleOwner", manager: "roleManager", editor: "roleEditor", support: "roleSupport", viewer: "roleViewer", guest: "roleGuest" };
+
+class Component extends DCLogic {
+  state = {
+    authStatus: "booting", guestBusy: false, tick: 0,
+    section: "dashboard", view: "list", entityId: null,
+    session: null,
+    loginEmail: "", loginPassword: "", loginRemember: true, loginError: "", loginBusy: false,
+    drawerOpen: false, notifsOpen: false, accountOpen: false,
+    vw: typeof window !== "undefined" ? window.innerWidth : 1440,
+    toasts: [], confirm: null,
+    settingsDraft: null
+  };
+
+  _focusDrawer() {
+    window.setTimeout(() => {
+      const n = document.querySelector('nav[aria-label="Admin sections"][role="dialog"]');
+      const f = n && n.querySelector("button,a[href]");
+      if (f) f.focus();
+    }, 0);
+  }
+  _restoreDrawerFocus() {
+    const r = this._drawerReturn;
+    this._drawerReturn = null;
+    if (r && document.contains(r) && typeof r.focus === "function") r.focus();
+  }
+
+  componentDidMount() {
+    this._bind();
+    this._onResize = () => this.setState({ vw: window.innerWidth });
+    window.addEventListener("resize", this._onResize);
+    this._onKey = (e) => {
+      if (e.key !== "Escape") return;
+      if (this.state.confirm) return this._resolveConfirm(false);
+      const wasDrawer = this.state.drawerOpen;
+      this.setState({ drawerOpen: false, notifsOpen: false, accountOpen: false }, () => { if (wasDrawer) this._restoreDrawerFocus(); });
+    };
+    window.addEventListener("keydown", this._onKey);
+    this._onHash = () => this._route();
+    window.addEventListener("hashchange", this._onHash);
+    /* Anywhere outside the open panel closes it. Exempting the whole header —
+       which is what this did — left the panel open when the breadcrumb, the
+       language button or the guest chip was clicked, since both panels sit
+       inside the header. The triggers stop propagation, so their toggle wins. */
+    this._onDocClick = (e) => {
+      if (!this.state.notifsOpen && !this.state.accountOpen) return;
+      const t = e.target;
+      const inPanel = t && t.closest && t.closest('header [role="menu"], header [role="dialog"]');
+      if (inPanel) return;
+      this.setState({ notifsOpen: false, accountOpen: false });
+    };
+    document.addEventListener("click", this._onDocClick);
+  }
+  componentWillUnmount() {
+    window.removeEventListener("resize", this._onResize);
+    window.removeEventListener("keydown", this._onKey);
+    if (this._unsubAuth) this._unsubAuth();
+    if (this._guestObs) this._guestObs.disconnect();
+    window.removeEventListener("hashchange", this._onHash);
+    document.removeEventListener("click", this._onDocClick);
+    if (this._unsub) this._unsub();
+    if (this._unsubUI) this._unsubUI();
+  }
+
+  _bind() {
+    const S = window.TSUMUGI_STORE;
+    if (!S) { this._t = setTimeout(() => this._bind(), 40); return; }
+    this.S = S;
+    this._unsub = S.subscribe(() => this.setState(s => ({ tick: s.tick + 1 })));
+    this._unsubUI = S.subscribeUI(evt => {
+      if (evt.ui === "toast") this._pushToast(evt.message, evt.kind);
+      if (evt.ui === "confirm") this.setState({ confirm: { ...evt.opts, resolve: evt.resolve } });
+    });
+    /* Authentication decides what may be painted: the console stays on its boot
+       screen until the auth service reports a status, so no administration data
+       is rendered while it is "booting" or "signed_out". */
+    const A = window.TSUMUGI_AUTH;
+    this.setState({ settingsDraft: { ...S.settings() } });
+    if (!A) { this.setState({ authStatus: "signed_out" }, () => this._route()); return; }
+    this._unsubAuth = A.subscribe(st => {
+      this.setState({ authStatus: st.status, session: st.session }, () => {
+        this._route();
+        if (st.status === "guest") this._watchForGuest();
+      });
+    });
+    A.boot().then(() => {
+      this.setState({ authStatus: A.status(), session: A.session() }, () => {
+        this._route();
+        if (A.status() === "guest") this._watchForGuest();
+      });
+    });
+  }
+
+  /* The route a signed-out visitor asked for, kept in sessionStorage so it
+     survives the sign-in round trip (and a reload of the login screen). */
+  _rememberWanted(path) {
+    try { sessionStorage.setItem("tsumugi.admin.wanted", path); } catch (e) { }
+  }
+  _takeWanted() {
+    try {
+      const v = sessionStorage.getItem("tsumugi.admin.wanted");
+      sessionStorage.removeItem("tsumugi.admin.wanted");
+      return v || "";
+    } catch (e) { return ""; }
+  }
+
+  _route() {
+    const raw = (location.hash || "").replace(/^#\/?/, "");
+    const parts = raw.split("/").filter(Boolean);
+    if (parts[0] !== "admin") { location.hash = "#/admin"; return; }
+    const section = parts[1] || "dashboard";
+    const third = parts[2] || "";
+    const view = !third ? "list" : third === "new" ? "new" : "detail";
+    this.setState({
+      section, view, entityId: view === "detail" ? decodeURIComponent(third) : null,
+      drawerOpen: false, notifsOpen: false, accountOpen: false
+    });
+    window.scrollTo({ top: 0, behavior: "auto" });
+  }
+
+  nav = (path) => {
+    const target = "#" + (path.startsWith("/") ? path : "/" + path);
+    if (location.hash === target) this._route(); else location.hash = target;
+  };
+
+  _pushToast(message, kind) {
+    const id = "t" + Date.now() + Math.random();
+    this.setState(s => ({ toasts: [...s.toasts, { id, message, kind: kind || "success" }] }));
+    setTimeout(() => this.setState(s => ({ toasts: s.toasts.filter(t => t.id !== id) })), 4200);
+  }
+  componentDidUpdate() { this._lockForGuest(); }
+  /* Children mount asynchronously, so re-apply the lock whenever the console
+     adds nodes. Only childList is observed: the lock's own attribute writes
+     cannot retrigger it. */
+  _watchForGuest() {
+    if (this._guestObs) return;
+    this._guestObs = new MutationObserver(() => {
+      clearTimeout(this._guestT);
+      this._guestT = setTimeout(() => this._lockForGuest(), 60);
+    });
+    this._guestObs.observe(document.body, { childList: true, subtree: true });
+  }
+  _resolveConfirm(ok) {
+    const c = this.state.confirm;
+    this.setState({ confirm: null }, () => { if (c && c.resolve) c.resolve(ok); if (this._lastFocus && this._lastFocus.focus) this._lastFocus.focus(); });
+  }
+
+  /* One generic failure message, whatever went wrong: the screen never reveals
+     whether an address has an account. */
+  onLoginSubmit = (e) => {
+    if (e && e.preventDefault) e.preventDefault();
+    const { loginEmail, loginPassword, loginRemember, loginBusy } = this.state;
+    if (loginBusy) return;
+    const T = this._dict();
+    if (!loginEmail.trim()) return this.setState({ loginError: T.authEmailNeeded });
+    if (!loginPassword) return this.setState({ loginError: T.authPassNeeded });
+    this.setState({ loginBusy: true, loginError: "" });
+    window.TSUMUGI_AUTH.signIn(loginEmail, loginPassword, loginRemember).then(async res => {
+      if (!res || !res.ok) {
+        this.setState({ loginBusy: false, loginPassword: "", loginError: T.authFailed });
+        return;
+      }
+      /* Do not reveal the console with the anonymous/public catalogue still in
+         memory. Staff RLS is resolved first, then drafts and scheduled content
+         are loaded into the shared Store. */
+      if (window.TSUMUGI_CMS && window.TSUMUGI_CMS.configured()) {
+        try { await window.TSUMUGI_CMS.refresh("staff"); }
+        catch (e) {
+          this.setState({ loginBusy: false, loginPassword: "", loginError: T.authFailed });
+          return;
+        }
+      }
+      // Restoration is owned by the render path (authed && wantsLogin), so the
+      // requested deep link is not overwritten by a second navigation here.
+      this.setState({ loginBusy: false, loginPassword: "", loginError: "" }, () => {
+        this.S.toast(T.kSignedInAs + res.session.name, "success");
+      });
+    });
+  };
+
+  onGuestEnter = () => {
+    if (this.state.guestBusy) return;
+    const T = this._dict();
+    this.setState({ guestBusy: true, loginError: "" });
+    window.TSUMUGI_AUTH.signInAsGuest().then(res => {
+      if (!res || !res.ok) {
+        this.setState({ guestBusy: false, loginError: T.authGuestFailed });
+        return;
+      }
+      this.setState({ guestBusy: false, loginPassword: "" }, () => {
+        this.S.toast(T.guestSignedIn, "info");
+      });
+    });
+  };
+
+  onLogout = async () => {
+    this.setState({ accountOpen: false, notifsOpen: false, drawerOpen: false });
+    const ok = await this.S.confirm({ title: T2.kSignOutOfTheAdminConsole, body: T2.kUnsavedWorkInAnOpenEditorWillBeLos, accept: T2.kSignOut, tone: "#A2493C" });
+    if (!ok) return;
+    await window.TSUMUGI_AUTH.signOut();
+    this.setState({ session: null, authStatus: "signed_out", loginEmail: "", loginPassword: "", loginError: "" });
+    this.nav("/admin/login");
+  };
+
+  _deny(perm, action, entityId) {
+    const T = this._dict();
+    this.S.toast(T.permissionDenied, "error");
+    try { this.S.logAudit("permission.denied", action || "admin", entityId || perm, T.permissionDenied + " — " + perm); } catch (e) { }
+    return false;
+  }
+  _guard(perm, action) {
+    if (this.S.can(perm)) return true;
+    return this._deny(perm, action);
+  }
+
+
+  /* Read-only enforcement in the DOM. The store is the authoritative boundary
+     (every mutation is refused there); this is the second layer that stops a
+     guest from typing into a form whose save will never land. Filter, search,
+     sort and pagination controls stay usable so the console can still be read.
+     Applied after each render because the children re-render freely. */
+  _lockForGuest() {
+    if (!this.S || !this.S.isGuest()) return;
+    const main = document.querySelector("main");
+    if (!main) return;
+    /* Fields, and the rich-text body. */
+    main.querySelectorAll("input, select, textarea, [contenteditable='true']").forEach(el => {
+      const hint = (el.id || "") + " " + (el.name || "") + " " + (el.getAttribute("aria-label") || "");
+      if (/search|query|filter|sort|page|lang|-f-|reveal/i.test(hint) || (el.type || "").toLowerCase() === "search") return;
+      if (el.isContentEditable) { el.setAttribute("contenteditable", "false"); return; }
+      if (!el.disabled) { el.disabled = true; el.setAttribute("aria-disabled", "true"); }
+    });
+    /* Buttons: everything that writes is turned off, so nothing on screen is a
+       click that silently does nothing. The allow-list is the console's reading
+       vocabulary — navigation, disclosure, preview, cancel and menu openers. */
+    const READ_ONLY_OK = /プレビュー|preview|キャンセル|cancel|閉じる|close|ストアで見る|view on store|サイトで|編集|edit|戻る|back|次|前|page|検索|search|絞り込|filter|並び替|sort|表示|show|すべて|all|コピー|copy|ダウンロード|download|印刷|print/i;
+    main.querySelectorAll("button").forEach(el => {
+      if (el.dataset.guestLocked === "1" || el.disabled) return;
+      // Disclosure toggles and popup openers only reveal what is already there.
+      if (el.hasAttribute("aria-expanded") || el.hasAttribute("aria-haspopup")) return;
+      if (el.closest("[role='tablist'], nav, header")) return;
+      const label = (el.textContent || "") + " " + (el.getAttribute("aria-label") || "") + " " + (el.title || "");
+      if (READ_ONLY_OK.test(label)) return;
+      // Links dressed as buttons navigate; leave them alone.
+      if (el.closest("a")) return;
+      el.dataset.guestLocked = "1";
+      el.disabled = true;
+      el.setAttribute("aria-disabled", "true");
+      el.style.opacity = "0.45";
+      el.style.cursor = "not-allowed";
+    });
+  }
+
+  /* Store-level refusal is the real boundary; this only explains it on screen. */
+  _guestBlock() {
+    if (!this.S.isGuest()) return false;
+    this.S.toast(this._dict().guestBlocked, "warning");
+    return true;
+  }
+  _setSetting = (k, v) => {
+    if (this._guestBlock() || !this.S.can("settings")) return;
+    this.setState(s => ({ settingsDraft: { ...s.settingsDraft, [k]: v } }), () => {
+      clearTimeout(this._settingsT);
+      this._settingsT = setTimeout(() => { this.S.saveSettings(this.state.settingsDraft); this.S.toast(T2.kSettingsSaved, "success"); }, 700);
+    });
+  };
+
+  _rel(isoStr) {
+    const then = new Date(isoStr).getTime();
+    if (!then) return "—";
+    const mins = Math.round((Date.now() - then) / 60000);
+    if (mins < 1) return T2.kJustNow;
+    if (mins < 60) return mins + T2.kMAgo;
+    const h = Math.round(mins / 60);
+    if (h < 24) return h + T2.kHAgo;
+    const d = Math.round(h / 24);
+    if (d < 31) return d + T2.kDAgo;
+    return new Date(isoStr).toISOString().slice(0, 10);
+  }
+  _initials(name) { return String(name || "?").split(" ").map(w => w[0]).join("").slice(0, 2).toUpperCase(); }
+
+  _lang() { const S = this.S || this.store || window.TSUMUGI_STORE; return (S && S.lang) ? S.lang() : "en"; }
+  _dict() { const I = window.TSUMUGI_I18N; return I ? I.t(this._lang()) : {}; }
+  renderVals() {
+    const l = this._lang();
+    const pick = (S) => S || this.S || this.store || window.TSUMUGI_STORE;
+    return Object.assign({
+      t: this._dict(), lang: l, isJa: l === "ja",
+      aDismissNotification: this._dict().kDismissNotification,
+      setLangEn: () => { const S = pick(); if (S && S.setLang) S.setLang("en"); },
+      setLangJa: () => { const S = pick(); if (S && S.setLang) S.setLang("ja"); },
+      toggleLang: () => { const S = pick(); if (S && S.toggleLang) S.toggleLang(); },
+      langLabel: l === "ja" ? "ENGLISH" : "日本語",
+      langEnMark: l === "ja" ? "" : "✓", langJaMark: l === "ja" ? "✓" : ""
+    }, this._renderVals());
+  }
+
+  _renderVals() {
+    const T2 = this._dict();
+    const T = T2;
+    const s = this.state;
+    const isCompact = s.vw < 1024, isWide = s.vw >= 720;
+    const base = {
+      booting: s.authStatus === "booting",
+      isCompact, isWide,
+      toasts: s.toasts.map(t => ({ ...t, tone: TONE[t.kind] || TONE.success, onClose: () => this.setState(st => ({ toasts: st.toasts.filter(x => x.id !== t.id) })) })),
+      confirmOpen: !!s.confirm,
+      confirmTitle: s.confirm ? s.confirm.title : "",
+      confirmBody: s.confirm ? s.confirm.body : "",
+      confirmAcceptLabel: s.confirm ? (s.confirm.accept || T2.kConfirm) : "",
+      confirmCancelLabel: s.confirm ? (s.confirm.cancel || T2.kCancel) : "",
+      confirmTone: s.confirm ? (s.confirm.tone || "#6D7761") : "#6D7761",
+      onConfirmAccept: () => this._resolveConfirm(true),
+      onConfirmCancel: () => this._resolveConfirm(false),
+      confirmBtnRef: el => { if (el && this._cbtn !== el) { this._cbtn = el; this._lastFocus = document.activeElement; setTimeout(() => el.focus(), 30); } },
+      confirmRef: el => {
+        if (!el || el._trapped) return;
+        el._trapped = true;
+        el.addEventListener("keydown", ev => {
+          if (ev.key !== "Tab") return;
+          const f = el.querySelectorAll("button");
+          if (!f.length) return;
+          const first = f[0], last = f[f.length - 1];
+          if (ev.shiftKey && document.activeElement === first) { ev.preventDefault(); last.focus(); }
+          else if (!ev.shiftKey && document.activeElement === last) { ev.preventDefault(); first.focus(); }
+        });
+      }
+    };
+    if (s.authStatus === "booting") return { ...base, showLogin: false, showApp: false };
+
+    const authed = (s.authStatus === "authenticated" || s.authStatus === "guest") && !!s.session;
+    const wantsLogin = s.section === "login";
+    if (!authed && !wantsLogin) {
+      // Remember the deep link so signing in returns here instead of the dashboard.
+      this._rememberWanted("/admin/" + s.section + (s.entityId ? "/" + s.entityId : s.view === "new" ? "/new" : ""));
+      setTimeout(() => this.nav("/admin/login"), 0);
+    }
+    const showLogin = !authed || wantsLogin;
+    /* Several renders can pass through this state (store ticks, toasts); the
+       redirect is scheduled once, or the second pass would consume an empty
+       route and navigate over the restored one. */
+    if (authed && wantsLogin && !this._restoring) {
+      this._restoring = true;
+      const t = this._takeWanted() || "/admin";
+      setTimeout(() => { this._restoring = false; this.nav(t); }, 0);
+    }
+
+    const login = {
+      showLogin, showApp: !showLogin,
+      loginEmail: s.loginEmail, loginPassword: s.loginPassword, loginRemember: s.loginRemember,
+      loginError: s.loginError, loginBusy: s.loginBusy,
+      onLoginEmail: e => this.setState({ loginEmail: e.target.value, loginError: "" }),
+      onLoginPassword: e => this.setState({ loginPassword: e.target.value, loginError: "" }),
+      onLoginRemember: e => this.setState({ loginRemember: e.target.checked }),
+      onLoginSubmit: this.onLoginSubmit,
+      onGuestEnter: this.onGuestEnter,
+      guestBusy: s.guestBusy,
+      /* Only the offline demo provider has a shared credential to show; the
+         block disappears as soon as Supabase is configured. */
+      showDemoCreds: !!(window.TSUMUGI_AUTH && !window.TSUMUGI_AUTH.isConfigured()),
+      demoEmail: (this.S && this.S.DEMO) ? this.S.DEMO.email : "",
+      fillDemo: () => this.setState({ loginEmail: (this.S.DEMO || {}).email || "", loginPassword: (this.S.DEMO || {}).password || "", loginError: "" })
+    };
+    if (showLogin) return { ...base, ...login };
+
+    const S = this.S;
+    const P = S.products(), C = S.customers(), N = S.news(), ST = S.settings();
+    const drafts = P.filter(p => p.status === "draft");
+    const lowThreshold = Number(ST.lowStockThreshold || 1);
+    const low = P.filter(p => (p.status === "published" && p.stock <= lowThreshold) || p.status === "soldout").slice(0, 6);
+    const draftNews = N.filter(n => n.status === "draft" || n.status === "scheduled");
+    const thisMonth = C.filter(c => c.registered >= "2026-07-01");
+
+    // Direct URL access is enforced here, not only by the hidden nav item.
+    const secPerm = SECTION_PERM[s.section] || "";
+    const isDenied = !!secPerm && !S.can(secPerm);
+    if (isDenied && this._deniedFor !== s.section) {
+      this._deniedFor = s.section;
+      try { S.logAudit("permission.denied", "route", "/admin/" + s.section, T2.noAccessTitle + " — " + secPerm); } catch (e) { }
+    }
+    if (!isDenied) this._deniedFor = null;
+
+    const secTitles = {
+      dashboard: [T2.kDashboard, T2.storeOverviewFor + " " + new Date().toISOString().slice(0, 10)],
+      products: s.view === "list" ? [T2.kProducts, P.length + T2.kPiecesInTheArchive] : s.view === "new" ? [T2.kNewProduct, T2.kAddAPieceToTheArchive] : [T2.kEditProduct, T2.kUpdateArchiveRecord],
+      customers: s.view === "list" ? [T2.kCustomers, C.length + T2.kRegisteredAccounts] : [T2.kCustomer, T2.kProfileOrdersAndInternalNotes],
+      news: s.view === "list" ? [T2.kNewsJournal, N.length + T2.kEntries] : s.view === "new" ? [T2.kNewEntry, T2.kWriteANewsPostOrJournalArticle] : [T2.kEditEntry, T2.kUpdatePublishedOrDraftContent],
+      orders: s.view === "list"
+        ? [T.orders, S.orders().length + " " + T.ordersCount]
+        : [(S.getOrder(s.entityId) || {}).number || T.orderNotFound,
+           (S.getOrder(s.entityId) || {}).customerName || T.orderSummaryHead],
+      featured: [T.fcTitle, T.fcSubtitle],
+      specials: [T.sfTitle, T.sfSubtitle],
+      settings: [T2.kSettings, this._lang() === "ja" ? "ストア情報・管理画面の設定" : "Store details and console preferences"]
+    };
+    let [pageTitle, pageSubtitle] = secTitles[s.section] || [T2.kNotFound, T2.kThisAdminPageDoesNotExist];
+    if (isDenied) { pageTitle = T2.noAccessTitle; pageSubtitle = T2.permissionDenied; }
+
+    const O = S.orders();
+    const unfulfilled = O.filter(o => o.fulfilmentStatus === "Unfulfilled");
+    const awaitingPay = O.filter(o => o.paymentStatus === "Pending");
+    const returns = O.filter(o => o.fulfilmentStatus === "Returned");
+
+    // Navigation is filtered by role, but every handler re-checks the permission too.
+    const navDef = [
+      [T2.kDashboard, "dashboard", "/admin", ICONS.dashboard, "", null],
+      [T.orders, "orders", "/admin/orders", ICONS.orders, unfulfilled.length ? String(unfulfilled.length) : "", "orders.view"],
+      [T2.kProducts, "products", "/admin/products", ICONS.products, drafts.length ? String(drafts.length) : "", "products.view"],
+      [T2.kCustomers, "customers", "/admin/customers", ICONS.customers, "", "customers.view"],
+      [T2.kNews, "news", "/admin/news", ICONS.news, draftNews.length ? String(draftNews.length) : "", "content.view"],
+      [T.fcTitle, "featured", "/admin/featured", ICONS.featured, "", "content.view"],
+      [T.sfTitle, "specials", "/admin/specials", ICONS.specials, "", "content.view"],
+      [T2.kSettings, "settings", "/admin/settings", ICONS.settings, "", "settings"]
+    ].filter(row => !row[5] || S.can(row[5]));
+
+    // Products missing anything mandatory for publication.
+    const incompleteProducts = P.filter(p => {
+      const m = p.measurements || {};
+      const hasMeasure = Object.keys(m).filter(k => Number(m[k]) > 0).length >= 2;
+      const primary = (p.images || []).some(im => im.primary && im.url);
+      const alts = (p.images || []).every(im => (im.alt || "").trim());
+      return !p.name || !p.sku || !p.price || !p.category || !p.size ||
+        !p.condition || !(p.conditionNote || "").trim() || !hasMeasure || !primary || !alts || !p.slug;
+    });
+    const scheduled = N.filter(n => n.status === "scheduled" || (n.status === "published" && n.publishDate > new Date().toISOString().slice(0, 10)));
+    const auditAll = S.audit();
+    const exportEvents = auditAll.filter(a => a.action === "customer.export" || a.action === "order.export");
+    const revealEvents = auditAll.filter(a => a.action === "pii.reveal");
+
+    const attentionDefs = [
+      ["awaitingPayment", awaitingPay.length, "#8A3F33", "/admin/orders", "orders.view", T.payPending],
+      ["returnsAttention", returns.length, "#8A3F33", "/admin/orders", "orders.view", T.fulReturned],
+      ["unfulfilledOrders", unfulfilled.length, "#9A7A32", "/admin/orders", "orders.view", T.fulUnfulfilled],
+      ["productsIncomplete", incompleteProducts.length, "#9A7A32", "/admin/products", "products.view", T.missingRequired],
+      ["draftsReview", draftNews.length, "#6D7761", "/admin/news", "content.view", T.kDraft]
+    ];
+    const attentionItems = attentionDefs
+      .filter(([, count, , , perm]) => count > 0 && (!perm || S.can(perm)))
+      .map(([key, count, tone, path, , note]) => ({
+        label: T[key], count: String(count), tone, note,
+        onClick: () => this.nav(path)
+      }));
+
+    const crumbLast = s.view !== "list" ? (s.view === "new" ? "NEW" : String(s.entityId)) : "";
+    /* The console root is not named in the trail: every page is inside it, so
+       the word adds a step without telling anyone where they are. */
+    const crumbList = [];
+    if (s.section !== "dashboard") {
+      const secKey = { products: "kProducts", customers: "kCustomers", news: "kNews", settings: "kSettings" }[s.section];
+      const secOwn = s.section === "featured" ? T.fcTitle : s.section === "specials" ? T.sfTitle : "";
+      const lbl = s.section === "orders"
+        ? (this._lang() === "ja" ? T.orders : "ORDERS")
+        : secOwn ? secOwn
+        : (this._lang() === "ja" && secKey && T2[secKey]) ? T2[secKey] : s.section.toUpperCase();
+      crumbList.push({ label: lbl, path: "/admin/" + s.section });
+    }
+    if (crumbLast) crumbList.push({ label: crumbLast, path: null });
+    // At phone widths three crumbs cannot fit beside the header actions; keep the last two.
+    if (s.vw < 560 && crumbList.length > 2) crumbList.splice(0, crumbList.length - 2);
+
+    const canNewProduct = S.can("products.edit"), canNewEntry = S.can("content.edit");
+    const primary = {
+      products: s.view === "list" && canNewProduct ? [T2.kNewProduct, () => { if (this._guard("products.edit", "product.create")) this.nav("/admin/products/new"); }] : null,
+      customers: null,
+      news: s.view === "list" && canNewEntry ? [T2.kNewEntry, () => { if (this._guard("content.edit", "content.create")) this.nav("/admin/news/new"); }] : null,
+      dashboard: canNewProduct ? [T2.kNewProduct, () => { if (this._guard("products.edit", "product.create")) this.nav("/admin/products/new"); }] : null,
+      settings: null
+    }[s.section] || null;
+
+    const notifItems = [];
+    const jp = this._lang() === "ja";
+    if (ST.notifyDrafts && drafts.length) notifItems.push({
+      title: jp ? "未公開の商品下書きが " + drafts.length + " 件あります" : drafts.length + " product " + (drafts.length === 1 ? "draft is" : "drafts are") + " unpublished",
+      meta: T2.kProductsNeedsReview, dot: "#9A7A32", onClick: () => this.nav("/admin/products")
+    });
+    if (ST.notifyLowStock && low.length) notifItems.push({
+      title: jp ? "売り切れ、または在庫僅少の商品が " + low.length + " 点あります" : low.length + " " + (low.length === 1 ? "piece is" : "pieces are") + " sold out or low",
+      meta: T2.kInventoryCheckAvailability, dot: "#8A3F33", onClick: () => this.nav("/admin/products")
+    });
+    if (draftNews.length) notifItems.push({
+      title: jp ? "公開待ちの記事が " + draftNews.length + " 本あります" : draftNews.length + " " + (draftNews.length === 1 ? "article" : "articles") + " awaiting publication",
+      meta: T2.kNewsAndJournal, dot: "#6D7761", onClick: () => this.nav("/admin/news")
+    });
+    if (thisMonth.length) notifItems.push({
+      title: jp ? "今月の新規顧客が " + thisMonth.length + " 名います" : thisMonth.length + " new " + (thisMonth.length === 1 ? "customer" : "customers") + " this month",
+      meta: T2.kCustomersJuly2026, dot: "#6D7761", onClick: () => this.nav("/admin/customers")
+    });
+
+    const statusBadge = k => { const b = BADGE[k] || BADGE.draft; return [b[0], b[1], T2[b[2]] || b[2]]; };
+
+    return {
+      ...base, ...login,
+      tick: s.tick, view: s.view, entityId: s.entityId, nav: this.nav,
+      showSidebar: !isCompact,
+      isDashboard: !isDenied && s.section === "dashboard", isProducts: !isDenied && s.section === "products",
+      isOrders: !isDenied && s.section === "orders",
+      isCustomers: !isDenied && s.section === "customers", isNews: !isDenied && s.section === "news",
+      isFeatured: !isDenied && s.section === "featured",
+      isSpecials: !isDenied && s.section === "specials",
+      isSettings: !isDenied && s.section === "settings",
+      isDenied,
+      deniedPermLabel: isDenied ? (T[PERM_LABEL[secPerm]] || secPerm) : "",
+      goDashboard: () => this.nav("/admin"),
+      pageTitle, pageSubtitle,
+      hasPrimaryAction: !isDenied && !!primary,
+      primaryActionLabel: primary ? primary[0] : "",
+      onPrimaryAction: primary ? primary[1] : () => { },
+      navItems: navDef.map(([label, key, path, d, badge]) => ({
+        label, d, badge, href: "#" + path,
+        current: s.section === key ? "page" : "false",
+        bg: s.section === key ? "#EEF0EA" : "transparent",
+        fg: s.section === key ? "#3F4A35" : "#55534C",
+        weight: s.section === key ? "500" : "400",
+        onClick: e => { e.preventDefault(); this.nav(path); }
+      })),
+      crumbs: crumbList.map((c, i) => ({
+        label: c.label, sep: i < crumbList.length - 1, last: !c.path,
+        color: c.path ? "#77736B" : "#232220", cursor: c.path ? "pointer" : "default",
+        onClick: () => c.path && this.nav(c.path)
+      })),
+      /* demo banner + role simulation */
+      goPublicStore: () => { window.location.href = "./"; },
+      isGuest: S.isGuest(),
+      guestChip: T.guestBadge + " · " + T.guestReadOnly,
+      /* A guest session is a standing condition, not an event: the bar under the
+         header states it for as long as the session lasts, rather than a toast
+         that has already gone by the time anything is clicked. */
+      guestNoticeHead: T.guestNoticeHead,
+      readOnlyNotice: T.guestNoticeBody,
+      settingsLocked: !S.can("settings"),
+      roleLabel: T[ROLE_KEY[S.roleOf()]] || S.roleOf(),
+      roleValue: S.roleOf(),
+      canSwitchRole: S.can("roles"), cannotSwitchRole: !S.can("roles"),
+      onExitSimulation: () => { S.setRole("owner"); this.setState({ accountOpen: false }); S.toast(T.simulationEnded, "info"); },
+      roleOptions: S.ROLES.map(r => ({ v: r, t: T[ROLE_KEY[r]] || r })),
+      onRoleChange: e => {
+        const next = e.target.value;
+        if (!this._guard("roles", "role.switch")) return;
+        S.setRole(next); this.setState({ accountOpen: false });
+        S.toast(T.activeRole + ": " + (T[ROLE_KEY[next]] || next), "info");
+      },
+
+      /* needs-attention, ordered by operational urgency */
+      attention: attentionItems,
+      noAttention: attentionItems.length === 0,
+      attentionCountLabel: attentionItems.length
+        ? attentionItems.length + " " + T.itemsCount
+        : "",
+
+      drawerOpen: s.drawerOpen,
+      openDrawer: () => { this._drawerReturn = document.activeElement; this.setState({ drawerOpen: true }, () => this._focusDrawer()); },
+      closeDrawer: () => this.setState({ drawerOpen: false }, () => this._restoreDrawerFocus()),
+      notifsOpen: s.notifsOpen, accountOpen: s.accountOpen,
+      toggleNotifs: e => { e.stopPropagation(); this.setState(st => ({ notifsOpen: !st.notifsOpen, accountOpen: false })); },
+      toggleAccount: e => { e.stopPropagation(); this.setState(st => ({ accountOpen: !st.accountOpen, notifsOpen: false })); },
+      closeMenus: () => this.setState({ notifsOpen: false, accountOpen: false }),
+      notifs: notifItems, hasNotifs: notifItems.length > 0, noNotifs: notifItems.length === 0,
+      notifCount: notifItems.length,
+      userName: s.session.name, userEmail: s.session.email, userRole: s.session.role,
+      initials: this._initials(s.session.name),
+      onLogout: this.onLogout,
+      goSettings: () => { this.setState({ accountOpen: false }); this.nav("/admin/settings"); },
+      goProducts: () => this.nav("/admin/products"),
+      goCustomers: () => this.nav("/admin/customers"),
+      goNews: () => this.nav("/admin/news"),
+
+      stats: [
+        [T2.kTotalProducts, P.length, T2.kInTheArchive, "#232220", "/admin/products"],
+        [T2.kPublished2, P.filter(p => p.status === "published").length, T2.kVisibleInTheShop, "#4F5C42", "/admin/products"],
+        [T2.kDrafts, drafts.length, T2.kNotYetPublic, "#9A7A32", "/admin/products"],
+        [T2.kSoldOut2, P.filter(p => p.status === "soldout").length, T2.kShownAsUnavailable, "#8A3F33", "/admin/products"],
+        [T2.kTotalCustomers, C.length, T2.kRegisteredAccounts2, "#232220", "/admin/customers"],
+        [T2.kNewThisMonth, thisMonth.length, T2.kSince1July, "#4F5C42", "/admin/customers"],
+        [T2.kPublishedArticles, N.filter(n => n.status === "published").length, T2.kLiveOnTheSite, "#4F5C42", "/admin/news"],
+        [T2.kArticleDrafts, N.filter(n => n.status === "draft").length, T2.kAwaitingReview, "#9A7A32", "/admin/news"]
+      ].map(([label, value, note, tone, path]) => ({ label, value, note, tone, onClick: () => this.nav(path) })),
+
+      recentProducts: P.slice().sort((a, b) => (b.updatedAt || "").localeCompare(a.updatedAt || "")).slice(0, 5).map(p => {
+        const b = statusBadge(p.status);
+        return {
+          name: p.name, thumb: (p.images[0] || {}).thumb || "", alt: (p.images[0] || {}).alt || p.name,
+          hasThumb: !!(p.images[0] || {}).thumb, noThumb: !(p.images[0] || {}).thumb,
+          meta: p.sku + " · " + this._rel(p.updatedAt),
+          badge: b[2], badgeBg: b[0], badgeFg: b[1],
+          onClick: () => this.nav("/admin/products/" + p.id)
+        };
+      }),
+      lowStock: low.map(p => ({
+        name: p.name, sku: p.sku,
+        stockLabel: p.status === "soldout" ? T2.kSoldOut2 : p.stock + T2.kLeft,
+        stockTone: p.status === "soldout" || p.stock === 0 ? "#A2493C" : "#9A7A32",
+        onClick: () => this.nav("/admin/products/" + p.id)
+      })),
+      noLowStock: low.length === 0,
+      lowStockLabel: low.length + T2.kNeedAttention,
+      recentCustomers: C.slice().sort((a, b) => b.registered.localeCompare(a.registered)).slice(0, 5).map(c => {
+        const b = statusBadge(c.status);
+        return { name: c.name, id: c.id, registered: c.registered, initials: this._initials(c.name), status: b[2], badgeBg: b[0], badgeFg: b[1], onClick: () => this.nav("/admin/customers/" + c.id) };
+      }),
+      pendingNews: draftNews.slice(0, 5).map(n => ({
+        title: n.title,
+        meta: (n.type === "journal" ? T.kJournal : T.kNews2 || T.kNews) + " · " +
+          (T[{ draft: "draft", published: "published", scheduled: "scheduled", archived: "kArchived" }[n.status]] || n.status) + " · " + n.publishDate,
+        canPublish: S.can("content.publish"),
+        onEdit: () => this.nav("/admin/news/" + n.id),
+        onPublish: async () => {
+          if (!this._guard("content.publish", "content.publish")) return;
+          const ok = await this.S.setNewsStatus([n.id], "published");
+          if (ok) this.S.toast("“" + n.title + "” " + T.nowLive, "success");
+        }
+      })),
+      noPending: draftNews.length === 0,
+      activity: this.S.activity().slice(0, 7).map(a => ({
+        text: a.text, who: a.who, when: this._rel(a.at),
+        dot: a.kind === "delete" ? "#A2493C" : a.kind === "create" ? "#6D7761" : a.kind === "publish" ? "#4F5C42" : "#C0BBB1"
+      })),
+
+      setStoreName: (s.settingsDraft || ST).storeName,
+      setTagline: (s.settingsDraft || ST).tagline,
+      setEmail: (s.settingsDraft || ST).email,
+      setPhone: (s.settingsDraft || ST).phone,
+      setAddress: (s.settingsDraft || ST).address,
+      setPerPage: String((s.settingsDraft || ST).itemsPerPage),
+      setLowStock: (s.settingsDraft || ST).lowStockThreshold,
+      setNotifyDrafts: (s.settingsDraft || ST).notifyDrafts,
+      setNotifyLowStock: (s.settingsDraft || ST).notifyLowStock,
+      onSetStoreName: e => this._setSetting("storeName", e.target.value),
+      onSetTagline: e => this._setSetting("tagline", e.target.value),
+      onSetEmail: e => this._setSetting("email", e.target.value),
+      onSetPhone: e => this._setSetting("phone", e.target.value),
+      onSetAddress: e => this._setSetting("address", e.target.value),
+      onSetPerPage: e => this._setSetting("itemsPerPage", Number(e.target.value)),
+      onSetLowStock: e => this._setSetting("lowStockThreshold", Number(e.target.value)),
+      onSetNotifyDrafts: e => this._setSetting("notifyDrafts", e.target.checked),
+      onSetNotifyLowStock: e => this._setSetting("notifyLowStock", e.target.checked)
+    };
+  }
+}
+</script>
+</body>
+</html>

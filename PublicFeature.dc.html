@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+      <div style="animation:fadeIn 400ms ease both">
+        <section style="padding:clamp(28px,5vh,64px) clamp(20px,4vw,64px) clamp(20px,3vh,32px);display:flex;flex-direction:column;gap:20px">
+          <span style="font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:0.16em;color:#9C978F">{{ vm.t.sfCrumb }}</span>
+
+          <sc-if value="{{ vm.sfMissing }}" hint-placeholder-val="{{ false }}">
+            <div style="display:flex;flex-direction:column;gap:18px;padding:clamp(32px,8vh,80px) 0 clamp(48px,10vh,120px);max-width:560px">
+              <h1 style="margin:0;font-family:'EB Garamond',serif;font-size:clamp(25px,3.2vw,36px);font-weight:400;line-height:1.2">{{ vm.t.sfGone }}</h1>
+              <p style="margin:0;font-size:15px;line-height:1.9;color:#4A4740">{{ vm.t.sfGoneBody }}</p>
+              <a href="#/shop" onClick="{{ vm.goShopLink }}" style="font-family:'IBM Plex Mono',monospace;font-size:12px;letter-spacing:0.2em;border-bottom:1px solid #C9C2B7;padding-bottom:8px;width:fit-content;transition:border-color 320ms ease" style-hover="border-bottom-color:#222222">{{ vm.t.sfBackToShop }}</a>
+            </div>
+          </sc-if>
+
+          <sc-if value="{{ vm.sfFound }}" hint-placeholder-val="{{ true }}">
+            <div style="display:flex;flex-direction:column;gap:clamp(20px,3vh,32px)">
+              <div style="display:flex;align-items:flex-end;justify-content:space-between;gap:24px;flex-wrap:wrap">
+                <div style="display:flex;flex-direction:column;gap:14px;max-width:680px;min-width:0">
+                  <span style="font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:0.22em;color:#6D7761">{{ vm.t.sfEyebrow }}</span>
+                  <h1 style="margin:0;font-family:'EB Garamond',serif;font-size:clamp(25px,3.2vw,36px);font-weight:400;line-height:1.14">{{ vm.feature.title }}</h1>
+                  <p style="margin:0;font-size:15px;line-height:1.95;color:#4A4740;text-wrap:pretty;white-space:pre-line">{{ vm.feature.dek }}</p>
+                </div>
+                <span style="font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:0.18em;color:#9C978F;white-space:nowrap">{{ vm.feature.meta }}</span>
+              </div>
+            </div>
+          </sc-if>
+        </section>
+
+        <sc-if value="{{ vm.sfFound }}" hint-placeholder-val="{{ true }}">
+          <section style="padding:0 clamp(20px,4vw,64px) clamp(32px,5vh,56px);display:flex;flex-direction:column;gap:clamp(12px,1.6vw,20px)">
+            <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:clamp(12px,1.6vw,20px)">
+              <div style="min-width:0;position:relative;height:clamp(300px,52vh,560px);background:#E4DCD1;overflow:hidden"><img loading="lazy" decoding="async" src="{{ vm.feature.a.img }}" alt="{{ vm.feature.a.alt }}" style="width:100%;height:100%;object-fit:cover;display:block;filter:saturate(0.86) sepia(0.1) contrast(1.02)"></div>
+              <sc-if value="{{ vm.feature.hasSide }}" hint-placeholder-val="{{ true }}">
+                <div style="min-width:0;display:grid;grid-template-rows:1fr 1fr;gap:clamp(12px,1.6vw,20px);height:clamp(300px,52vh,560px)">
+                  <div style="min-width:0;position:relative;background:#E4DCD1;overflow:hidden"><img loading="lazy" decoding="async" src="{{ vm.feature.b.img }}" alt="{{ vm.feature.b.alt }}" style="width:100%;height:100%;object-fit:cover;display:block;filter:saturate(0.86) sepia(0.1) contrast(1.02)"></div>
+                  <sc-if value="{{ vm.feature.hasThird }}" hint-placeholder-val="{{ true }}">
+                    <div style="min-width:0;position:relative;background:#E4DCD1;overflow:hidden"><img loading="lazy" decoding="async" src="{{ vm.feature.c.img }}" alt="{{ vm.feature.c.alt }}" style="width:100%;height:100%;object-fit:cover;display:block;filter:saturate(0.86) sepia(0.1) contrast(1.02)"></div>
+                  </sc-if>
+                </div>
+              </sc-if>
+            </div>
+          </section>
+
+          <section style="padding:0 clamp(20px,4vw,64px) clamp(56px,9vh,110px);display:flex;flex-direction:column;gap:clamp(24px,4vh,40px)">
+            <div style="display:flex;align-items:flex-end;justify-content:space-between;gap:16px;border-bottom:1px solid #E6E0D7;padding-bottom:18px">
+              <h2 style="margin:0;font-family:'EB Garamond',serif;font-size:clamp(20px,2.4vw,28px);font-weight:400">{{ vm.t.sfInFeature }}</h2>
+              <span style="font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:0.18em;color:#9C978F;white-space:nowrap">{{ vm.feature.countLabel }}</span>
+            </div>
+
+            <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(clamp(150px,40vw,250px),1fr));gap:clamp(20px,3vw,40px) clamp(12px,2.4vw,32px)">
+              <sc-for list="{{ vm.feature.products }}" as="p" hint-placeholder-count="4">
+                <article style="min-width:0;display:flex;flex-direction:column;gap:clamp(10px,2.4vw,14px)">
+                  <div style="min-width:0;position:relative;aspect-ratio:3/4;background:#E4DCD1;overflow:hidden">
+                    <button type="button" onClick="{{ p.onOpen }}" aria-label="{{ p.name }}" style="position:absolute;inset:0;border:none;padding:0;background:transparent;cursor:pointer;transition:opacity 500ms ease;z-index:1" style-hover="opacity:0.88">
+                      <img loading="lazy" decoding="async" src="{{ p.card }}" alt="{{ p.shot }}" style="width:100%;height:100%;object-fit:cover;display:block;filter:saturate(0.86) sepia(0.1) contrast(1.02)">
+                    </button>
+                    <button type="button" onClick="{{ p.onWish }}" aria-label="{{ vm.t.aWishlist }}" style="position:absolute;top:12px;right:12px;z-index:2;border:none;background:rgba(248,247,244,0.92);font-size:13px;color:#6D7761;padding:10px 12px;min-width:44px;min-height:44px;display:grid;place-items:center;cursor:pointer">{{ p.wishLabel }}</button>
+                  </div>
+                  <div style="display:flex;flex-direction:column;gap:clamp(6px,1.6vw,8px)">
+                    <span style="font-family:'IBM Plex Mono',monospace;font-size:10px;line-height:1.5;letter-spacing:min(0.18em,0.42vw);color:#9C978F">{{ p.meta }}</span>
+                    <button type="button" onClick="{{ p.onOpen }}" style="border:none;background:transparent;padding:0;text-align:left;font-family:'EB Garamond',serif;font-size:clamp(15px,3.9vw,19px);line-height:1.28;color:#222222;cursor:pointer">{{ p.name }}</button>
+                    <span style="font-size:12px;color:#4A4740">{{ p.priceLabel }}</span>
+                  </div>
+                </article>
+              </sc-for>
+            </div>
+
+            <a href="#/shop" onClick="{{ vm.goShopLink }}" style="font-family:'IBM Plex Mono',monospace;font-size:12px;letter-spacing:0.2em;border-bottom:1px solid #C9C2B7;padding-bottom:8px;width:fit-content;transition:border-color 320ms ease" style-hover="border-bottom-color:#222222">{{ vm.t.sfBackToShop }}</a>
+          </section>
+        </sc-if>
+      </div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;vm&quot;:{&quot;editor&quot;:null,&quot;tsType&quot;:&quot;object&quot;}}">
+/* Special Feature detail — a curated group of pieces, not a journal article.
+   Presentational only: the shell (TSUMUGI.dc.html) resolves the feature, its
+   eligible products and its media, and passes them in as `vm`. */
+class Component extends DCLogic {
+  renderVals() { return {}; }
+}
+</script>
+</body>
+</html>

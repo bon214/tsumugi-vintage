@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html><head><meta charset="utf-8"><title>RQA12 — LANGUAGE focus + keyboard</title>
+<style>body{margin:0;font:12px/1.5 ui-monospace,monospace;background:#111;color:#dfd}
+#f{border:0;background:#fff;display:block}#o{white-space:pre-wrap;padding:10px}</style></head>
+<body><div id="o"></div><iframe id="f" width="390" height="844"></iframe>
+<script>
+const f = document.getElementById("f"), o = document.getElementById("o");
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+const say = s => { o.textContent += s + "\n"; };
+const W = () => f.contentWindow, D = () => f.contentDocument;
+const txt = e => (e ? (e.innerText || "").trim().replace(/\s+/g, " ") : "");
+const trig = () => D().querySelector('[data-panel="menu"] [aria-controls="tsumugi-lang"]');
+const opts = () => [...D().querySelectorAll("#tsumugi-lang button")];
+const act = () => { const a = D().activeElement; return a ? a.tagName + "/" + txt(a).slice(0, 12) : "none"; };
+const esc = () => W().dispatchEvent(new (W().KeyboardEvent)("keydown", { key: "Escape", bubbles: true }));
+const key = (el, k) => el.dispatchEvent(new (W().KeyboardEvent)("keydown", { key: k, bubbles: true }));
+
+(async () => {
+  f.src = "about:blank"; await new Promise(r => f.onload = r);
+  f.src = "../TSUMUGI.dc.html#/"; await new Promise(r => f.onload = r);
+  await sleep(2200);
+  W().focus();
+
+  D().querySelector('[data-trigger="menu"]').focus();
+  D().querySelector('[data-trigger="menu"]').click();
+  await sleep(600);
+
+  // keyboard user: focus the trigger, activate it with the keyboard
+  const t = trig(); t.focus();
+  say("trigger focused=" + (D().activeElement === t) + " active=" + act());
+  t.click(); await sleep(400);
+  say("opened: expanded=" + trig().getAttribute("aria-expanded") + " active=" + act() +
+      " optionsFocusable=" + opts().every(b => b.tabIndex >= 0));
+
+  opts()[1].focus();
+  say("option focusable: active=" + act() + " aria-current=" + opts()[1].getAttribute("aria-current"));
+
+  esc(); await sleep(500);
+  say("ESC → listOpen=" + !!D().querySelector("#tsumugi-lang") +
+      " menuOpen=" + !!D().querySelector('[data-panel="menu"]') +
+      " active=" + act() + " focusOnTrigger=" + (D().activeElement === trig()) +
+      " bodyPos=" + D().body.style.position);
+
+  // Enter/Space on an option (native button behaviour is a click; verify keydown does not break it)
+  trig().click(); await sleep(400);
+  const en = opts().find(b => /English/.test(txt(b)));
+  en.focus(); en.click(); await sleep(800);
+  say("Enter-equivalent on English: lang=" + W().TSUMUGI_STORE.lang() +
+      " current=" + txt(trig()) + " listOpen=" + !!D().querySelector("#tsumugi-lang") +
+      " active=" + act() + " focusOnTrigger=" + (D().activeElement === trig()));
+
+  W().TSUMUGI_STORE.setLang("en");
+  say("DONE");
+})().catch(e => say("ERROR " + e.message));
+</script></body></html>

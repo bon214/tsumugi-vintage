@@ -1,0 +1,944 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<sc-if value="{{ loading }}" hint-placeholder-val="{{ false }}">
+  <div role="status" style="background:#FFFFFF;border:1px solid #E3DFD7;padding:48px 24px;display:flex;flex-direction:column;align-items:center;gap:10px;text-align:center">
+    <span style="font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:0.18em;color:#8C887F">{{ t.kLoadingCustomers }}</span>
+    <span style="font-size:13px;color:#77736B">{{ t.kConnectingToTheStoreDatabase }}</span>
+  </div>
+</sc-if>
+
+<sc-if value="{{ isList }}" hint-placeholder-val="{{ true }}">
+  <div style="display:flex;flex-direction:column;gap:14px">
+
+    <div style="background:#FFFFFF;border:1px solid #E3DFD7;padding:13px 14px;display:flex;flex-direction:column;gap:12px">
+      <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center">
+        <div style="position:relative;flex:1 1 240px;min-width:0">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#9C978F" stroke-width="1.7" stroke-linecap="round" aria-hidden="true" style="position:absolute;left:11px;top:50%;transform:translateY(-50%)"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-3.5-3.5"></path></svg>
+          <label for="cu-search" style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)">{{ t.kSearchCustomers }}</label>
+          <input id="cu-search" type="search" placeholder="{{ t.kSearchNameEmailTelephoneOrCustomer }}" value="{{ query }}" onChange="{{ onQuery }}" style="width:100%;border:1px solid #DAD5CB;background:#FCFBF9;padding:10px 12px 10px 33px;font-size:13.5px;min-height:42px" style-focus="border-color:#6D7761;background:#FFFFFF">
+        </div>
+        <div style="display:flex;align-items:center;gap:7px">
+          <label for="cu-sort" style="font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:0.16em;color:#8C887F">{{ t.kSort }}</label>
+          <select id="cu-sort" value="{{ sort }}" onChange="{{ onSort }}" style="border:1px solid #DAD5CB;background:#FCFBF9;padding:9px 10px;font-size:13px;min-height:42px" style-focus="border-color:#6D7761">
+            <sc-for list="{{ sortOptions }}" as="o" hint-placeholder-count="5">
+              <option value="{{ o.value }}">{{ o.label }}</option>
+            </sc-for>
+          </select>
+        </div>
+        <button type="button" onClick="{{ toggleFilters }}" aria-expanded="{{ filtersOpen }}" style="display:flex;align-items:center;gap:8px;border:1px solid #DAD5CB;background:{{ filterBtnBg }};padding:9px 13px;min-height:42px;font-size:13px;white-space:nowrap;cursor:pointer" style-hover="border-color:#6D7761">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" aria-hidden="true"><path d="M3 5h18M6 12h12M10 19h4"></path></svg>
+          <span>{{ t.kFilters }}</span>
+          <sc-if value="{{ hasFilters }}" hint-placeholder-val="{{ false }}">
+            <span style="font-family:'IBM Plex Mono',monospace;font-size:11px;background:#6D7761;color:#FFFFFF;border-radius:9px;padding:1px 6px">{{ filterCount }}</span>
+          </sc-if>
+        </button>
+        <sc-if value="{{ canExportCsv }}" hint-placeholder-val="{{ true }}">
+          <button type="button" onClick="{{ onExport }}" style="display:flex;align-items:center;gap:8px;border:1px solid #DAD5CB;background:#FFFFFF;padding:9px 13px;min-height:42px;font-size:13px;white-space:nowrap;cursor:pointer" style-hover="border-color:#6D7761;color:#6D7761">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4v12M7 11l5 5 5-5M4 20h16"></path></svg>
+            <span>{{ t.kExportCsv }}</span>
+          </button>
+        </sc-if>
+      </div>
+
+      <sc-if value="{{ filtersOpen }}" hint-placeholder-val="{{ false }}">
+        <div style="border-top:1px solid #EDEAE3;padding-top:13px;display:grid;grid-template-columns:repeat(auto-fill,minmax(178px,1fr));gap:11px">
+          <sc-for list="{{ filterSelects }}" as="f" hint-placeholder-count="4">
+            <div style="display:flex;flex-direction:column;gap:5px;min-width:0">
+              <label for="{{ f.id }}" style="font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:0.14em;color:#8C887F">{{ f.label }}</label>
+              <select id="{{ f.id }}" value="{{ f.value }}" onChange="{{ f.onChange }}" style="width:100%;border:1px solid #DAD5CB;background:#FCFBF9;padding:9px 10px;font-size:13px;min-height:42px" style-focus="border-color:#6D7761">
+                <sc-for list="{{ f.options }}" as="o" hint-placeholder-count="4">
+                  <option value="{{ o.v }}">{{ o.t }}</option>
+                </sc-for>
+              </select>
+            </div>
+          </sc-for>
+          <div style="display:flex;flex-direction:column;gap:5px;min-width:0">
+            <label for="cu-reg" style="font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:0.14em;color:#8C887F">{{ t.kRegisteredAfter }}</label>
+            <input id="cu-reg" type="date" value="{{ regAfter }}" onChange="{{ onRegAfter }}" style="width:100%;border:1px solid #DAD5CB;background:#FCFBF9;padding:9px 10px;font-size:13px;min-height:42px" style-focus="border-color:#6D7761">
+          </div>
+          <div style="display:flex;align-items:flex-end">
+            <button type="button" onClick="{{ clearFilters }}" style="border:1px solid #DAD5CB;background:#FFFFFF;padding:9px 13px;min-height:42px;font-size:13px;white-space:nowrap;cursor:pointer;width:100%" style-hover="border-color:#A2493C;color:#A2493C">{{ t.kClearAll }}</button>
+          </div>
+        </div>
+      </sc-if>
+    </div>
+
+    <sc-if value="{{ hasSelection }}" hint-placeholder-val="{{ false }}">
+      <div role="toolbar" aria-label="{{ t.kBulkCustomerActions }}" style="position:sticky;top:8px;z-index:20;background:#3F4A35;color:#FFFFFF;padding:10px 14px;display:flex;gap:9px;flex-wrap:wrap;align-items:center;box-shadow:0 6px 20px rgba(40,45,30,0.18)">
+        <span style="font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:0.12em">{{ selectionLabel }}</span>
+        <span aria-hidden="true" style="width:1px;height:20px;background:rgba(255,255,255,0.25)"></span>
+        <sc-if value="{{ canEditCustomers }}" hint-placeholder-val="{{ true }}">
+          <select value="{{ bulkTag }}" onChange="{{ onBulkAddTag }}" aria-label="{{ t.kAddTagToSelectedCustomers }}" style="border:1px solid rgba(255,255,255,0.35);background:transparent;color:#FFFFFF;padding:7px 10px;min-height:38px;font-size:12.5px">
+            <sc-for list="{{ bulkTagOptions }}" as="o" hint-placeholder-count="6">
+              <option value="{{ o.v }}" style="color:#232220">{{ o.t }}</option>
+            </sc-for>
+          </select>
+          <select value="{{ bulkStatus }}" onChange="{{ onBulkStatus }}" aria-label="{{ t.kSetStatusForSelectedCustomers }}" style="border:1px solid rgba(255,255,255,0.35);background:transparent;color:#FFFFFF;padding:7px 10px;min-height:38px;font-size:12.5px">
+            <sc-for list="{{ bulkStatusOptions }}" as="o" hint-placeholder-count="5">
+              <option value="{{ o.v }}" style="color:#232220">{{ o.t }}</option>
+            </sc-for>
+          </select>
+        </sc-if>
+        <sc-if value="{{ canExportCsv }}" hint-placeholder-val="{{ true }}">
+          <button type="button" onClick="{{ bulkExport }}" style="border:1px solid rgba(255,255,255,0.35);background:transparent;color:#FFFFFF;padding:7px 12px;min-height:38px;font-size:12.5px;cursor:pointer" style-hover="background:rgba(255,255,255,0.14)">{{ t.kExportSelected }}</button>
+        </sc-if>
+        <button type="button" onClick="{{ clearSelection }}" style="margin-left:auto;border:none;background:transparent;color:rgba(255,255,255,0.75);padding:7px 6px;min-height:38px;font-size:12.5px;cursor:pointer;text-decoration:underline" style-hover="color:#FFFFFF">{{ t.kClearSelection }}</button>
+      </div>
+    </sc-if>
+
+    <sc-if value="{{ isEmpty }}" hint-placeholder-val="{{ false }}">
+      <div style="background:#FFFFFF;border:1px solid #E3DFD7;padding:56px 24px;display:flex;flex-direction:column;align-items:center;gap:12px;text-align:center">
+        <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="#C6C1B7" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M17 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path><circle cx="9.5" cy="7" r="4"></circle></svg>
+        <h2 style="margin:0;font-size:16px;font-weight:600">{{ t.kNoCustomersMatchThisSearch }}</h2>
+        <p style="margin:0;max-width:380px;font-size:13.5px;line-height:1.65;color:#77736B">{{ t.kSearchByNameEmailAddressTelephoneN }}</p>
+        <button type="button" onClick="{{ clearFilters }}" style="border:1px solid #DAD5CB;background:#FFFFFF;padding:10px 16px;min-height:44px;font-size:13.5px;white-space:nowrap;cursor:pointer;margin-top:4px" style-hover="border-color:#6D7761;color:#6D7761">{{ t.kClearSearchAndFilters }}</button>
+      </div>
+    </sc-if>
+
+    <sc-if value="{{ showTable }}" hint-placeholder-val="{{ true }}">
+      <div style="background:#FFFFFF;border:1px solid #E3DFD7;overflow-x:auto" data-adm-scroll="1">
+        <table style="width:100%;min-width:1120px;border-collapse:collapse;font-size:13px">
+          <caption style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)">{{ t.kRegisteredCustomers }}</caption>
+          <thead>
+            <tr style="background:#FBFAF7">
+              <th scope="col" style="width:40px;padding:11px 0 11px 14px;text-align:left;border-bottom:1px solid #E3DFD7">
+                <input type="checkbox" checked="{{ allChecked }}" onChange="{{ toggleAll }}" aria-label="{{ t.kSelectAllCustomersOnThisPage }}" style="width:16px;height:16px;accent-color:#6D7761">
+              </th>
+              <sc-for list="{{ columns }}" as="c" hint-placeholder-count="10">
+                <th scope="col" style="padding:11px 10px;text-align:{{ c.align }};border-bottom:1px solid #E3DFD7;white-space:nowrap;font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:0.13em;color:#8C887F;font-weight:400">{{ c.label }}</th>
+              </sc-for>
+            </tr>
+          </thead>
+          <tbody>
+            <sc-for list="{{ rows }}" as="r" hint-placeholder-count="10">
+              <tr style="border-bottom:1px solid #F2F0EA;background:{{ r.rowBg }}" style-hover="background:#FAF9F6">
+                <td style="padding:9px 0 9px 14px">
+                  <input type="checkbox" checked="{{ r.checked }}" onChange="{{ r.onCheck }}" aria-label="{{ r.selectLabel }}" style="width:16px;height:16px;accent-color:#6D7761">
+                </td>
+                <td style="padding:9px 10px;font-family:'IBM Plex Mono',monospace;font-size:11px;color:#77736B;white-space:nowrap">{{ r.id }}</td>
+                <td style="padding:9px 10px">
+                  <button type="button" onClick="{{ r.onOpen }}" style="display:flex;align-items:center;gap:9px;border:none;background:transparent;padding:0;cursor:pointer;text-align:left" style-hover="color:#6D7761">
+                    <span aria-hidden="true" style="width:28px;height:28px;border-radius:50%;flex:0 0 28px;background:#F1EFE9;color:#6E6A62;display:grid;place-items:center;font-family:'IBM Plex Mono',monospace;font-size:11px">{{ r.initials }}</span>
+                    <span style="font-size:13.5px;color:#232220;max-width:280px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ r.name }}</span>
+                  </button>
+                </td>
+                <td style="padding:9px 10px;color:#55534C;white-space:nowrap"><span style="display:block;max-width:260px;overflow:hidden;text-overflow:ellipsis">{{ r.email }}</span></td>
+                <td style="padding:9px 10px;font-family:'IBM Plex Mono',monospace;font-size:11px;color:#77736B;white-space:nowrap">{{ r.phone }}</td>
+                <td style="padding:9px 10px;font-family:'IBM Plex Mono',monospace;font-size:11px;color:#8C887F;white-space:nowrap">{{ r.registered }}</td>
+                <td style="padding:9px 10px;text-align:center;font-family:'IBM Plex Mono',monospace;font-size:11.5px;color:#3F3D38">{{ r.orders }}</td>
+                <td style="padding:9px 10px;text-align:right;font-family:'IBM Plex Mono',monospace;font-size:11.5px;color:#232220;white-space:nowrap">{{ r.total }}</td>
+                <td style="padding:9px 10px;font-family:'IBM Plex Mono',monospace;font-size:11px;color:#8C887F;white-space:nowrap">{{ r.last }}</td>
+                <td style="padding:9px 10px"><span style="display:inline-flex;align-items:center;gap:5px;font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:0.1em;padding:3px 7px;white-space:nowrap;background:{{ r.badgeBg }};color:{{ r.badgeFg }}"><span aria-hidden="true">{{ r.badgeMark }}</span>{{ r.status }}</span></td>
+                <td style="padding:9px 10px;font-size:12.5px;color:#55534C;white-space:nowrap"><span style="display:inline-flex;align-items:center;gap:5px"><span aria-hidden="true" style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:#6E6A62">{{ r.segmentMark }}</span>{{ r.segment }}</span></td>
+                <td style="padding:9px 10px;font-size:12.5px;color:#55534C;white-space:nowrap"><span style="display:inline-flex;align-items:center;gap:5px"><span aria-hidden="true" style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:{{ r.engagementTone }}">{{ r.engagementMark }}</span>{{ r.engagement }}</span></td>
+                <td style="padding:9px 10px;max-width:190px">
+                  <span style="display:flex;gap:4px;flex-wrap:wrap">
+                    <sc-for list="{{ r.tags }}" as="tg" hint-placeholder-count="2">
+                      <span style="font-size:11px;background:#F1EFE9;color:#6E6A62;padding:2px 6px;white-space:nowrap">{{ tg }}</span>
+                    </sc-for>
+                  </span>
+                </td>
+                <td style="padding:9px 14px 9px 10px;text-align:center;font-family:'IBM Plex Mono',monospace;font-size:11px;color:{{ r.marketingTone }}">{{ r.marketing }}</td>
+              </tr>
+            </sc-for>
+          </tbody>
+        </table>
+      </div>
+    </sc-if>
+
+    <sc-if value="{{ showCards }}" hint-placeholder-val="{{ false }}">
+      <div style="display:flex;flex-direction:column;gap:10px">
+        <sc-for list="{{ rows }}" as="r" hint-placeholder-count="6">
+          <div style="background:#FFFFFF;border:1px solid #E3DFD7;padding:13px;display:flex;gap:12px;align-items:flex-start">
+            <input type="checkbox" checked="{{ r.checked }}" onChange="{{ r.onCheck }}" aria-label="{{ r.selectLabel }}" style="width:18px;height:18px;accent-color:#6D7761;margin-top:3px;flex:0 0 18px">
+            <div style="flex:1;min-width:0;display:flex;flex-direction:column;gap:7px">
+              <div style="display:flex;align-items:center;gap:10px">
+                <span aria-hidden="true" style="width:34px;height:34px;border-radius:50%;flex:0 0 34px;background:#F1EFE9;color:#6E6A62;display:grid;place-items:center;font-family:'IBM Plex Mono',monospace;font-size:11px">{{ r.initials }}</span>
+                <button type="button" onClick="{{ r.onOpen }}" style="flex:1;min-width:0;border:none;background:transparent;padding:0;text-align:left;font-size:15px;color:#232220;cursor:pointer;overflow-wrap:anywhere">{{ r.name }}</button>
+                <span style="display:inline-flex;align-items:center;gap:5px;font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:0.1em;padding:3px 7px;white-space:nowrap;background:{{ r.badgeBg }};color:{{ r.badgeFg }}"><span aria-hidden="true">{{ r.badgeMark }}</span>{{ r.status }}</span>
+              </div>
+              <span style="font-size:12.5px;color:#55534C;overflow-wrap:anywhere">{{ r.email }}</span>
+              <span style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:#8C887F">{{ r.cardMeta }}</span>
+              <div style="display:flex;gap:6px;flex-wrap:wrap">
+                <span style="display:inline-flex;align-items:center;gap:5px;font-size:12px;color:#55534C;background:#F4F2ED;padding:3px 8px;white-space:nowrap"><span aria-hidden="true" style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:#6E6A62">{{ r.segmentMark }}</span>{{ r.segment }}</span>
+                <span style="display:inline-flex;align-items:center;gap:5px;font-size:12px;color:#55534C;background:#F4F2ED;padding:3px 8px;white-space:nowrap"><span aria-hidden="true" style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:{{ r.engagementTone }}">{{ r.engagementMark }}</span>{{ r.engagement }}</span>
+              </div>
+              <div style="display:flex;gap:4px;flex-wrap:wrap">
+                <sc-for list="{{ r.tags }}" as="tg" hint-placeholder-count="2">
+                  <span style="font-size:11px;background:#F1EFE9;color:#6E6A62;padding:2px 6px">{{ tg }}</span>
+                </sc-for>
+              </div>
+              <button type="button" onClick="{{ r.onOpen }}" style="border:1px solid #DAD5CB;background:#FFFFFF;padding:10px;min-height:44px;font-size:13px;cursor:pointer;margin-top:2px" style-hover="border-color:#6D7761;color:#6D7761">{{ t.kOpenCustomer }}</button>
+            </div>
+          </div>
+        </sc-for>
+      </div>
+    </sc-if>
+
+    <sc-if value="{{ showPager }}" hint-placeholder-val="{{ true }}">
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;padding:2px 2px 6px">
+        <span style="font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:0.12em;color:#8C887F">{{ rangeLabel }}</span>
+        <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap">
+          <button type="button" onClick="{{ prevPage }}" disabled="{{ atFirst }}" style="border:1px solid #DAD5CB;background:#FFFFFF;padding:8px 13px;min-height:40px;font-size:13px;white-space:nowrap;cursor:pointer;opacity:{{ prevOpacity }}" style-hover="border-color:#6D7761">{{ t.kPrevious }}</button>
+          <sc-for list="{{ pageButtons }}" as="p" hint-placeholder-count="3">
+            <button type="button" onClick="{{ p.onClick }}" aria-current="{{ p.current }}" style="min-width:40px;min-height:40px;border:1px solid {{ p.border }};background:{{ p.bg }};color:{{ p.fg }};font-family:'IBM Plex Mono',monospace;font-size:12px;cursor:pointer" style-hover="border-color:#6D7761">{{ p.label }}</button>
+          </sc-for>
+          <button type="button" onClick="{{ nextPage }}" disabled="{{ atLast }}" style="border:1px solid #DAD5CB;background:#FFFFFF;padding:8px 13px;min-height:40px;font-size:13px;white-space:nowrap;cursor:pointer;opacity:{{ nextOpacity }}" style-hover="border-color:#6D7761">{{ t.kNext }}</button>
+        </div>
+      </div>
+    </sc-if>
+  </div>
+</sc-if>
+
+<sc-if value="{{ notFound }}" hint-placeholder-val="{{ false }}">
+  <div style="background:#FFFFFF;border:1px solid #E3DFD7;padding:56px 24px;display:flex;flex-direction:column;align-items:center;gap:12px;text-align:center">
+    <h2 style="margin:0;font-size:16px;font-weight:600">{{ t.kCustomerNotFound }}</h2>
+    <p style="margin:0;max-width:360px;font-size:13.5px;line-height:1.65;color:#77736B">{{ t.kThisAccountMayHaveBeenDeletedOrThe }}</p>
+    <button type="button" onClick="{{ backToList }}" style="border:1px solid #DAD5CB;background:#FFFFFF;padding:10px 16px;min-height:44px;font-size:13.5px;white-space:nowrap;cursor:pointer" style-hover="border-color:#6D7761;color:#6D7761">{{ t.kBackToCustomers }}</button>
+  </div>
+</sc-if>
+
+<sc-if value="{{ isDetail }}" hint-placeholder-val="{{ false }}">
+  <div style="display:grid;grid-template-columns:{{ detailColumns }};gap:14px;align-items:start;max-width:1180px">
+
+    <div style="display:flex;flex-direction:column;gap:14px;min-width:0">
+
+      <section style="background:#FFFFFF;border:1px solid #E3DFD7">
+        <div style="padding:14px 16px;border-bottom:1px solid #EDEAE3;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap">
+          <h2 style="margin:0;font-size:14px;font-weight:600">{{ t.kProfile }}</h2>
+          <div style="display:flex;gap:8px">
+            <sc-if value="{{ editing }}" hint-placeholder-val="{{ false }}">
+              <button type="button" onClick="{{ onCancelEdit }}" style="border:1px solid #DAD5CB;background:#FFFFFF;padding:8px 13px;min-height:40px;font-size:13px;white-space:nowrap;cursor:pointer" style-hover="border-color:#8C887F">{{ t.kCancel }}</button>
+            </sc-if>
+            <button type="button" onClick="{{ onToggleEdit }}" style="border:1px solid {{ editBtnBorder }};background:{{ editBtnBg }};color:{{ editBtnFg }};padding:8px 13px;min-height:40px;font-size:13px;white-space:nowrap;cursor:pointer" style-hover="border-color:#6D7761">{{ editBtnLabel }}</button>
+          </div>
+        </div>
+        <div style="padding:16px;display:flex;flex-direction:column;gap:16px">
+          <div style="display:flex;align-items:center;gap:14px;flex-wrap:wrap">
+            <span aria-hidden="true" style="width:52px;height:52px;border-radius:50%;background:#EEF0EA;color:#5C6650;display:grid;place-items:center;font-family:'IBM Plex Mono',monospace;font-size:16px;flex:0 0 52px">{{ initials }}</span>
+            <div style="display:flex;flex-direction:column;gap:4px;min-width:0">
+              <span style="font-size:19px;font-weight:600;letter-spacing:-0.01em">{{ cName }}</span>
+              <span style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:#8C887F">{{ cRegisteredLine }}</span>
+            </div>
+            <span style="margin-left:auto;font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:0.12em;padding:4px 9px;background:{{ statusBg }};color:{{ statusFg }}">{{ cStatus }}</span>
+          </div>
+
+          <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,210px),1fr));gap:13px">
+            <sc-for list="{{ profileFields }}" as="p" hint-placeholder-count="5">
+              <div style="display:flex;flex-direction:column;gap:6px;min-width:0">
+                <label for="{{ p.id }}" style="font-size:12px;font-weight:500;color:#55534C">{{ p.label }}</label>
+                <sc-if value="{{ p.editing }}" hint-placeholder-val="{{ false }}">
+                  <input id="{{ p.id }}" value="{{ p.value }}" onChange="{{ p.onChange }}" style="border:1px solid #DAD5CB;background:#FCFBF9;padding:10px 12px;font-size:14px;min-height:44px" style-focus="border-color:#6D7761;background:#FFFFFF">
+                </sc-if>
+                <sc-if value="{{ p.reading }}" hint-placeholder-val="{{ true }}">
+                  <sc-if value="{{ p.plain }}" hint-placeholder-val="{{ true }}">
+                    <span style="font-size:14px;color:#232220;padding:10px 0;word-break:break-word">{{ p.value }}</span>
+                  </sc-if>
+                  <sc-if value="{{ p.maskable }}" hint-placeholder-val="{{ false }}">
+                    <span style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:4px 0">
+                      <span style="font-size:14px;color:#232220;word-break:break-word;font-family:'IBM Plex Mono',monospace">{{ p.value }}</span>
+                      <sc-if value="{{ p.canReveal }}" hint-placeholder-val="{{ true }}">
+                        <button type="button" onClick="{{ p.onReveal }}" aria-label="{{ p.revealLabel }}" aria-pressed="{{ p.revealPressed }}" style="border:1px solid #DAD5CB;background:#FFFFFF;padding:8px 11px;min-height:44px;font-size:12.5px;white-space:nowrap;cursor:pointer;color:#55534C" style-hover="border-color:#6D7761;color:#6D7761">{{ p.revealText }}</button>
+                      </sc-if>
+                      <sc-if value="{{ p.noReveal }}" hint-placeholder-val="{{ false }}">
+                        <span style="font-size:12px;line-height:1.5;color:#77736B">{{ t.piiNoPermission }}</span>
+                      </sc-if>
+                      <sc-if value="{{ p.isMasked }}" hint-placeholder-val="{{ true }}">
+                        <span style="font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:0.12em;padding:3px 7px;background:#F1EFE9;color:#6E6A62;white-space:nowrap">{{ t.maskedLabel }}</span>
+                      </sc-if>
+                    </span>
+                  </sc-if>
+                </sc-if>
+              </div>
+            </sc-for>
+            <sc-for list="{{ axisFields }}" as="ax" hint-placeholder-count="3">
+              <div style="display:flex;flex-direction:column;gap:6px;min-width:0">
+                <label for="{{ ax.id }}" style="font-size:12px;font-weight:500;color:#55534C">{{ ax.label }}</label>
+                <sc-if value="{{ ax.editing }}" hint-placeholder-val="{{ false }}">
+                  <select id="{{ ax.id }}" value="{{ ax.value }}" onChange="{{ ax.onChange }}" style="border:1px solid #DAD5CB;background:#FCFBF9;padding:10px 12px;font-size:14px;min-height:44px" style-focus="border-color:#6D7761">
+                    <sc-for list="{{ ax.options }}" as="o" hint-placeholder-count="3">
+                      <option value="{{ o.v }}">{{ o.t }}</option>
+                    </sc-for>
+                  </select>
+                </sc-if>
+                <sc-if value="{{ ax.reading }}" hint-placeholder-val="{{ true }}">
+                  <span style="display:inline-flex;align-items:center;gap:6px;font-size:14px;color:#232220;padding:10px 0">
+                    <span aria-hidden="true" style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:{{ ax.tone }}">{{ ax.mark }}</span>{{ ax.display }}
+                  </span>
+                </sc-if>
+              </div>
+            </sc-for>
+          </div>
+
+          <label style="display:flex;align-items:center;gap:10px;font-size:13.5px;cursor:{{ marketingCursor }};min-height:44px">
+            <input type="checkbox" checked="{{ cMarketing }}" disabled="{{ reading }}" onChange="{{ onMarketing }}" style="width:16px;height:16px;accent-color:#6D7761">
+            <span>{{ t.kConsentsToMarketingEmail }}</span>
+          </label>
+
+          <div style="display:flex;flex-direction:column;gap:8px">
+            <span style="font-size:12px;font-weight:500;color:#55534C">{{ t.kTags }}</span>
+            <div style="display:flex;gap:7px;flex-wrap:wrap">
+              <sc-for list="{{ tagChips }}" as="tg" hint-placeholder-count="3">
+                <span style="display:flex;align-items:center;gap:7px;background:#EEF0EA;color:#4F5C42;padding:6px 10px;font-size:12.5px">
+                  <span>{{ tg.label }}</span>
+                  <button type="button" onClick="{{ tg.onRemove }}" aria-label="{{ tg.removeLabel }}" style="border:none;background:transparent;color:#6D7761;cursor:pointer;font-size:14px;line-height:1;padding:0 1px" style-hover="color:#A2493C">×</button>
+                </span>
+              </sc-for>
+              <sc-if value="{{ noTags }}" hint-placeholder-val="{{ false }}">
+                <span style="font-size:13px;color:#8C887F">{{ t.kNoTagsYet }}</span>
+              </sc-if>
+            </div>
+            <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+              <label for="cu-addtag" style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)">{{ t.kAddATag }}</label>
+              <select id="cu-addtag" value="{{ addTagValue }}" onChange="{{ onAddTag }}" style="border:1px solid #DAD5CB;background:#FCFBF9;padding:9px 11px;font-size:13px;min-height:42px" style-focus="border-color:#6D7761">
+                <sc-for list="{{ availableTags }}" as="o" hint-placeholder-count="5">
+                  <option value="{{ o.v }}">{{ o.t }}</option>
+                </sc-for>
+              </select>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section style="background:#FFFFFF;border:1px solid #E3DFD7">
+        <div style="padding:14px 16px;border-bottom:1px solid #EDEAE3;display:flex;align-items:baseline;justify-content:space-between;gap:12px;flex-wrap:wrap">
+          <h2 style="margin:0;font-size:14px;font-weight:600">{{ t.kPurchaseHistory }}</h2>
+          <span style="font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:0.12em;color:#8C887F">{{ purchaseSummary }}</span>
+        </div>
+        <div style="display:flex;flex-direction:column">
+          <sc-for list="{{ purchases }}" as="o" hint-placeholder-count="3">
+            <div style="padding:13px 16px;border-bottom:1px solid #F2F0EA;display:flex;flex-direction:column;gap:10px">
+              <div style="display:flex;align-items:center;gap:11px;flex-wrap:wrap">
+                <span style="font-family:'IBM Plex Mono',monospace;font-size:12px;color:#232220">{{ o.order }}</span>
+                <span style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:#8C887F">{{ o.date }}</span>
+                <span style="font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:0.1em;padding:3px 7px;background:{{ o.payBg }};color:{{ o.payFg }}">{{ o.payment }}</span>
+                <span style="font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:0.1em;padding:3px 7px;background:{{ o.shipBg }};color:{{ o.shipFg }}">{{ o.delivery }}</span>
+                <span style="margin-left:auto;font-family:'IBM Plex Mono',monospace;font-size:13px;color:#232220">{{ o.amount }}</span>
+              </div>
+              <div style="display:flex;gap:10px;flex-wrap:wrap">
+                <sc-for list="{{ o.items }}" as="it" hint-placeholder-count="1">
+                  <span style="display:flex;align-items:center;gap:9px;background:#FBFAF7;border:1px solid #EDEAE3;padding:6px 10px 6px 6px">
+                    <img loading="lazy" decoding="async" src="{{ it.thumb }}" alt="{{ it.alt }}" style="width:28px;height:36px;object-fit:cover;background:#EDE9E2;filter:saturate(0.9)">
+                    <span style="display:flex;flex-direction:column;gap:1px">
+                      <span style="font-size:12.5px;color:#232220">{{ it.name }}</span>
+                      <span style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:#8C887F">{{ it.price }}</span>
+                    </span>
+                  </span>
+                </sc-for>
+              </div>
+              <span style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:#B0ABA2">Card on file {{ o.card }} · full card details are never stored</span>
+            </div>
+          </sc-for>
+          <sc-if value="{{ noPurchases }}" hint-placeholder-val="{{ false }}">
+            <p style="margin:0;padding:34px 16px;text-align:center;font-size:13px;color:#8C887F">{{ t.kNoOrdersRecordedForThisCustomer }}</p>
+          </sc-if>
+        </div>
+      </section>
+
+      <section style="background:#FFFFFF;border:1px solid #E3DFD7">
+        <div style="padding:14px 16px;border-bottom:1px solid #EDEAE3"><h2 style="margin:0;font-size:14px;font-weight:600">{{ t.kInternalNotes }}</h2></div>
+        <div style="padding:16px;display:flex;flex-direction:column;gap:14px">
+          <sc-if value="{{ canEditCustomers }}" hint-placeholder-val="{{ true }}">
+          <div style="display:flex;flex-direction:column;gap:8px">
+            <label for="cu-note" style="font-size:12px;font-weight:500;color:#55534C">{{ t.kAddANote }}</label>
+            <textarea id="cu-note" rows="3" value="{{ noteDraft }}" onChange="{{ onNoteDraft }}" placeholder="{{ t.kVisibleOnlyToStoreStaff }}" style="border:1px solid #DAD5CB;background:#FCFBF9;padding:11px 12px;font-size:14px;line-height:1.65;resize:vertical" style-focus="border-color:#6D7761;background:#FFFFFF"></textarea>
+            <button type="button" onClick="{{ onAddNote }}" disabled="{{ noteEmpty }}" style="align-self:flex-start;border:none;background:#6D7761;color:#FFFFFF;padding:10px 16px;min-height:44px;font-size:13.5px;white-space:nowrap;cursor:pointer;opacity:{{ noteOpacity }}" style-hover="background:#59614F">{{ t.kAddNote }}</button>
+          </div>
+          </sc-if>
+          <div style="display:flex;flex-direction:column;gap:10px">
+            <sc-for list="{{ notes }}" as="n" hint-placeholder-count="1">
+              <div style="border:1px solid #EDEAE3;background:#FBFAF7;padding:12px 13px;display:flex;flex-direction:column;gap:8px">
+                <div style="display:flex;align-items:center;gap:9px;flex-wrap:wrap">
+                  <span style="font-size:12.5px;font-weight:500;color:#3F3D38">{{ n.author }}</span>
+                  <span style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:#8C887F">{{ n.when }}</span>
+                  <span style="margin-left:auto;display:flex;gap:6px">
+                    <button type="button" onClick="{{ n.onEdit }}" style="border:none;background:transparent;font-size:12px;color:#6D7761;cursor:pointer;text-decoration:underline;padding:4px 2px" style-hover="color:#232220">{{ n.editLabel }}</button>
+                    <button type="button" onClick="{{ n.onDelete }}" style="border:none;background:transparent;font-size:12px;color:#A2493C;cursor:pointer;text-decoration:underline;padding:4px 2px" style-hover="color:#8A3F33">{{ t.kDelete }}</button>
+                  </span>
+                </div>
+                <sc-if value="{{ n.editing }}" hint-placeholder-val="{{ false }}">
+                  <div style="display:flex;flex-direction:column;gap:8px">
+                    <textarea rows="3" value="{{ n.draft }}" onChange="{{ n.onDraft }}" style="border:1px solid #DAD5CB;background:#FFFFFF;padding:10px 11px;font-size:13.5px;line-height:1.65;resize:vertical" style-focus="border-color:#6D7761"></textarea>
+                    <button type="button" onClick="{{ n.onSave }}" style="align-self:flex-start;border:none;background:#6D7761;color:#FFFFFF;padding:9px 14px;min-height:40px;font-size:13px;white-space:nowrap;cursor:pointer" style-hover="background:#59614F">{{ t.kSaveNote }}</button>
+                  </div>
+                </sc-if>
+                <sc-if value="{{ n.reading }}" hint-placeholder-val="{{ true }}">
+                  <p style="margin:0;font-size:13.5px;line-height:1.7;color:#3F3D38">{{ n.text }}</p>
+                </sc-if>
+              </div>
+            </sc-for>
+            <sc-if value="{{ noNotes }}" hint-placeholder-val="{{ false }}">
+              <p style="margin:0;font-size:13px;color:#8C887F">{{ t.kNoInternalNotesYet }}</p>
+            </sc-if>
+          </div>
+        </div>
+      </section>
+    </div>
+
+    <aside style="display:flex;flex-direction:column;gap:14px;min-width:0">
+      <section style="background:#FFFFFF;border:1px solid #E3DFD7">
+        <div style="padding:14px 16px;border-bottom:1px solid #EDEAE3"><h2 style="margin:0;font-size:14px;font-weight:600">{{ t.kSummary }}</h2></div>
+        <div style="padding:16px;display:flex;flex-direction:column;gap:11px">
+          <sc-for list="{{ summaryRows }}" as="r" hint-placeholder-count="4">
+            <div style="display:flex;justify-content:space-between;gap:12px;font-size:13.5px">
+              <span style="color:#77736B">{{ r.k }}</span>
+              <span style="font-family:'IBM Plex Mono',monospace;color:#232220;text-align:right">{{ r.v }}</span>
+            </div>
+          </sc-for>
+        </div>
+      </section>
+
+      <section style="background:#FFFFFF;border:1px solid #E3DFD7">
+        <div style="padding:14px 16px;border-bottom:1px solid #EDEAE3"><h2 style="margin:0;font-size:14px;font-weight:600">{{ t.kActions }}</h2></div>
+        <div style="padding:16px;display:flex;flex-direction:column;gap:9px">
+          <sc-if value="{{ canExportOne }}" hint-placeholder-val="{{ true }}">
+          <button type="button" onClick="{{ onExportOne }}" style="border:1px solid #DAD5CB;background:#FFFFFF;padding:11px 15px;min-height:44px;font-size:13.5px;white-space:nowrap;cursor:pointer;text-align:left" style-hover="border-color:#6D7761;color:#6D7761">{{ t.kExportCustomerData }}</button>
+          </sc-if>
+          <sc-if value="{{ canEditCustomers }}" hint-placeholder-val="{{ true }}">
+          <button type="button" onClick="{{ onDisable }}" style="border:1px solid #DAD5CB;background:#FFFFFF;padding:11px 15px;min-height:44px;font-size:13.5px;white-space:nowrap;cursor:pointer;text-align:left" style-hover="border-color:#9A7A32;color:#7E6224">{{ disableLabel }}</button>
+          </sc-if>
+          <sc-if value="{{ canDeleteCustomer }}" hint-placeholder-val="{{ true }}">
+          <button type="button" onClick="{{ onDelete }}" style="border:1px solid #E7CFC9;background:#FBF0EE;color:#8A3F33;padding:11px 15px;min-height:44px;font-size:13.5px;white-space:nowrap;cursor:pointer;text-align:left" style-hover="background:#F6E3DF">{{ t.kDeleteCustomer }}</button>
+          </sc-if>
+          <button type="button" onClick="{{ backToList }}" style="border:none;background:transparent;color:#6D7761;padding:11px 0;min-height:44px;font-size:13.5px;white-space:nowrap;cursor:pointer;text-align:left;text-decoration:underline;text-underline-offset:3px" style-hover="color:#232220">{{ t.kBackToAllCustomers }}</button>
+        </div>
+      </section>
+
+      <section style="background:#FFFFFF;border:1px solid #E3DFD7">
+        <div style="padding:14px 16px;border-bottom:1px solid #EDEAE3"><h2 style="margin:0;font-size:14px;font-weight:600">{{ t.kActivityHistory }}</h2></div>
+        <ul style="margin:0;padding:0;list-style:none;max-height:320px;overflow-y:auto" data-adm-scroll="1">
+          <sc-for list="{{ activity }}" as="a" hint-placeholder-count="4">
+            <li style="padding:11px 16px;border-bottom:1px solid #F2F0EA;display:flex;flex-direction:column;gap:3px">
+              <span style="display:flex;align-items:center;gap:8px">
+                <span aria-hidden="true" style="width:6px;height:6px;border-radius:50%;flex:0 0 6px;background:{{ a.dot }}"></span>
+                <span style="font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:0.12em;color:#8C887F">{{ a.type }}</span>
+                <span style="margin-left:auto;font-family:'IBM Plex Mono',monospace;font-size:11px;color:#B0ABA2">{{ a.when }}</span>
+              </span>
+              <span style="font-size:13px;line-height:1.5;color:#3F3D38;padding-left:14px">{{ a.text }}</span>
+            </li>
+          </sc-for>
+        </ul>
+      </section>
+    </aside>
+  </div>
+</sc-if>
+
+<sc-if value="{{ exportOpen }}" hint-placeholder-val="{{ false }}">
+  <div style="position:fixed;inset:0;z-index:95;display:grid;place-items:center;padding:20px;background:rgba(35,34,32,0.42)">
+    <div role="dialog" aria-modal="true" aria-labelledby="cx-title" style="width:min(100%,480px);max-height:86vh;overflow-y:auto;background:#FFFFFF;border:1px solid #E3DFD7;box-shadow:0 18px 48px rgba(40,36,28,0.18)">
+      <div style="padding:18px 20px;border-bottom:1px solid #EDEAE3;display:flex;flex-direction:column;gap:6px">
+        <h2 id="cx-title" style="margin:0;font-size:16px;font-weight:600">{{ t.exportDialogTitle }}</h2>
+        <span style="font-size:13px;color:#55534C">{{ exportCountLabel }}</span>
+      </div>
+      <div style="padding:16px 20px;display:flex;flex-direction:column;gap:14px">
+        <div style="display:flex;flex-direction:column;gap:6px">
+          <span style="font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:0.16em;color:#8C887F">{{ t.exportFields }}</span>
+          <span style="font-size:12.5px;line-height:1.65;color:#55534C">{{ exportFieldList }}</span>
+        </div>
+        <p role="note" style="margin:0;padding:10px 12px;background:#F1EFE9;border-left:2px solid #C9C2B7;font-size:12.5px;line-height:1.6;color:#6E6A62">{{ t.exportNoCards }}<br>{{ t.exportLogged }}</p>
+        <div style="display:flex;flex-direction:column;gap:6px">
+          <label for="cx-purpose" style="font-size:12px;font-weight:500;color:#55534C">{{ t.exportPurpose }}</label>
+          <input id="cx-purpose" value="{{ exportPurpose }}" onChange="{{ onExportPurpose }}" placeholder="{{ t.exportPurposePh }}" aria-invalid="{{ exportInvalid }}" aria-describedby="cx-purpose-err" style="border:1px solid {{ exportBorder }};background:#FCFBF9;padding:11px 12px;font-size:14px;min-height:44px" style-focus="border-color:#6D7761;background:#FFFFFF">
+          <sc-if value="{{ exportHasError }}" hint-placeholder-val="{{ false }}">
+            <span id="cx-purpose-err" style="font-size:12.5px;color:#A2493C">{{ exportError }}</span>
+          </sc-if>
+        </div>
+      </div>
+      <div style="padding:14px 20px;border-top:1px solid #EDEAE3;display:flex;gap:9px;justify-content:flex-end;flex-wrap:wrap">
+        <button type="button" onClick="{{ onExportCancel }}" style="border:1px solid #DAD5CB;background:#FFFFFF;padding:11px 16px;min-height:44px;font-size:13.5px;white-space:nowrap;cursor:pointer" style-hover="border-color:#6D7761">{{ t.cancel }}</button>
+        <button type="button" onClick="{{ onExportRun }}" style="border:none;background:#6D7761;color:#FFFFFF;padding:11px 18px;min-height:44px;font-size:13.5px;font-weight:500;white-space:nowrap;cursor:pointer">{{ t.confirmExport }}</button>
+      </div>
+    </div>
+  </div>
+</sc-if>
+
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:1180,&quot;height&quot;:900},&quot;view&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;list&quot;,&quot;detail&quot;],&quot;default&quot;:&quot;list&quot;,&quot;tsType&quot;:&quot;string&quot;},&quot;entityId&quot;:{&quot;editor&quot;:&quot;text&quot;,&quot;default&quot;:&quot;&quot;,&quot;tsType&quot;:&quot;string&quot;},&quot;nav&quot;:{&quot;editor&quot;:null,&quot;tsType&quot;:&quot;(path: string) =&gt; void&quot;},&quot;compact&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:false,&quot;tsType&quot;:&quot;boolean&quot;},&quot;tick&quot;:{&quot;editor&quot;:null,&quot;tsType&quot;:&quot;number&quot;}}">
+const T3 = new Proxy({}, {
+  get: (_, key) => {
+    const I = window.TSUMUGI_I18N, S = window.TSUMUGI_STORE;
+    const d = I ? I.t(S && S.lang ? S.lang() : "en") : {};
+    return d[key];
+  }
+});
+
+const CBADGE = {
+  Active: ["#EEF0EA", "#4F5C42"], Inactive: ["#F1EFE9", "#6E6A62"],
+  VIP: ["#EDE7F1", "#5C4A72"], Blocked: ["#FBF0EE", "#8A3F33"]
+};
+const PAY = { Paid: ["#EEF0EA", "#4F5C42"], Pending: ["#F6EFDF", "#7E6224"], Refunded: ["#FBF0EE", "#8A3F33"] };
+const SHIP = { Delivered: ["#EEF0EA", "#4F5C42"], "In transit": ["#EAF0F2", "#3F5A63"], Preparing: ["#F1EFE9", "#6E6A62"] };
+const TAGS = ["Repeat customer", "Outerwear buyer", "Military collector", "Newsletter subscriber", "High-value customer"];
+const SORTS = ["Recently registered", "Name A–Z", "Most orders", "Highest spend", "Last purchase"];
+
+const ABADGE = {
+  Active: ["#EEF0EA", "#4F5C42", "accActive", "●"],
+  Suspended: ["#F6EAE7", "#8A3F33", "accSuspended", "✕"],
+  Closed: ["#F1EFE9", "#6E6A62", "accClosed", "—"]
+};
+
+class Component extends DCLogic {
+  state = {
+    query: "", sort: "Recently registered", filtersOpen: false, page: 1,
+    f: { status: "", tag: "", marketing: "", segment: "", engagement: "" }, regAfter: "",
+    revealed: {}, exportOpen: false, exportPurpose: "", exportScope: null, exportError: "",
+    selected: [], vw: typeof window !== "undefined" ? window.innerWidth : 1440,
+    editing: false, draft: null, noteDraft: "", editingNote: null, noteEdits: {}, tick: 0
+  };
+
+  componentDidMount() {
+    this._bind();
+    this._onResize = () => this.setState({ vw: window.innerWidth });
+    window.addEventListener("resize", this._onResize);
+  }
+  _bind() {
+    this.S = window.TSUMUGI_STORE;
+    if (!this.S) {
+      // The shared store loads from the shell's helmet; keep polling until it exists
+      // instead of giving up after one tick (which left this view permanently blank).
+      this._poll = setInterval(() => {
+        if (!window.TSUMUGI_STORE) return;
+        clearInterval(this._poll); this._poll = null;
+        this._bind(); this.forceUpdate();
+      }, 50);
+      return;
+    }
+    if (!this._unsub) this._unsub = this.S.subscribe(() => this.setState(s => ({ tick: s.tick + 1 })));
+  }
+  componentWillUnmount() {
+    window.removeEventListener("resize", this._onResize);
+    if (this._poll) clearInterval(this._poll);
+    if (this._unsub) this._unsub();
+  }
+  componentDidUpdate(prev) {
+    if (prev.entityId !== this.props.entityId || prev.view !== this.props.view) {
+      // Revealed PII must never survive navigation or switching customer.
+      this.setState({ editing: false, draft: null, noteDraft: "", editingNote: null, selected: [], revealed: {} });
+    }
+  }
+
+  _pii(kind, value) {
+    const S = this.S;
+    const shown = !!this.state.revealed[kind];
+    const masked = kind === "email" ? S.maskEmail(value) : S.maskPhone(value);
+    return { value: shown ? value : masked, shown };
+  }
+
+  _toggleReveal(kind, customerId) {
+    const S = this.S, T = this._dict();
+    if (this.state.revealed[kind]) {
+      this.setState(st => { const r = { ...st.revealed }; delete r[kind]; return { revealed: r }; });
+      return;
+    }
+    if (!S.can("customers.pii")) { S.toast(T.piiNoPermission, "error"); return; }
+    this.setState(st => ({ revealed: { ...st.revealed, [kind]: true } }));
+    S.logAudit("pii.reveal", "customer", customerId,
+      "Revealed " + (kind === "email" ? "email address" : "telephone number") + " for " + customerId);
+    S.toast(T.piiRevealed, "info");
+  }
+
+  _openExport(rows) {
+    const S = this.S, T = this._dict();
+    if (!S.can("export")) { S.toast(T.permissionDenied, "error"); return; }
+    this._exportTrigger = document.activeElement;
+    this.setState({ exportOpen: true, exportPurpose: "", exportError: "", exportScope: rows.map(c => c.id) });
+  }
+
+  _closeExport() {
+    this.setState({ exportOpen: false, exportPurpose: "", exportError: "" });
+    const t = this._exportTrigger;
+    this._exportTrigger = null;
+    if (t && document.contains(t) && t.focus) t.focus();
+  }
+
+  _runExport() {
+    const S = this.S, T = this._dict();
+    const purpose = this.state.exportPurpose.trim();
+    if (!purpose) {
+      this.setState({ exportError: T.exportPurposeReq });
+      window.setTimeout(() => { const el = document.getElementById("cx-purpose"); if (el) el.focus(); }, 0);
+      return;
+    }
+    const ids = this.state.exportScope || [];
+    const rows = S.customers().filter(c => ids.indexOf(c.id) >= 0);
+    const ok = this._download("tsumugi-customers.csv", S.customerCSV(rows));
+    S.logAudit("customer.export", "customer", rows.length + " records",
+      "Exported " + rows.length + " customer records — purpose: " + purpose);
+    S.toast(ok ? rows.length + " " + T.exportRecords : T.kExportIsNotAvailableInThisBrowser, ok ? "success" : "error");
+    this._closeExport();
+  }
+
+  _download(name, text) {
+    try {
+      const blob = new Blob([text], { type: "text/csv;charset=utf-8" });
+      const a = document.createElement("a");
+      a.href = URL.createObjectURL(blob); a.download = name; a.click();
+      setTimeout(() => URL.revokeObjectURL(a.href), 800);
+      return true;
+    } catch (e) { return false; }
+  }
+
+  _filtered() {
+    const { query, f, regAfter, sort } = this.state;
+    const q = query.trim().toLowerCase();
+    let list = this.S.customers().filter(c => {
+      if (f.status && (c.accountStatus || "Active") !== f.status) return false;
+      if (f.segment && (c.segment || "Standard") !== f.segment) return false;
+      if (f.engagement && (c.engagement || "Active") !== f.engagement) return false;
+      if (f.tag && (c.tags || []).indexOf(f.tag) < 0) return false;
+      if (f.marketing === "yes" && !c.marketing) return false;
+      if (f.marketing === "no" && c.marketing) return false;
+      if (regAfter && c.registered < regAfter) return false;
+      if (q && !(c.name + " " + c.email + " " + c.phone + " " + c.id).toLowerCase().includes(q)) return false;
+      return true;
+    });
+    const by = {
+      "Recently registered": (a, b) => b.registered.localeCompare(a.registered),
+      "Name A–Z": (a, b) => a.name.localeCompare(b.name),
+      "Most orders": (a, b) => b.orders - a.orders,
+      "Highest spend": (a, b) => b.totalSpent - a.totalSpent,
+      "Last purchase": (a, b) => (b.lastPurchase || "").localeCompare(a.lastPurchase || "")
+    };
+    return list.sort(by[sort]);
+  }
+
+  _initials(n) { return String(n || "?").split(" ").map(w => w[0]).join("").slice(0, 2).toUpperCase(); }
+  _rel(isoStr) {
+    const t = new Date(isoStr).getTime(); if (!t) return "—";
+    const m = Math.round((Date.now() - t) / 60000);
+    if (m < 60) return Math.max(1, m) + "m ago";
+    const h = Math.round(m / 60); if (h < 24) return h + "h ago";
+    const d = Math.round(h / 24); return d < 31 ? d + "d ago" : String(isoStr).slice(0, 10);
+  }
+
+  _lang() { const S = this.S || this.store || window.TSUMUGI_STORE; return (S && S.lang) ? S.lang() : "en"; }
+  _dict() { const I = window.TSUMUGI_I18N; return I ? I.t(this._lang()) : {}; }
+  _dialogKeys(open, close) {
+    if (open && !this._keyBound) {
+      this._keyBound = e => {
+        if (e.key === "Escape") { e.stopPropagation(); close(); }
+        if (e.key !== "Tab") return;
+        const dlg = document.querySelector('[role="dialog"][aria-modal="true"]');
+        if (!dlg) return;
+        const f = [...dlg.querySelectorAll('button,input,select,textarea,a[href]')].filter(x => !x.disabled);
+        if (!f.length) return;
+        const first = f[0], last = f[f.length - 1];
+        if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
+        else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
+      };
+      document.addEventListener("keydown", this._keyBound, true);
+      this._prevFocus = document.activeElement;
+      window.setTimeout(() => {
+        const dlg = document.querySelector('[role="dialog"][aria-modal="true"]');
+        const el = dlg && dlg.querySelector('input,button');
+        if (el) el.focus();
+      }, 20);
+    } else if (!open && this._keyBound) {
+      document.removeEventListener("keydown", this._keyBound, true);
+      this._keyBound = null;
+      const back = this._prevFocus;
+      this._prevFocus = null;
+      if (back && document.contains(back) && back.focus) window.setTimeout(() => back.focus(), 0);
+    }
+  }
+
+  renderVals() {
+    const l = this._lang();
+    const pick = (S) => S || this.S || this.store || window.TSUMUGI_STORE;
+    return Object.assign({
+      t: this._dict(), lang: l, isJa: l === "ja",
+      exportOpen: !!this.state.exportOpen,
+      exportPurpose: this.state.exportPurpose,
+      exportError: this.state.exportError,
+      exportHasError: !!this.state.exportError,
+      exportInvalid: this.state.exportError ? "true" : "false",
+      exportBorder: this.state.exportError ? "#D8A79C" : "#DAD5CB",
+      exportCountLabel: (this.state.exportScope || []).length + " " + (this._dict().exportRecords || ""),
+      exportFieldList: l === "ja"
+        ? "顧客ID · 氏名 · メール · 電話番号 · 登録日 · 注文数 · 購入合計 · 最終購入 · アカウント状態 · 区分 · 利用状況 · タグ · 配信同意"
+        : "Customer ID · Name · Email · Phone · Registered · Orders · Total spent · Last purchase · Account status · Segment · Engagement · Tags · Marketing",
+      onExportPurpose: e => this.setState({ exportPurpose: e.target.value, exportError: "" }),
+      onExportCancel: () => this._closeExport(),
+      onExportRun: () => this._runExport(),
+      setLangEn: () => { const S = pick(); if (S && S.setLang) S.setLang("en"); },
+      setLangJa: () => { const S = pick(); if (S && S.setLang) S.setLang("ja"); },
+      toggleLang: () => { const S = pick(); if (S && S.toggleLang) S.toggleLang(); },
+      langLabel: l === "ja" ? "ENGLISH" : "日本語",
+      langEnMark: l === "ja" ? "" : "✓", langJaMark: l === "ja" ? "✓" : ""
+    }, this._renderVals());
+  }
+
+  _renderVals() {
+    this._dialogKeys(!!this.state.exportOpen, () => this._closeExport());
+    if (!this.S) this._bind();
+    if (!this.S) return { isList: false, isDetail: false, notFound: false, loading: true };
+    const S = this.S, s = this.state, nav = this.props.nav || (() => { });
+    const isCards = s.vw < 820;
+    const perPage = Number(S.settings().itemsPerPage || 10);
+    const backToList = () => nav("/admin/customers");
+
+    if (this.props.view === "list") {
+      const filtered = this._filtered();
+      const pages = Math.max(1, Math.ceil(filtered.length / perPage));
+      const page = Math.min(s.page, pages);
+      const rows = filtered.slice((page - 1) * perPage, page * perPage);
+      const pageIds = rows.map(r => r.id);
+      const sel = s.selected;
+      const fSel = s.f, regAfterVal = s.regAfter;
+      const nFilters = [fSel.status, fSel.tag, fSel.marketing, fSel.segment, fSel.engagement, regAfterVal].filter(Boolean).length;
+      const mk = (key, label, options) => ({
+        id: "cu-f-" + key, label, value: s.f[key], options,
+        onChange: e => this.setState(st => ({ f: { ...st.f, [key]: e.target.value }, page: 1 }))
+      });
+      return {
+        isList: true, isDetail: false, notFound: false,
+        query: s.query, onQuery: e => this.setState({ query: e.target.value, page: 1 }),
+        sort: s.sort, sortOptions: SORTS.map(v => ({ value: v, label: (window.TSUMUGI_I18N ? window.TSUMUGI_I18N.label(v, this._lang()) : v) })), onSort: e => this.setState({ sort: e.target.value, page: 1 }),
+        filtersOpen: s.filtersOpen, filterBtnBg: s.filtersOpen ? "#EEF0EA" : "#FFFFFF",
+        toggleFilters: () => this.setState(st => ({ filtersOpen: !st.filtersOpen })),
+        hasFilters: nFilters > 0, filterCount: nFilters,
+        clearFilters: () => this.setState({ f: { status: "", tag: "", marketing: "", segment: "", engagement: "" }, regAfter: "", query: "", page: 1 }),
+        filterSelects: [
+          mk("status", T3.accountStatus, [{ v: "", t: T3.kAllStatuses }, { v: "Active", t: T3.accActive }, { v: "Suspended", t: T3.accSuspended }, { v: "Closed", t: T3.accClosed }]),
+          mk("segment", T3.segment, [{ v: "", t: T3.kAllStatuses }, { v: "Standard", t: T3.segStandard }, { v: "VIP", t: T3.segVip }]),
+          mk("engagement", T3.engagement, [{ v: "", t: T3.kAllStatuses }, { v: "Active", t: T3.engActive }, { v: "Dormant", t: T3.engDormant }]),
+          mk("tag", T3.kTag, [{ v: "", t: "All tags" }].concat(TAGS.map(t => ({ v: t, t })))),
+          mk("marketing", T3.kMarketing, [{ v: "", t: "Any consent" }, { v: "yes", t: T3.kConsented }, { v: "no", t: "Not consented" }])
+        ],
+        regAfter: s.regAfter, onRegAfter: e => this.setState({ regAfter: e.target.value, page: 1 }),
+        isEmpty: filtered.length === 0,
+        showTable: filtered.length > 0 && !isCards,
+        showCards: filtered.length > 0 && isCards,
+        showPager: filtered.length > 0,
+        columns: [
+          { label: T3.kId, align: "left" }, { label: T3.kName, align: "left" }, { label: T3.kEmail, align: "left" },
+          { label: T3.kTelephone2, align: "left" }, { label: T3.kRegistered, align: "left" }, { label: T3.kOrders, align: "center" },
+          { label: T3.kTotalSpent, align: "right" }, { label: T3.kLastPurchase2, align: "left" },
+          { label: T3.accountStatus, align: "left" }, { label: T3.segment, align: "left" }, { label: T3.engagement, align: "left" },
+          { label: T3.kTags2, align: "left" }, { label: T3.kMktg, align: "center" }
+        ],
+        allChecked: pageIds.length > 0 && pageIds.every(id => sel.includes(id)),
+        toggleAll: e => this.setState({ selected: e.target.checked ? [...new Set([...sel, ...pageIds])] : sel.filter(id => !pageIds.includes(id)) }),
+        rows: rows.map(c => {
+          const acc = c.accountStatus || "Active";
+          const b = ABADGE[acc] || ABADGE.Active;
+          const segKey = (c.segment || "Standard") === "VIP" ? "segVip" : "segStandard";
+          const engKey = (c.engagement || "Active") === "Dormant" ? "engDormant" : "engActive";
+          return {
+            id: c.id, name: c.name,
+            // List views always mask; reveal exists only on the detail screen.
+            email: S.maskEmail(c.email), phone: S.maskPhone(c.phone), registered: c.registered,
+            orders: c.orders, total: S.yen(c.totalSpent), last: c.lastPurchase || "—",
+            status: (T3[b[2]] || acc).toUpperCase(), badgeBg: b[0], badgeFg: b[1], badgeMark: b[3],
+            segment: T3[segKey], segmentMark: segKey === "segVip" ? "★" : "·",
+            engagement: T3[engKey], engagementMark: engKey === "engDormant" ? "○" : "●",
+            tags: (c.tags || []).slice(0, 3), initials: this._initials(c.name),
+            marketing: c.marketing ? T3.kYes : T3.kNo, marketingTone: c.marketing ? "#4F5C42" : "#B0ABA2",
+            cardMeta: c.id + " · " + c.orders + T3.kOrders2 + S.yen(c.totalSpent),
+            engagementTone: engKey === "engDormant" ? "#9A7A32" : "#4F5C42",
+            rowBg: sel.includes(c.id) ? "#F7F8F4" : "#FFFFFF",
+            checked: sel.includes(c.id), selectLabel: T3.selectRow.split("{x}").join(c.name),
+            onCheck: e => this.setState({ selected: e.target.checked ? [...sel, c.id] : sel.filter(x => x !== c.id) }),
+            onOpen: () => nav("/admin/customers/" + c.id)
+          };
+        }),
+        hasSelection: sel.length > 0,
+        canExportCsv: S.can("export"), canEditCustomers: S.can("customers.edit"),
+        selectionLabel: sel.length + T3.kSelected,
+        clearSelection: () => this.setState({ selected: [] }),
+        bulkTag: "", bulkTagOptions: [{ v: "", t: T3.addTagPh }].concat(TAGS.map(t => ({ v: t, t }))),
+        onBulkAddTag: e => { const v = e.target.value; if (!v) return; S.tagCustomers(sel, v, true); S.toast(T3.tagAddedToN.split("{x}").join(v).split("{n}").join(sel.length), "success"); this.setState({ selected: [] }); },
+        bulkStatus: "", bulkStatusOptions: [{ v: "", t: T3.accountStatus }, { v: "Active", t: T3.accActive }, { v: "Suspended", t: T3.accSuspended }, { v: "Closed", t: T3.accClosed }],
+        onBulkStatus: async e => {
+          const v = e.target.value; if (!v) return;
+          if (v === "Blocked") {
+            const ok = await S.confirm({ title: T3.blockNQ.split("{n}").join(sel.length), body: T3.blockNBody, accept: T3.blockAccounts, cancel: T3.kCancel, tone: "#A2493C" });
+            if (!ok) return;
+          }
+          S.setCustomerStatus(sel, v); S.toast(T3.statusSetToN.split("{n}").join(sel.length).split("{x}").join(v), "success"); this.setState({ selected: [] });
+        },
+        bulkExport: () => this._openExport(S.customers().filter(c => sel.includes(c.id))),
+        onExport: () => this._openExport(filtered),
+        rangeLabel: T3.kShowing + ((page - 1) * perPage + 1) + "–" + Math.min(page * perPage, filtered.length) + " " + T3.ofWord + " " + filtered.length,
+        atFirst: page <= 1, atLast: page >= pages,
+        prevOpacity: page <= 1 ? 0.45 : 1, nextOpacity: page >= pages ? 0.45 : 1,
+        prevPage: () => this.setState(st => ({ page: Math.max(1, st.page - 1), selected: [] })),
+        nextPage: () => this.setState(st => ({ page: Math.min(pages, st.page + 1), selected: [] })),
+        pageButtons: Array.from({ length: pages }, (_, i) => i + 1).filter(n => pages <= 7 || Math.abs(n - page) <= 2 || n === 1 || n === pages).map(n => ({
+          label: String(n), current: n === page ? "page" : "false",
+          bg: n === page ? "#3F4A35" : "#FFFFFF", fg: n === page ? "#FFFFFF" : "#55534C",
+          border: n === page ? "#3F4A35" : "#DAD5CB",
+          onClick: () => this.setState({ page: n, selected: [] })
+        }))
+      };
+    }
+
+    const c = S.getCustomer(this.props.entityId);
+    if (!c) return { isList: false, isDetail: false, notFound: true, backToList };
+
+    const editing = s.editing;
+    const d = s.draft || c;
+    const b = CBADGE[c.status] || CBADGE.Active;
+    const setDraft = (k, v) => this.setState(st => ({ draft: { ...(st.draft || c), [k]: v } }));
+    const avail = TAGS.filter(t => (c.tags || []).indexOf(t) < 0);
+
+    return {
+      isList: false, isDetail: true, notFound: false, backToList,
+      detailColumns: s.vw >= 1120 ? "minmax(0,1fr) 320px" : "minmax(0,1fr)",
+      initials: this._initials(c.name),
+      cName: c.name, cId: c.id, cRegistered: c.registered,
+      cRegisteredLine: this._lang() === "ja"
+        ? c.id + " · 登録 " + c.registered
+        : c.id + " · registered " + c.registered,
+      cStatus: this._lang() === "ja" && window.TSUMUGI_I18N
+        ? window.TSUMUGI_I18N.tx(c.status, "ja")
+        : c.status.toUpperCase(),
+      statusBg: b[0], statusFg: b[1],
+      cStatusValue: d.status, onStatusChange: e => setDraft("status", e.target.value),
+      editing, reading: !editing,
+      marketingCursor: editing ? "pointer" : "default",
+      editBtnLabel: editing ? "Save changes" : T3.kEditCustomer,
+      editBtnBg: editing ? "#6D7761" : "#FFFFFF",
+      editBtnFg: editing ? "#FFFFFF" : "#232220",
+      editBtnBorder: editing ? "#6D7761" : "#DAD5CB",
+      onToggleEdit: () => {
+        if (!editing) return this.setState({ editing: true, draft: JSON.parse(JSON.stringify(c)) });
+        S.saveCustomer(this.state.draft);
+        this.setState({ editing: false, draft: null });
+        S.toast(T3.kCustomerProfileUpdated, "success");
+      },
+      onCancelEdit: () => this.setState({ editing: false, draft: null }),
+      profileFields: [
+        ["name", T3.kName2, false], ["email", T3.kEmailAddress, true], ["phone", T3.kTelephone2, true],
+        ["address", T3.kAddress, false], ["country", T3.kCountry, false]
+      ].map(([k, label, maskable]) => {
+        const raw = d[k] || "";
+        const pii = maskable ? this._pii(k, raw) : null;
+        return {
+          id: "cu-p-" + k, label,
+          // Masked while reading; the edit form always shows the real value.
+          value: (!editing && pii) ? pii.value : raw,
+          editing, reading: !editing,
+          plain: !maskable, maskable: !!maskable,
+          isMasked: !!pii && !pii.shown,
+          revealPressed: pii && pii.shown ? "true" : "false",
+          revealText: pii && pii.shown
+            ? (k === "email" ? T3.hideEmail : T3.hidePhone)
+            : (k === "email" ? T3.revealEmail : T3.revealPhone),
+          revealLabel: pii && pii.shown
+            ? (k === "email" ? T3.hideEmail : T3.hidePhone)
+            : (k === "email" ? T3.revealEmail : T3.revealPhone),
+          canReveal: S.can("customers.pii"), noReveal: !S.can("customers.pii"),
+          onReveal: () => this._toggleReveal(k, c.id),
+          onChange: e => setDraft(k, e.target.value)
+        };
+      }),
+
+      axisFields: [
+        ["accountStatus", T3.accountStatus, S.ACCOUNT_STATUSES, { Active: "accActive", Suspended: "accSuspended", Closed: "accClosed" }],
+        ["segment", T3.segment, S.SEGMENTS, { Standard: "segStandard", VIP: "segVip" }],
+        ["engagement", T3.engagement, S.ENGAGEMENTS, { Active: "engActive", Dormant: "engDormant" }]
+      ].map(([k, label, opts, keys]) => {
+        const val = d[k] || opts[0];
+        const marks = { Active: "●", Suspended: "✕", Closed: "—", Standard: "·", VIP: "★", Dormant: "○" };
+        const tones = { Suspended: "#8A3F33", Closed: "#6E6A62", Dormant: "#9A7A32" };
+        return {
+          id: "cu-" + k, label, value: val, editing, reading: !editing,
+          display: T3[keys[val]] || val,
+          mark: marks[val] || "·", tone: tones[val] || "#4F5C42",
+          options: opts.map(o => ({ v: o, t: T3[keys[o]] || o })),
+          onChange: e => setDraft(k, e.target.value)
+        };
+      }),
+      cMarketing: !!d.marketing,
+      onMarketing: e => setDraft("marketing", e.target.checked),
+      tagChips: (c.tags || []).map(t => ({
+        label: t, removeLabel: "Remove tag " + t,
+        onRemove: () => { S.tagCustomers([c.id], t, false); S.toast(T3.kTagRemoved, "info"); }
+      })),
+      noTags: (c.tags || []).length === 0,
+      addTagValue: "",
+      availableTags: [{ v: "", t: avail.length ? T3.addTagPh : T3.allTagsApplied }].concat(avail.map(t => ({ v: t, t }))),
+      onAddTag: e => { const v = e.target.value; if (!v) return; S.tagCustomers([c.id], v, true); S.toast(T3.tagAddedOne.split("{x}").join(v), "success"); },
+
+      purchaseSummary: c.orders + T3.kOrders3 + S.yen(c.totalSpent),
+      noPurchases: (c.purchases || []).length === 0,
+      purchases: (c.purchases || []).map(o => {
+        const p = PAY[o.payment] || PAY.Paid, sh = SHIP[o.delivery] || SHIP.Delivered;
+        return {
+          order: o.order, date: o.date, amount: S.yen(o.amount), card: o.card,
+          payment: o.payment.toUpperCase(), payBg: p[0], payFg: p[1],
+          delivery: o.delivery.toUpperCase(), shipBg: sh[0], shipFg: sh[1],
+          items: o.items.map(it => ({ name: it.name, price: S.yen(it.price), thumb: it.thumb, alt: it.name + " — " + it.brand }))
+        };
+      }),
+
+      noteDraft: s.noteDraft,
+      onNoteDraft: e => this.setState({ noteDraft: e.target.value }),
+      noteEmpty: !s.noteDraft.trim(),
+      noteOpacity: s.noteDraft.trim() ? 1 : 0.5,
+      onAddNote: () => {
+        if (!s.noteDraft.trim()) return;
+        S.addNote(c.id, s.noteDraft.trim());
+        this.setState({ noteDraft: "" });
+        S.toast(T3.kInternalNoteAdded, "success");
+      },
+      noNotes: (c.notes || []).length === 0,
+      notes: (c.notes || []).map(n => {
+        const isEd = s.editingNote === n.id;
+        return {
+          author: n.author, when: this._rel(n.at), text: n.text,
+          editing: isEd, reading: !isEd,
+          editLabel: isEd ? T3.kCancel : T3.kEdit,
+          draft: s.noteEdits[n.id] != null ? s.noteEdits[n.id] : n.text,
+          onDraft: e => { const v = e.target.value; this.setState(st => ({ noteEdits: { ...st.noteEdits, [n.id]: v } })); },
+          onEdit: () => this.setState(st => ({ editingNote: isEd ? null : n.id, noteEdits: { ...st.noteEdits, [n.id]: n.text } })),
+          onSave: () => { S.updateNote(c.id, n.id, this.state.noteEdits[n.id] || n.text); this.setState({ editingNote: null }); S.toast(T3.kNoteUpdated, "success"); },
+          onDelete: async () => {
+            const ok = await S.confirm({ title: T3.kDeleteThisInternalNote, body: T3.kTheNoteAndItsAuthorRecordWillBeRem, accept: T3.deleteNote, cancel: T3.kCancel, tone: "#A2493C" });
+            if (ok) { S.deleteNote(c.id, n.id); S.toast(T3.kNoteDeleted, "error"); }
+          }
+        };
+      }),
+
+      summaryRows: [
+        { k: T3.kCustomerId, v: c.id },
+        { k: T3.kPurchases, v: String(c.orders) },
+        { k: T3.kTotalSpent2, v: S.yen(c.totalSpent) },
+        { k: T3.kAverageOrder, v: S.yen(c.orders ? Math.round(c.totalSpent / c.orders) : 0) },
+        { k: T3.kLastPurchase, v: c.lastPurchase || "—" },
+        { k: T3.kMarketing2, v: c.marketing ? T3.kConsented : T3.kDeclined }
+      ],
+      disableLabel: c.status === "Blocked" ? T3.kRestoreAccount : T3.kDisableAccount,
+      onDisable: async () => {
+        if (c.status === "Blocked") { S.setCustomerStatus([c.id], "Active"); return S.toast(T3.kAccountRestored, "success"); }
+        const ok = await S.confirm({ title: T3.disableAcctQ.split("{x}").join(c.name), body: T3.disableAcctBody, accept: T3.disableAccount, cancel: T3.kCancel, tone: "#A2493C" });
+        if (ok) { S.setCustomerStatus([c.id], "Blocked"); S.toast(T3.kAccountDisabled, "warning"); }
+      },
+      onDelete: async () => {
+        const ok = await S.confirm({ title: T3.delCustomerQ.split("{x}").join(c.name), body: T3.delCustomerBody, accept: T3.deleteCustomer, cancel: T3.kCancel, tone: "#A2493C" });
+        if (!ok) return;
+        S.deleteCustomers([c.id]); S.toast(T3.kCustomerDeleted, "error"); nav("/admin/customers");
+      },
+      onExportOne: () => this._openExport([c]),
+      canExportOne: S.can("export"),
+      canEditCustomers: S.can("customers.edit"),
+      canDeleteCustomer: S.can("customers.delete"),
+      readOnlyCustomer: !S.can("customers.edit"),
+      activity: (c.activity || []).map(a => ({
+        type: a.type.toUpperCase(), text: a.text, when: this._rel(a.at),
+        dot: a.type === T3.kPurchase ? "#4F5C42" : a.type === "Tag" ? "#6D7761" : a.type === "Account" ? "#9A7A32" : "#C0BBB1"
+      }))
+    };
+  }
+}
+</script>
+</body>
+</html>

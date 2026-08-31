@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>TSUMUGI re-probe 2</title>
+<style>
+  body { margin: 0; font: 13px/1.45 ui-monospace, monospace; background: #14140f; color: #e8e4da; display: flex; }
+  #wrap { flex: none; overflow: hidden; border-right: 2px solid #333; }
+  iframe { border: 0; display: block; background: #fff; transform-origin: 0 0; }
+  #log { flex: 1; padding: 10px 12px; white-space: pre-wrap; overflow: auto; height: 100vh; }
+</style>
+</head>
+<body>
+<div id="wrap"><iframe id="f" src="about:blank"></iframe></div>
+<pre id="log">running…</pre>
+<script>
+const F = document.getElementById("f"), WRAP = document.getElementById("wrap"), LOG = document.getElementById("log");
+let lines = [];
+const say = s => { lines.push(s); LOG.textContent = lines.join("\n"); };
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+const D = () => F.contentWindow.document;
+const W = () => F.contentWindow;
+const CS = el => W().getComputedStyle(el);
+const txt = el => (el ? (el.innerText || el.textContent || "").replace(/\s+/g, " ").trim() : "");
+const click = el => el && el.dispatchEvent(new (W().MouseEvent)("click", { bubbles: true, cancelable: true, view: W() }));
+const S = () => W().TSUMUGI_STORE;
+function size(w, h) {
+  const s = Math.min(1, 190 / w);
+  F.style.width = w + "px"; F.style.height = h + "px"; F.style.transform = "scale(" + s + ")";
+  WRAP.style.width = Math.round(w * s) + "px"; WRAP.style.height = Math.round(h * s) + "px";
+}
+async function load(file, w, h, hash) {
+  size(w, h);
+  await new Promise(res => { F.onload = res; F.src = "../" + file + "?q=" + Date.now() + (hash || ""); });
+  await sleep(2100);
+}
+function setInput(el, v) {
+  const proto = el.tagName === "SELECT" ? W().HTMLSelectElement.prototype : W().HTMLInputElement.prototype;
+  Object.getOwnPropertyDescriptor(proto, "value").set.call(el, v);
+  el.dispatchEvent(new (W().Event)("input", { bubbles: true }));
+  el.dispatchEvent(new (W().Event)("change", { bubbles: true }));
+}
+const errEls = () => [...D().querySelectorAll("span,div,p")].filter(e => !e.querySelector("span,div,p") && txt(e) && /rgb\(162, 73, 60\)/.test(CS(e).color));
+
+async function tJaProducts() {
+  await load("TSUMUGI%20Admin.dc.html", 1180, 900, "#/admin/products/new");
+  const st = S(), before = st.lang();
+  st.setLang("ja"); await sleep(400);
+  if (!st.session()) { st.login("admin@tsumugi.archive", "tsumugi-demo", false); await sleep(900); }
+  W().location.hash = "#/admin/products/new"; await sleep(1800);
+  const draft = () => [...D().querySelectorAll("button")].find(b => txt(b) === "下書きとして保存");
+  say("<b>ADMIN PRODUCTS JA</b> signedIn=" + !!st.session() + " saveBtn=\"" + txt(draft()) + "\"");
+  click(draft()); await sleep(1100);
+  say("  empty-form errors: " + (errEls().map(e => txt(e)).join(" | ") || "NONE"));
+  const skuIn = [...D().querySelectorAll("input")].find(i => /sku/i.test(i.id + i.name + (i.getAttribute("aria-label") || "")));
+  const ex = st.products()[0];
+  if (skuIn && ex) {
+    setInput(skuIn, ex.sku); await sleep(500);
+    click(draft()); await sleep(1100);
+    say("  duplicate SKU \"" + ex.sku + "\" (owner \"" + ex.name + "\") → " + (errEls().map(e => txt(e)).filter(t => /SKU|使用/.test(t)).join(" | ") || "NO SKU ERROR"));
+  }
+  const body = D().body ? D().body.innerText : "";
+  const leak = /A product name is required|A SKU is required|A brand or maker|Schedule for/.test(body);
+  say("  english leak in JA console=" + leak + (leak ? " ✗" : " ✓"));
+  st.setLang(before);
+}
+
+async function tCheckout(w, lang) {
+  await load("TSUMUGI.dc.html", w, 900, "#/");
+  const st = S(), before = st.lang();
+  if (lang) { st.setLang(lang); await sleep(600); }
+  const p = st.products().find(x => x.status === "published" && Number(x.stock) > 0) || st.products()[0];
+  W().location.hash = "#/product/" + p.id; await sleep(1600);
+  const cta = [...D().querySelectorAll("main button")].find(b => /カート|CART/i.test(txt(b)) && !b.disabled);
+  click(cta); await sleep(900);
+  const cartTrig = D().querySelector('[data-trigger="cart"]');
+  say("<b>CHECKOUT " + w + " lang=" + st.lang() + "</b> product=\"" + p.name + "\" cta=\"" + txt(cta) + "\" header=\"" + txt(cartTrig) + "\"");
+  W().location.hash = "#/checkout/information"; await sleep(1800);
+  const sel = () => D().querySelector("#co-prefecture");
+  if (!sel()) { say("  ✗ prefecture select not rendered (cart empty?) buttons=[" + [...D().querySelectorAll("main button")].map(b => txt(b)).join(" / ") + "]"); st.setLang(before); return; }
+  say("  valid state: aria-invalid=" + sel().getAttribute("aria-invalid") + " aria-describedby=" + (sel().getAttribute("aria-describedby") || "(absent)"));
+  const btns = [...D().querySelectorAll("main button")];
+  const submit = btns.filter(b => !/戻る|BACK|編集|EDIT|カート/i.test(txt(b))).pop();
+  say("  submit=\"" + txt(submit) + "\"");
+  click(submit); await sleep(1200);
+  const s2 = sel(), db = s2 && s2.getAttribute("aria-describedby"), tgt = db ? D().getElementById(db) : null;
+  say("  after invalid submit: hash=" + W().location.hash + " aria-invalid=" + (s2 && s2.getAttribute("aria-invalid")) +
+      " aria-describedby=" + (db || "(absent)") + " target=" + (tgt ? "\"" + txt(tgt) + "\"" : "MISSING") + (db && tgt ? " ✓ resolves" : " ✗"));
+  const ids = [...D().querySelectorAll("[id]")].map(e => e.id), dup = ids.filter((v, i) => ids.indexOf(v) !== i);
+  say("  errSpans=[" + [...D().querySelectorAll("[id$='-err']")].map(e => e.id).join(",") + "] dupIds=" + (dup.join(",") || "none"));
+  if (s2) { const opt = [...s2.options].find(o => o.value); setInput(s2, opt ? opt.value : "Tokyo"); await sleep(900); }
+  const s3 = sel();
+  say("  valid again: value=\"" + (s3 ? s3.value : "-") + "\" aria-invalid=" + (s3 && s3.getAttribute("aria-invalid")) +
+      " aria-describedby=" + ((s3 && s3.getAttribute("aria-describedby")) || "(absent)") +
+      (s3 && !s3.getAttribute("aria-describedby") ? " ✓ no dangling ref" : " ✗ stale ref") + " sw=" + D().documentElement.scrollWidth + "/" + W().innerWidth);
+  st.setLang(before);
+}
+
+(async () => {
+  const errs = [];
+  window.addEventListener("error", e => errs.push(e.message));
+  for (const fn of [() => tJaProducts(), () => tCheckout(390, "en"), () => tCheckout(1440, "ja")]) {
+    try { await fn(); } catch (e) { say("  ✗ THREW: " + (e && e.message) + " @ " + String(e && e.stack).split("\n")[1]); }
+  }
+  say("DONE" + (errs.length ? "  harness errors: " + errs.join(" | ") : "  no harness errors"));
+})();
+</script>
+</body>
+</html>

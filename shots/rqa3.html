@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>TSUMUGI final regression QA</title>
+<style>
+  body { margin: 0; font: 13px/1.4 ui-monospace, monospace; background: #14140f; color: #e8e4da; display: flex; }
+  #wrap { flex: none; overflow: hidden; border-right: 2px solid #333; }
+  iframe { border: 0; display: block; background: #fff; transform-origin: 0 0; }
+  #log { flex: 1; padding: 10px 12px; white-space: pre-wrap; overflow: auto; height: 100vh; }
+  b { color: #ffd479; font-weight: 400; }
+</style>
+</head>
+<body>
+<div id="wrap"><iframe id="f" src="about:blank"></iframe></div>
+<pre id="log">running…</pre>
+<script>
+const F = document.getElementById("f"), WRAP = document.getElementById("wrap"), LOG = document.getElementById("log");
+let lines = [];
+const say = s => { lines.push(s); LOG.innerHTML = lines.join("\n"); };
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+const D = () => F.contentWindow.document;
+const W = () => F.contentWindow;
+const CS = el => W().getComputedStyle(el);
+const R = el => { const r = el.getBoundingClientRect(); return { t: Math.round(r.top), b: Math.round(r.bottom), l: Math.round(r.left), r: Math.round(r.right), w: Math.round(r.width), h: Math.round(r.height) }; };
+const txt = el => (el ? (el.innerText || el.textContent || "").replace(/\s+/g, " ").trim() : "");
+const click = el => el && el.dispatchEvent(new (W().MouseEvent)("click", { bubbles: true, cancelable: true, view: W() }));
+const esc = () => W().dispatchEvent(new (W().KeyboardEvent)("keydown", { key: "Escape", bubbles: true }));
+const bp = () => CS(D().body).position;
+const bt = () => CS(D().body).top;
+const sy = () => Math.round(W().scrollY);
+const layers = () => [...D().querySelectorAll("div")].filter(d => { const c = CS(d); return c.position === "fixed" && c.zIndex === "60"; });
+const openKeys = () => ["menu", "search", "cart", "filters", "sort"].filter(k => !!D().querySelector('[data-overlay="' + k + '"]'));
+const ovl = k => D().querySelector('[data-overlay="' + k + '"]');
+const trig = k => D().querySelector('[data-trigger="' + k + '"]');
+const who = () => { const a = D().activeElement; if (!a) return "none"; return a.tagName.toLowerCase() + (a.getAttribute("data-panel") ? "[panel=" + a.getAttribute("data-panel") + "]" : a.getAttribute("data-trigger") ? "[trig=" + a.getAttribute("data-trigger") + "]" : a.hasAttribute("data-search-input") ? "[search-input]" : ""); };
+const state = () => "layers=" + layers().length + " open=[" + openKeys().join(",") + "] bodyPos=" + bp() + " bodyTop=" + bt() + " scrollY=" + sy();
+
+function size(w, h) {
+  const s = Math.min(1, 190 / w);
+  F.style.width = w + "px"; F.style.height = h + "px"; F.style.transform = "scale(" + s + ")";
+  WRAP.style.width = Math.round(w * s) + "px"; WRAP.style.height = Math.round(h * s) + "px";
+}
+async function load(w, h, hash, wait) {
+  size(w, h);
+  await new Promise(res => { F.onload = res; F.src = "../TSUMUGI.dc.html?q=" + Date.now() + (hash || "#/"); });
+  await sleep(wait === undefined ? 1900 : wait);
+  try { W().focus(); } catch (e) { }
+}
+function overflow() {
+  const w = W(), d = D(), iw = w.innerWidth, out = [];
+  d.querySelectorAll("main *, header *, footer *").forEach(el => {
+    const r = el.getBoundingClientRect();
+    if (r.width > 0 && (r.right > iw + 1.5 || r.left < -1.5)) out.push(el.tagName.toLowerCase() + "[" + Math.round(r.left) + "→" + Math.round(r.right) + "]");
+  });
+  return { iw, sw: d.documentElement.scrollWidth, out };
+}
+const sheetBar = () => [...D().querySelectorAll("main div")].find(d => CS(d).position === "sticky");
+const scrollerIn = root => [...root.querySelectorAll("div")].find(d => /auto|scroll/.test(CS(d).overflowY) && d.scrollHeight > d.clientHeight) || [...root.querySelectorAll("div")].find(d => /auto|scroll/.test(CS(d).overflowY));
+
+/* ---------- 1+2+3: coordination matrix, lock integrity, escape rule ---------- */
+async function pair(label, hash, openA, openB, w, h) {
+  await load(w, h, hash);
+  const wi = W();
+  wi.scrollTo({ top: 900, behavior: "instant" }); await sleep(400);
+  const y0 = sy();
+  say("<b>" + label + " " + w + "×" + h + "</b> route=" + hash + " scrollY0=" + y0);
+  await openA(); await sleep(700);
+  say("  A open  → " + state());
+  await openB(); await sleep(800);
+  const st = openKeys();
+  say("  B open  → " + state() + (st.length === 1 ? " ✓ single overlay" : " ✗ " + st.length + " overlays") + (bp() === "fixed" ? " ✓ locked" : " ✗ UNLOCKED with overlay open"));
+  esc(); await sleep(900);
+  say("  Escape  → " + state() + " focus=" + who() +
+      (layers().length === 0 && bp() === "static" ? " ✓ closed+unlocked" : " ✗"));
+  wi.scrollTo({ top: 300, behavior: "instant" }); await sleep(250);
+  say("  scroll test → scrollY=" + sy() + (sy() === 300 ? " ✓ page scrolls" : " ✗ blocked") + " restoredEarlier=" + (Math.abs(y0 - 900) < 3));
+}
+const openMenu = () => { click(trig("menu")); };
+const openSearch = () => { click(trig("search")); };
+const openCart = () => { click(trig("cart")); };
+async function openFilters() { const bar = sheetBar(); click(bar && bar.querySelector("button")); }
+async function openSort() { const bar = sheetBar(); const bs = bar ? [...bar.querySelectorAll("button")] : []; click(bs[1]); }
+
+/* ---------- 4: responsive sweep, 5 routes ---------- */
+async function tSweep(w, h) {
+  const routes = ["#/", "#/shop", "#/product/1", "#/about", "#/contact"];
+  const cells = [];
+  for (const hash of routes) {
+    await load(w, h, hash);
+    const o = overflow();
+    const hdr = D().querySelector("header"), ftr = D().querySelector("footer");
+    const ok = o.sw <= o.iw + 1;
+    cells.push(hash.replace("#/", "") || "home");
+    say("  " + (w + "×" + h).padEnd(9) + (hash + "").padEnd(12) + " sw=" + o.sw + "/" + o.iw + (ok ? " ✓" : " ✗+" + (o.sw - o.iw)) +
+        " hdr=" + (hdr ? R(hdr).w + "w/" + R(hdr).h + "h" : "MISSING") + " ftr=" + (ftr ? R(ftr).w + "w" : "MISSING") +
+        (o.out.length ? "  OVF:" + o.out.slice(0, 3).join(" ") : ""));
+  }
+}
+
+/* ---------- 5: menu regression ---------- */
+async function tMenuReg(w, h) {
+  await load(w, h, "#/");
+  const wi = W();
+  wi.scrollTo({ top: 600, behavior: "instant" }); await sleep(350);
+  const y0 = sy();
+  const hb = trig("menu");
+  say("<b>MENU REG " + w + "×" + h + "</b> hamburger=" + (hb ? "box" + JSON.stringify(R(hb)) + " label=\"" + hb.getAttribute("aria-label") + "\" expanded=" + hb.getAttribute("aria-expanded") : "MISSING") + " scrollY0=" + y0);
+  click(hb); await sleep(650);
+  const ov = ovl("menu"), panel = ov && ov.querySelector('[data-panel="menu"]');
+  say("  open → " + state() + " panel=" + (panel ? JSON.stringify(R(panel)) : "-") + " focus=" + who() + " expanded=" + trig("menu").getAttribute("aria-expanded"));
+  click(panel); await sleep(300);
+  say("  inside click → open=" + !!ovl("menu") + (ovl("menu") ? " ✓" : " ✗ closed"));
+  click(ovl("menu")); await sleep(700);
+  say("  backdrop → " + state() + (Math.abs(sy() - y0) < 3 ? " ✓ scroll restored" : " ✗ expected " + y0));
+  click(trig("menu")); await sleep(650);
+  esc(); await sleep(850);
+  say("  Escape → " + state() + " focus=" + who() + (D().activeElement === trig("menu") ? " ✓ trigger" : " ✗ not trigger"));
+  click(trig("menu")); await sleep(650);
+  say("  reopen for resize test → " + state());
+  size(1440, 900); W().dispatchEvent(new (W().Event)("resize")); await sleep(900);
+  say("  resize→1440 → " + state() + " hamburger=" + !!trig("menu") + " desktopNav=" + !!D().querySelector("header nav") +
+      (bp() === "static" && layers().length === 0 ? " ✓ unlocked on desktop" : " ✗ still locked"));
+}
+
+/* ---------- 5: filter + sort regression ---------- */
+async function tFilterReg(w, h) {
+  await load(w, h, "#/shop");
+  const wi = W();
+  wi.scrollTo({ top: 2000, behavior: "instant" }); await sleep(600);
+  const y0 = sy();
+  const bar = sheetBar(), fbtn = bar && bar.querySelector("button");
+  say("<b>FILTER REG " + w + "×" + h + "</b> scrollY0=" + y0 + " trigger=\"" + txt(fbtn) + "\"");
+  click(fbtn); await sleep(700);
+  const ov = ovl("filters");
+  if (!ov) { say("  ✗ filter overlay missing"); return; }
+  const panel = ov.querySelector('[data-panel="filters"]') || ov.firstElementChild;
+  const sc = scrollerIn(panel);
+  say("  open → " + state() + " panel=" + JSON.stringify(R(panel)) + " panelTop=" + R(panel).t + (R(panel).t <= 1 ? " ✓ at viewport top" : " ✗"));
+  say("  scroller scrollTop=" + (sc ? sc.scrollTop : "-") + (sc && sc.scrollTop === 0 ? " ✓ reset" : "") + " scrollH=" + (sc ? sc.scrollHeight + "/" + sc.clientHeight : "-"));
+  if (sc) { sc.scrollTop = 300; await sleep(300); }
+  say("  panel scrolled → scroller=" + (sc ? sc.scrollTop : "-") + " winScrollY=" + sy() + " bodyTop=" + bt() + (sy() === 0 && bp() === "fixed" ? " ✓ bg fixed" : " ✗ bg moved"));
+  click(ovl("filters")); await sleep(800);
+  say("  backdrop → " + state() + " focus=" + who() + (Math.abs(sy() - y0) < 3 ? " ✓ restored" : " ✗ expected " + y0));
+  const bar2 = sheetBar(); click(bar2 && [...bar2.querySelectorAll("button")][1]); await sleep(1000);
+  const so = ovl("sort");
+  const sp = so && (so.querySelector('[data-panel="sort"]') || so.firstElementChild);
+  say("  SORT open → " + state() + " sheet=" + (sp ? JSON.stringify(R(sp)) : "-") + " ih=" + W().innerHeight +
+      (sp && R(sp).b <= W().innerHeight + 1 && R(sp).t >= 0 ? " ✓ in viewport" : " ✗ out of viewport"));
+  esc(); await sleep(900);
+  say("  SORT Escape → " + state() + " focus=" + who() + (Math.abs(sy() - y0) < 3 ? " ✓ restored" : " ✗ expected " + y0));
+}
+
+/* ---------- 5: hero, during + after animation ---------- */
+async function tHero(w, h) {
+  await load(w, h, "#/", 320);
+  let o = overflow();
+  const early = o.sw + "/" + o.iw + (o.sw <= o.iw + 1 ? " ✓" : " ✗+" + (o.sw - o.iw));
+  await sleep(1700);
+  o = overflow();
+  const hero = D().querySelector("main section");
+  say("  HERO " + (w + "×" + h).padEnd(9) + " mid-anim sw=" + early + "   settled sw=" + o.sw + "/" + o.iw + (o.sw <= o.iw + 1 ? " ✓" : " ✗+" + (o.sw - o.iw)) +
+      " hero=" + JSON.stringify(R(hero)) + (o.out.length ? " OVF:" + o.out.slice(0, 2).join(" ") : ""));
+}
+
+/* ---------- 6: home density ---------- */
+async function tDensity(w, h) {
+  await load(w, h, "#/");
+  const secs = [...D().querySelectorAll("main section")];
+  const docH = D().documentElement.scrollHeight;
+  const arr = secs.find(s => s.querySelector("article"));
+  const idx = secs.indexOf(arr);
+  say("<b>HOME DENSITY " + w + "×" + h + "</b> sections=" + secs.length + " docH=" + docH + " screens=" + (docH / h).toFixed(1));
+  secs.forEach((s, i) => {
+    const head = txt(s.querySelector("h1,h2")) || txt(s.querySelector("span"));
+    say("  [" + i + "] h=" + R(s).h + " (" + ((R(s).h / docH) * 100).toFixed(1) + "% of page) top=" + Math.round(R(s).t + W().scrollY) + "  \"" + head.slice(0, 34) + "\"" + (i === idx ? "   ← ARRIVALS cards=" + s.querySelectorAll("article").length : ""));
+  });
+  const after = secs[idx + 1];
+  say("  arrivals ends at y=" + Math.round(R(arr).b + W().scrollY) + " → next section \"" + (after ? txt(after.querySelector("h1,h2,span")).slice(0, 30) : "-") + "\" starts at y=" + (after ? Math.round(R(after).t + W().scrollY) : "-") +
+      " = " + (after ? ((R(after).t + W().scrollY) / h).toFixed(1) : "-") + " screens down");
+}
+
+/* ---------- 7: founder both languages ---------- */
+async function tFounder(w, h, ja) {
+  await load(w, h, "#/about");
+  if (ja) {
+    const lang = [...D().querySelectorAll("header button")].find(b => /日本語|JA|JP/i.test(txt(b)));
+    if (lang) { click(lang); await sleep(1200); }
+  }
+  const img = [...D().querySelectorAll("main img")].find(i => /RSeo/i.test(i.getAttribute("src") || ""));
+  if (!img) { say("<b>FOUNDER " + w + (ja ? " JA" : " EN") + "</b> ✗ image missing"); return; }
+  const sec = img.closest("section");
+  const nodes = [...sec.querySelectorAll("h1,h2,h3,span,p,img")].filter(el => el.tagName === "IMG" || (txt(el) && !el.querySelector("span,p,h2")));
+  say("<b>FOUNDER " + w + "×" + h + (ja ? " JA" : " EN") + "</b> cols=" + CS(sec).gridTemplateColumns + " sw=" + overflow().sw + "/" + overflow().iw);
+  nodes.forEach(el => say("  " + (el.tagName === "IMG" ? "[IMG] alt=\"" + (el.getAttribute("alt") || "").slice(0, 34) + "\"" : el.tagName.toLowerCase() + " \"" + txt(el).slice(0, 38) + "\"") + " top=" + Math.round(R(el).t + W().scrollY) + " h=" + R(el).h));
+  const dup = nodes.filter(el => el.tagName !== "IMG" && /^(FOUNDER|FOUNDER \/ BUYER)$/i.test(txt(el)));
+  const sig = nodes.filter(el => el.tagName === "P" && /R\. Seo\s*$/.test(txt(el)));
+  say("  FOUNDER labels=" + dup.length + " BUYER=" + nodes.filter(el => /BUYER/i.test(txt(el))).length + " trailingSignature=" + sig.length +
+      (dup.length <= 1 && sig.length === 0 ? " ✓ no duplication" : " ✗"));
+}
+
+const QUEUE = [
+  [() => pair("MENU→SEARCH", "#/", openMenu, openSearch, 390, 844)],
+  [() => pair("SEARCH→CART", "#/", openSearch, openCart, 390, 844)],
+  [() => pair("CART→MENU", "#/", openCart, openMenu, 390, 844)],
+  [() => pair("FILTER→SEARCH", "#/shop", openFilters, openSearch, 390, 844)],
+  [() => pair("SORT→CART", "#/shop", openSort, openCart, 390, 844)],
+  [() => tMenuReg(390, 844)],
+  [() => tFilterReg(390, 844)],
+  [() => tDensity(390, 844)],
+  [() => tFounder(390, 844, false)],
+  [() => tFounder(390, 844, true)],
+  [() => tFounder(1440, 900, false)],
+  [() => say("<b>HERO OVERFLOW (mid-animation + settled)</b>")],
+  [() => tHero(390, 844)], [() => tHero(390, 700)], [() => tHero(768, 900)],
+  [() => tHero(900, 900)], [() => tHero(1024, 900)], [() => tHero(1440, 900)],
+  [() => say("<b>RESPONSIVE SWEEP — home / shop / product / about / contact</b>")],
+  [() => tSweep(390, 844)], [() => tSweep(390, 700)], [() => tSweep(768, 900)],
+  [() => tSweep(900, 900)], [() => tSweep(1024, 900)], [() => tSweep(1440, 900)]
+];
+async function run() {
+  const errs = [];
+  window.addEventListener("error", e => errs.push(e.message));
+  for (const [fn] of QUEUE) {
+    try { await fn(); } catch (e) { say("  ✗ TEST THREW: " + (e && e.message) + " @ " + String(e && e.stack).split("\n")[1]); }
+  }
+  const ids = [...D().querySelectorAll("[id]")].map(e => e.id);
+  const dupIds = ids.filter((v, i) => ids.indexOf(v) !== i);
+  say("<b>STATIC</b> duplicateIds=" + (dupIds.join(",") || "none") + " overlaysLeft=" + layers().length + " bodyPos=" + bp());
+  say("DONE" + (errs.length ? "  harness errors: " + errs.join(" | ") : "  no harness errors"));
+}
+run();
+</script>
+</body>
+</html>

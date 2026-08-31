@@ -1,0 +1,2360 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,400;0,500;1,400&family=Hanken+Grotesk:wght@300;400;500&family=IBM+Plex+Mono:wght@400&display=swap" rel="stylesheet">
+<link rel="preconnect" href="https://images.unsplash.com" crossorigin>
+<title>TSUMUGI — 古着とアーカイブの店 | Vintage &amp; Archive Clothing</title>
+<meta name="description" content="TSUMUGI は東京の古着店です。年代やブランドではなく、生地・仕立て・今の服と合わせて着られるかで一点ずつ選んでいます。">
+<meta name="robots" content="index,follow">
+<link rel="canonical" href="./">
+<link rel="icon" href="./favicon.svg" type="image/svg+xml">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="TSUMUGI">
+<meta property="og:image" content="./og-cover.jpg">
+<meta name="twitter:card" content="summary_large_image">
+<script src="./auth-config.js"></script>
+<script src="./tsumugi-supabase.js"></script>
+<script src="./tsumugi-sanitize.js"></script>
+<script src="./tsumugi-data.js"></script>
+<script src="./tsumugi-repository.js"></script>
+<script src="./tsumugi-images.js"></script>
+<script src="./tsumugi-auth.js"></script>
+<script src="./tsumugi-i18n-public.js"></script>
+<script src="./tsumugi-i18n-admin.js"></script>
+<script src="./tsumugi-i18n-orders.js"></script>
+<script src="./tsumugi-i18n-content.js"></script>
+<script src="./tsumugi-i18n.js"></script>
+<style>
+  html { scroll-behavior: smooth; }
+  body { margin: 0; background: #F8F7F4; color: #222222; font-family: 'Hanken Grotesk', system-ui, sans-serif; -webkit-font-smoothing: antialiased; }
+  * { box-sizing: border-box; }
+  a { color: #6D7761; text-decoration: none; }
+  a:hover { color: #222222; }
+  button, input, select { font-family: inherit; }
+  :focus-visible { outline: 2px solid #6D7761; outline-offset: 3px; }
+  ::selection { background: #EFE9E0; }
+  @keyframes fadeUp { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: none; } }
+  @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+  @keyframes slideIn { from { transform: translateX(24px); opacity: 0; } to { transform: none; opacity: 1; } }
+  @keyframes slideInLeft { from { transform: translateX(-20px); opacity: 0; } to { transform: none; opacity: 1; } }
+  @keyframes reveal { from { opacity: 0; transform: scale(1.03); } to { opacity: 1; transform: none; } }
+  /* Japanese runs must not inherit the Latin eyebrow tracking. */
+  html[lang="ja"] main *, html[lang="ja"] header *, html[lang="ja"] [role="note"] *,
+  html[lang="ja"] [role="dialog"] *, html[lang="ja"] [role="alertdialog"] *,
+  html[lang="ja"] [role="status"] *, html[lang="ja"] [role="toolbar"] * { letter-spacing: 0.02em !important; }
+</style>
+</helmet>
+
+<div style="min-height:100vh;display:flex;flex-direction:column;background:#F8F7F4">
+
+  <header style="position:sticky;top:0;z-index:40;background:rgba(248,247,244,0.94);backdrop-filter:blur(10px);border-bottom:1px solid #E6E0D7">
+    <div style="display:grid;grid-template-columns:minmax(0,1fr) auto minmax(0,1fr);align-items:center;gap:16px;padding:clamp(14px,1.4vw,22px) clamp(20px,4vw,64px)">
+      <sc-if value="{{ isCompact }}" hint-placeholder-val="{{ false }}">
+        <button type="button" data-trigger="menu" onClick="{{ openMenu }}" aria-label="{{ t.aOpenMenu }}" aria-expanded="{{ menuExpanded }}" aria-controls="tsumugi-menu" style="justify-self:start;border:none;background:transparent;padding:0;margin-left:-11px;width:44px;height:44px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;cursor:pointer">
+          <span style="display:block;width:21px;height:1px;background:#222222"></span>
+          <span style="display:block;width:21px;height:1px;background:#222222"></span>
+          <span style="display:block;width:21px;height:1px;background:#222222"></span>
+        </button>
+      </sc-if>
+      <a href="#/" onClick="{{ goHome }}" style="justify-self:{{ logoJustify }};display:flex;flex-direction:column;justify-content:center;gap:3px;min-height:44px;color:#222222">
+        <span style="font-family:'EB Garamond',serif;font-size:clamp(17px,1.6vw,23px);letter-spacing:0.22em">TSUMUGI</span>
+        <sc-if value="{{ isDesktop }}" hint-placeholder-val="{{ true }}">
+          <span style="font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:0.32em;color:#9C978F">{{ t.brandSub }}</span>
+        </sc-if>
+      </a>
+      <sc-if value="{{ isDesktop }}" hint-placeholder-val="{{ true }}">
+        <nav style="justify-self:center;display:flex;gap:clamp(18px,2.2vw,34px);align-items:center">
+          <sc-for list="{{ navItems }}" as="n" hint-placeholder-count="5">
+            <a href="{{ n.href }}" onClick="{{ n.onClick }}" style="font-size:13px;letter-spacing:0.05em;color:#222222;padding:6px 0;border-bottom:1px solid transparent;transition:border-color 300ms ease" style-hover="border-bottom-color:#6D7761">{{ n.label }}</a>
+          </sc-for>
+        </nav>
+      </sc-if>
+      <div style="justify-self:end;display:flex;gap:clamp(12px,1.4vw,22px);align-items:center">
+        <sc-if value="{{ showHeaderLang }}" hint-placeholder-val="{{ true }}">
+        <div style="position:relative;display:flex;align-items:center">
+          <button type="button" onClick="{{ toggleHeaderLang }}" aria-label="{{ t.aLangSelect }}" aria-expanded="{{ headerLangExpanded }}" aria-controls="tsumugi-lang-header" style="display:flex;align-items:center;gap:7px;border:none;background:transparent;font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:0.14em;color:#6D7761;min-height:44px;padding:0 2px;white-space:nowrap;cursor:pointer" style-hover="color:#222222">
+            <span>Language</span>
+            <span aria-hidden="true" style="font-size:10px;color:#9C978F">{{ headerLangCaret }}</span>
+          </button>
+          <sc-if value="{{ headerLangOpen }}" hint-placeholder-val="{{ false }}">
+            <div onClick="{{ closeHeaderLang }}" style="position:fixed;inset:0;z-index:1"></div>
+            <div id="tsumugi-lang-header" role="group" aria-label="{{ t.aLangSelect }}" style="position:absolute;right:0;top:calc(100% + 6px);z-index:2;min-width:168px;background:#F8F7F4;border:1px solid #D9D1C4;box-shadow:0 12px 28px rgba(34,34,34,0.1);display:flex;flex-direction:column;padding:5px 0;animation:fadeIn 180ms ease both">
+              <sc-for list="{{ headerLangOptions }}" as="o" hint-placeholder-count="2">
+                <button type="button" onClick="{{ o.onSelect }}" aria-current="{{ o.current }}" style="display:flex;align-items:center;gap:10px;border:none;background:{{ o.bg }};padding:11px 15px;min-height:44px;font-size:13px;letter-spacing:0.04em;color:{{ o.color }};font-weight:{{ o.weight }};cursor:pointer;text-align:left;transition:background 160ms ease,color 160ms ease" style-hover="background:#EFE9E0;color:#222222">
+                  <span aria-hidden="true" style="width:10px;flex:none;font-family:'IBM Plex Mono',monospace;font-size:10px;color:#6D7761">{{ o.mark }}</span>
+                  <span>{{ o.label }}</span>
+                </button>
+              </sc-for>
+            </div>
+          </sc-if>
+        </div>
+        </sc-if>
+        <sc-if value="{{ showHeaderAccount }}" hint-placeholder-val="{{ true }}">
+        <button type="button" onClick="{{ goAccountHeader }}" style="border:none;background:transparent;font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:0.14em;color:#6D7761;white-space:nowrap;cursor:pointer;padding:12px 4px;min-height:44px;transition:color 300ms ease" style-hover="color:#222222">{{ t.accHeader }}</button>
+        </sc-if>
+        <button type="button" data-trigger="search" onClick="{{ openSearch }}" aria-label="{{ t.search }}" aria-expanded="{{ searchExpanded }}" aria-controls="tsumugi-search" style="border:none;background:transparent;font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:0.14em;color:#6D7761;white-space:nowrap;cursor:pointer;padding:12px 4px;min-height:44px;white-space:nowrap;transition:color 300ms ease" style-hover="color:#222222">Search</button>
+        <button type="button" data-trigger="cart" onClick="{{ openCart }}" aria-label="{{ t.aOpenCart }}" aria-expanded="{{ cartExpanded }}" aria-controls="tsumugi-cart" style="border:none;background:transparent;font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:0.14em;color:#222222;white-space:nowrap;cursor:pointer;padding:12px 4px;min-height:44px;white-space:nowrap">{{ cartLabel }}</button>
+      </div>
+    </div>
+  </header>
+
+  <sc-if value="{{ menuOpen }}" hint-placeholder-val="{{ false }}">
+    <div data-overlay="menu" onClick="{{ onMenuBackdrop }}" style="position:fixed;inset:0;height:100dvh;z-index:60;background:rgba(34,34,34,0.3);animation:fadeIn 240ms ease both;display:flex;justify-content:flex-start">
+      <div data-panel="menu" id="tsumugi-menu" role="dialog" aria-modal="true" aria-label="{{ t.menu }}" tabIndex="-1" style="width:min(420px,88%);height:100%;background:#F8F7F4;display:flex;flex-direction:column;overflow-y:auto;overscroll-behavior:contain;outline:none;animation:slideInLeft 300ms cubic-bezier(0.2,0.7,0.2,1) both">
+        <div style="flex:none;display:flex;align-items:center;justify-content:space-between;padding:18px 20px;border-bottom:1px solid #E6E0D7">
+          <span style="font-family:'EB Garamond',serif;font-size:18px;letter-spacing:0.22em">TSUMUGI</span>
+          <button type="button" onClick="{{ closeMenu }}" aria-label="{{ t.aCloseMenu }}" style="border:none;background:transparent;font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:0.16em;color:#222222;min-height:44px;padding:12px;white-space:nowrap;cursor:pointer">{{ t.closeX }}</button>
+        </div>
+        <nav style="padding:24px 20px calc(26px + env(safe-area-inset-bottom));display:flex;flex-direction:column;flex:1 1 auto;background:#EFE9E0">
+          <sc-for list="{{ navItems }}" as="n" hint-placeholder-count="5">
+            <a href="{{ n.href }}" onClick="{{ n.onClick }}" style="font-family:'EB Garamond',serif;font-size:18px;letter-spacing:0.04em;color:#222222;padding:14px 0;border-bottom:1px solid #E0D8CB;min-height:48px;display:flex;align-items:center">{{ n.label }}</a>
+          </sc-for>
+          <a href="#/account" onClick="{{ goAccountMenu }}" style="font-family:'EB Garamond',serif;font-size:18px;letter-spacing:0.04em;color:#222222;padding:14px 0;border-bottom:1px solid #E0D8CB;min-height:48px;display:flex;align-items:center" style-hover="color:#6D7761">{{ t.accHeader }}</a>
+          <div style="margin-top:auto;padding-top:44px;display:flex;flex-direction:column;align-items:flex-start;gap:2px">
+            <div style="position:relative;display:flex;flex-direction:column;align-items:flex-start">
+              <button type="button" onClick="{{ toggleLangMenu }}" aria-label="{{ t.aLangSelect }}" aria-expanded="{{ langExpanded }}" aria-controls="tsumugi-lang" style="display:flex;align-items:center;gap:12px;border:none;background:transparent;padding:9px 0;min-height:44px;font-family:'EB Garamond',serif;font-size:20px;letter-spacing:0.04em;color:#222222;cursor:pointer;text-align:left">
+                <span>Language</span>
+                <span aria-hidden="true" style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:#9C978F;transition:color 160ms ease">{{ langCaret }}</span>
+              </button>
+              <sc-if value="{{ langOpen }}" hint-placeholder-val="{{ false }}">
+                <div onClick="{{ closeLangMenu }}" style="position:fixed;inset:0;z-index:1"></div>
+                <div id="tsumugi-lang" role="group" aria-label="{{ t.aLangSelect }}" style="position:absolute;left:0;bottom:calc(100% + 8px);z-index:2;min-width:184px;background:#F8F7F4;border:1px solid #D9D1C4;box-shadow:0 12px 28px rgba(34,34,34,0.1);display:flex;flex-direction:column;padding:5px 0;animation:fadeUp 180ms ease both">
+                  <sc-for list="{{ langOptions }}" as="o" hint-placeholder-count="2">
+                    <button type="button" onClick="{{ o.onSelect }}" aria-current="{{ o.current }}" style="display:flex;align-items:center;gap:10px;border:none;background:{{ o.bg }};padding:12px 16px;min-height:44px;font-size:13px;letter-spacing:0.04em;color:{{ o.color }};font-weight:{{ o.weight }};cursor:pointer;text-align:left;transition:background 160ms ease,color 160ms ease" style-hover="background:#EFE9E0;color:#222222">
+                      <span aria-hidden="true" style="width:10px;flex:none;font-family:'IBM Plex Mono',monospace;font-size:10px;color:#6D7761">{{ o.mark }}</span>
+                      <span>{{ o.label }}</span>
+                    </button>
+                  </sc-for>
+                </div>
+              </sc-if>
+            </div>
+          </div>
+        </nav>
+      </div>
+    </div>
+  </sc-if>
+
+  <sc-if value="{{ searchOpen }}" hint-placeholder-val="{{ false }}">
+    <div data-overlay="search" onClick="{{ onSearchBackdrop }}" style="position:fixed;inset:0;height:100dvh;z-index:60;background:rgba(34,34,34,0.3);animation:fadeIn 240ms ease both;display:flex;justify-content:center;align-items:flex-start;padding:clamp(20px,8vh,90px) clamp(16px,4vw,40px)">
+      <div data-panel="search" id="tsumugi-search" role="dialog" aria-modal="true" aria-label="{{ t.search }}" tabIndex="-1" style="width:100%;max-width:720px;max-height:100%;background:#F8F7F4;padding:clamp(20px,3vw,32px);display:flex;flex-direction:column;gap:24px;box-shadow:0 30px 60px rgba(34,34,34,0.18);outline:none;animation:fadeUp 320ms ease both">
+        <div style="flex:none;display:flex;align-items:center;gap:14px;border-bottom:1px solid #C9C2B7;padding-bottom:14px">
+          <span style="font-family:'IBM Plex Mono',monospace;font-size:13px;color:#9C978F">⌕</span>
+          <input type="search" data-search-input="1" value="{{ query }}" onChange="{{ onQuery }}" placeholder="{{ t.phSearchArchive }}" aria-label="{{ t.phSearchArchive }}" style="flex:1;min-width:0;border:none;background:transparent;font-family:'EB Garamond',serif;font-size:clamp(20px,2.4vw,26px);outline:none;color:#222222;min-height:44px">
+          <button type="button" onClick="{{ closeSearch }}" aria-label="{{ t.aCloseSearch }}" style="border:none;background:transparent;font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:0.14em;color:#9C978F;white-space:nowrap;cursor:pointer;min-height:44px;padding:0 4px">ESC</button>
+        </div>
+        <div style="flex:1 1 auto;min-height:0;display:flex;flex-direction:column;gap:6px;max-height:52vh;overflow:auto;overscroll-behavior:contain">
+          <span style="font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:0.22em;color:#6D7761;padding-bottom:8px">{{ searchCountLabel }}</span>
+          <sc-for list="{{ searchResults }}" as="r" hint-placeholder-count="3">
+            <button type="button" onClick="{{ r.onOpen }}" style="display:flex;gap:16px;align-items:center;padding:10px;border:none;background:transparent;text-align:left;cursor:pointer;transition:background 300ms ease" style-hover="background:#EFE9E0">
+              <div style="min-width:0;position:relative;width:56px;height:70px;flex:none;background:#E4DCD1;overflow:hidden"><img loading="lazy" decoding="async" src="{{ r.thumb }}" alt="" style="width:100%;height:100%;object-fit:cover;display:block;filter:saturate(0.86) sepia(0.1) contrast(1.02)"></div>
+              <span style="display:flex;flex-direction:column;gap:4px;flex:1;min-width:0">
+                <span style="font-family:'EB Garamond',serif;font-size:20px;color:#222222">{{ r.name }}</span>
+                <span style="font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:0.16em;color:#9C978F">{{ r.meta }}</span>
+              </span>
+              <span style="font-size:13px;color:#4A4740">{{ r.priceLabel }}</span>
+            </button>
+          </sc-for>
+        </div>
+        <div style="flex:none;display:flex;gap:12px;flex-wrap:wrap;border-top:1px solid #E6E0D7;padding-top:18px;align-items:center">
+          <span style="font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:0.14em;color:#9C978F">{{ t.tryLabel }}</span>
+          <sc-for list="{{ suggestions }}" as="s" hint-placeholder-count="4">
+            <button type="button" onClick="{{ s.onClick }}" style="border:none;background:transparent;font-size:13px;color:#6D7761;cursor:pointer;padding:6px 0" style-hover="color:#222222">{{ s.label }}</button>
+          </sc-for>
+        </div>
+      </div>
+    </div>
+  </sc-if>
+
+  <sc-if value="{{ cartOpen }}" hint-placeholder-val="{{ false }}">
+    <div data-overlay="cart" onClick="{{ onCartBackdrop }}" style="position:fixed;inset:0;height:100dvh;z-index:60;display:flex;justify-content:flex-end;background:rgba(34,34,34,0.28);animation:fadeIn 240ms ease both">
+      <div data-panel="cart" id="tsumugi-cart" role="dialog" aria-modal="true" aria-label="{{ t.cart }}" tabIndex="-1" style="width:min(420px,100%);height:100%;background:#F8F7F4;display:flex;flex-direction:column;outline:none;animation:slideIn 320ms cubic-bezier(0.2,0.7,0.2,1) both">
+        <div style="flex:none;display:flex;justify-content:space-between;align-items:center;padding:24px 24px 18px;border-bottom:1px solid #E6E0D7">
+          <span style="font-family:'EB Garamond',serif;font-size:24px">{{ t.cart }}</span>
+          <button type="button" onClick="{{ closeCart }}" aria-label="{{ t.aCloseCart }}" style="border:none;background:transparent;font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:0.14em;color:#9C978F;white-space:nowrap;cursor:pointer;min-height:44px;padding:0 4px">{{ t.closeX }}</button>
+        </div>
+        <div style="flex:1 1 auto;min-height:0;overflow:auto;overscroll-behavior:contain;padding:22px 24px;display:flex;flex-direction:column;gap:22px">
+          <sc-if value="{{ cartEmpty }}" hint-placeholder-val="{{ true }}">
+            <div style="display:flex;flex-direction:column;gap:16px;padding:40px 0">
+              <p style="margin:0;font-family:'EB Garamond',serif;font-size:20px;line-height:1.5;color:#4A4740">{{ t.cartQuiet }}</p>
+              <button type="button" onClick="{{ goShopFromCart }}" style="border:1px solid #B8B1A6;background:transparent;font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:0.18em;padding:16px;min-height:48px;white-space:nowrap;cursor:pointer;color:#222222">{{ t.browseArchive }}</button>
+            </div>
+          </sc-if>
+          <sc-for list="{{ cartItems }}" as="c" hint-placeholder-count="1">
+            <div style="display:flex;gap:16px;animation:fadeUp 300ms ease both">
+              <div style="min-width:0;position:relative;width:84px;height:106px;flex:none;background:#E4DCD1;overflow:hidden"><img loading="lazy" decoding="async" src="{{ c.thumb }}" alt="" style="width:100%;height:100%;object-fit:cover;display:block;filter:saturate(0.86) sepia(0.1) contrast(1.02)"></div>
+              <div style="display:flex;flex-direction:column;gap:6px;flex:1;min-width:0">
+                <span style="font-family:'EB Garamond',serif;font-size:20px;line-height:1.3">{{ c.name }}</span>
+                <span style="font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:0.16em;color:#9C978F">{{ c.meta }}</span>
+                <div style="display:flex;justify-content:space-between;align-items:center;padding-top:6px">
+                  <span style="font-size:13px;color:#4A4740">{{ c.priceLabel }}</span>
+                  <button type="button" onClick="{{ c.onRemove }}" style="border:none;background:transparent;font-size:12px;color:#9C978F;cursor:pointer;padding:8px 0" style-hover="color:#222222">{{ t.remove }}</button>
+                </div>
+              </div>
+            </div>
+          </sc-for>
+        </div>
+        <div style="flex:none;padding:20px 24px calc(24px + env(safe-area-inset-bottom));border-top:1px solid #E6E0D7;display:flex;flex-direction:column;gap:14px">
+          <div style="display:flex;justify-content:space-between;align-items:baseline">
+            <span style="font-size:13px;color:#4A4740">{{ t.subtotal }}</span>
+            <span style="font-family:'EB Garamond',serif;font-size:24px">{{ cartTotal }}</span>
+          </div>
+          <span style="font-size:12px;color:#9C978F">{{ t.shipCalc }}</span>
+          <button type="button" onClick="{{ goCartPage }}" style="border:none;background:#222222;color:#F8F7F4;font-family:'IBM Plex Mono',monospace;font-size:12px;letter-spacing:0.2em;padding:18px;min-height:52px;cursor:pointer;transition:background 320ms ease" style-hover="background:#6D7761">{{ t.reviewOrder }}</button>
+        </div>
+      </div>
+    </div>
+  </sc-if>
+
+  <main style="flex:1;min-height:{{ mainMinH }};overflow-anchor:none;opacity:{{ pageOpacity }};transition:opacity 300ms ease">
+
+    <sc-if value="{{ isHome }}" hint-placeholder-val="{{ true }}">
+      <dc-import name="PublicHome" vm="{{ homeVm }}" hint-size="100%,1400px"></dc-import>
+
+    </sc-if>
+
+    <sc-if value="{{ isShop }}" hint-placeholder-val="{{ false }}">
+      <dc-import name="PublicShop" vm="{{ shopVm }}" hint-size="100%,1200px"></dc-import>
+
+    </sc-if>
+
+    <sc-if value="{{ isFeature }}" hint-placeholder-val="{{ false }}">
+      <dc-import name="PublicFeature" vm="{{ featureVm }}" hint-size="100%,1200px"></dc-import>
+    </sc-if>
+
+    <sc-if value="{{ isProduct }}" hint-placeholder-val="{{ false }}">
+      <dc-import name="PublicProduct" vm="{{ productVm }}" hint-size="100%,1400px"></dc-import>
+
+    </sc-if>
+
+    <sc-if value="{{ isAbout }}" hint-placeholder-val="{{ false }}">
+      <dc-import name="PublicAbout" vm="{{ aboutVm }}" hint-size="100%,1400px"></dc-import>
+    </sc-if>
+
+    <sc-if value="{{ isJournal }}" hint-placeholder-val="{{ false }}">
+      <dc-import name="PublicJournal" vm="{{ journalVm }}" hint-size="100%,900px"></dc-import>
+
+    </sc-if>
+
+
+    <sc-if value="{{ isArticle }}" hint-placeholder-val="{{ false }}">
+      <dc-import name="PublicArticle" vm="{{ articleVm }}" hint-size="100%,1200px"></dc-import>
+
+    </sc-if>
+
+    <sc-if value="{{ isContact }}" hint-placeholder-val="{{ false }}">
+      <dc-import name="PublicContact" vm="{{ contactVm }}" hint-size="100%,1000px"></dc-import>
+
+    </sc-if>
+
+    <sc-if value="{{ isCartPage }}" hint-placeholder-val="{{ false }}">
+      <dc-import name="PublicCart" vm="{{ cartVm }}" hint-size="100%,700px"></dc-import>
+
+    </sc-if>
+
+
+    <sc-if value="{{ isCheckout }}" hint-placeholder-val="{{ false }}">
+      <dc-import name="PublicCheckout" vm="{{ checkoutVm }}" hint-size="100%,1000px"></dc-import>
+
+    </sc-if>
+
+    <sc-if value="{{ isAccountBooting }}" hint-placeholder-val="{{ false }}">
+      <section style="padding:clamp(40px,7vh,90px) clamp(20px,4vw,64px);min-height:46vh;display:flex;flex-direction:column;gap:22px">
+        <span style="font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:0.16em;color:#9C978F">{{ t.accCrumb }}</span>
+        <div aria-hidden="true" style="width:min(280px,60%);height:34px;background:#EFE9E0"></div>
+      </section>
+    </sc-if>
+
+    <sc-if value="{{ isAccountAuth }}" hint-placeholder-val="{{ false }}">
+      <dc-import name="PublicAuth" vm="{{ authVm }}" hint-size="100%,820px"></dc-import>
+    </sc-if>
+
+    <sc-if value="{{ isAccountHome }}" hint-placeholder-val="{{ false }}">
+      <dc-import name="PublicAccount" vm="{{ accountVm }}" hint-size="100%,1200px"></dc-import>
+    </sc-if>
+
+    <sc-if value="{{ is404 }}" hint-placeholder-val="{{ false }}">
+      <section style="padding:clamp(60px,14vh,160px) clamp(20px,4vw,64px);display:flex;flex-direction:column;gap:26px;align-items:flex-start;max-width:640px;animation:fadeUp 400ms ease both">
+        <span style="font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:0.24em;color:#6D7761">{{ t.notInArchive }}</span>
+        <h1 style="margin:0;font-family:'EB Garamond',serif;font-size:clamp(30px,4.2vw,48px);line-height:1.15;font-weight:400">{{ t.alreadyFound }}</h1>
+        <p style="margin:0;font-size:15px;line-height:2;color:#4A4740">{{ t.notFoundBody }}</p>
+        <div style="display:flex;gap:12px;flex-wrap:wrap">
+          <button type="button" onClick="{{ goShop }}" style="border:none;background:#222222;color:#F8F7F4;font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:0.2em;padding:18px 32px;min-height:52px;cursor:pointer">{{ t.viewArchive }}</button>
+          <button type="button" onClick="{{ goHome }}" style="border:1px solid #B8B1A6;background:transparent;font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:0.2em;padding:18px 32px;min-height:52px;cursor:pointer;color:#222222">{{ t.backHome }}</button>
+        </div>
+      </section>
+    </sc-if>
+
+  </main>
+
+  <footer style="background:#222222;color:#DDD8CF;padding:clamp(48px,8vh,88px) clamp(20px,4vw,64px) clamp(80px,8vh,44px);display:flex;flex-direction:column;gap:clamp(32px,5vh,64px)">
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:clamp(24px,3vw,56px)">
+      <div style="min-width:0;display:flex;flex-direction:column;gap:14px">
+        <span style="font-family:'EB Garamond',serif;font-size:22px;letter-spacing:0.22em;color:#F8F7F4">TSUMUGI</span>
+        <p style="margin:0;font-size:13px;line-height:1.9;color:#9C978F;max-width:300px">{{ t.footerAddress }}<br>{{ t.footerHours }}</p>
+      </div>
+      <div style="min-width:0;display:flex;flex-direction:column;gap:10px">
+        <span style="font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:0.24em;color:#6D7761">{{ t.shopHead }}</span>
+        <sc-for list="{{ footerShop }}" as="f" hint-placeholder-count="4">
+          <button type="button" onClick="{{ f.onClick }}" style="border:none;background:transparent;padding:6px 0;text-align:left;font-size:13px;color:#DDD8CF;cursor:pointer;min-height:32px" style-hover="color:#F8F7F4">{{ f.label }}</button>
+        </sc-for>
+      </div>
+      <div style="min-width:0;display:flex;flex-direction:column;gap:10px">
+        <span style="font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:0.24em;color:#6D7761">{{ t.archiveHead }}</span>
+        <sc-for list="{{ footerArchive }}" as="f" hint-placeholder-count="4">
+          <button type="button" onClick="{{ f.onClick }}" style="border:none;background:transparent;padding:6px 0;text-align:left;font-size:13px;color:#DDD8CF;cursor:pointer;min-height:32px" style-hover="color:#F8F7F4">{{ f.label }}</button>
+        </sc-for>
+      </div>
+      <div style="min-width:0;display:flex;flex-direction:column;gap:10px">
+        <span style="font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:0.24em;color:#6D7761">{{ t.helpHead }}</span>
+        <span style="display:flex;align-items:center;padding:6px 0;min-height:32px;font-size:13px;color:#DDD8CF">{{ t.sizingGuide }}</span>
+        <span style="display:flex;align-items:center;padding:6px 0;min-height:32px;font-size:13px;color:#DDD8CF">{{ t.shipping }}</span>
+        <span style="display:flex;align-items:center;padding:6px 0;min-height:32px;font-size:13px;color:#DDD8CF">{{ t.returns }}</span>
+        <span style="display:flex;align-items:center;padding:6px 0;min-height:32px;font-size:13px;color:#DDD8CF">{{ t.careRepair }}</span>
+      </div>
+    </div>
+    <div style="display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap;border-top:1px solid #3A3A38;padding-top:24px">
+      <span style="font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:0.14em;color:#6D7761">© 2026 TSUMUGI</span>
+    </div>
+  </footer>
+
+  <sc-if value="{{ showStickyBar }}" hint-placeholder-val="{{ false }}">
+    <div style="position:fixed;left:0;right:0;bottom:0;z-index:50;background:rgba(238,235,228,0.92);backdrop-filter:blur(10px);border-top:1px solid #DCD6CC;padding:8px 20px;display:flex;gap:12px;align-items:center;animation:fadeUp 320ms ease both">
+      <div style="flex:1;min-width:0;display:flex;flex-direction:column;gap:1px">
+        <span style="font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:0.16em;color:#A29C93">{{ stickyMeta }}</span>
+        <span style="font-family:'IBM Plex Mono',monospace;font-size:13px;letter-spacing:0.04em;color:#4A463F;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ stickyTitle }}</span>
+      </div>
+      <button type="button" onClick="{{ stickyAction }}" style="border:none;background:#6B665D;color:#F8F7F4;font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:0.16em;padding:0 20px;min-height:44px;cursor:pointer;white-space:nowrap;transition:background 260ms ease" style-hover="background:#54504A">{{ stickyLabel }}</button>
+    </div>
+  </sc-if>
+
+  <sc-if value="{{ toastVisible }}" hint-placeholder-val="{{ false }}">
+    <div style="position:fixed;left:50%;bottom:clamp(24px,4vh,44px);transform:translateX(-50%);z-index:70;background:#222222;color:#F8F7F4;padding:14px 22px;font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:0.14em;animation:fadeUp 300ms ease both">{{ toast }}</div>
+  </sc-if>
+</div>
+
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;showRelatedNotes&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:true,&quot;tsType&quot;:&quot;boolean&quot;,&quot;section&quot;:&quot;Product page&quot;}}">
+const U = (id, w) => "https://images.unsplash.com/photo-" + id + "?auto=format&fit=crop&q=72&w=" + w;
+
+// garment / rail / flat-lay pool — warm neutral, natural daylight, film-like
+const GARMENTS = [
+  "1591047139829-d91aecb6caea","1523381210434-271e8be1f52b","1467043237213-65f2da53396f",
+  "1479064555552-3ef4979f8908","1434389677669-e08b4cac3105","1490114538077-0a7f8cb49891",
+  "1556905055-8f358a7a47b2","1495105787522-5334e3ffa0ef","1620799140408-edc6dcb6d633",
+  "1596755094514-f87e34085b2c","1611652022419-a9419f74343d","1517445312882-bc9910d016b7",
+  "1544022613-e87ca75a784a","1618932260643-eee4a2f652a6","1520006403909-838d6b92c22e",
+  "1512436991641-6745cdb1723f","1490481651871-ab68de25d43d","1445205170230-053b83016050",
+  "1441984904996-e0b6ba687e04","1519058082700-08a0b56da9b4"
+];
+const DETAILS = ["1611652022419-a9419f74343d","1490114538077-0a7f8cb49891","1523381210434-271e8be1f52b","1556905055-8f358a7a47b2","1495105787522-5334e3ffa0ef"];
+const LIFESTYLE = ["1519058082700-08a0b56da9b4","1489493887464-892be6d1daae","1447752875215-b2761acb3c5d","1500534314209-a25ddb2bd429","1470252649378-9c29740c9fa8","1476231682828-37e571bc172f"];
+const INTERIORS = ["1441984904996-e0b6ba687e04","1513161455079-7dc1de15ef3e","1519710164239-da123dc03ef4","1499750310107-5fef28a66643","1583847268964-b28dc8f51f92","1502672260266-1c1ef2d93688"];
+
+const YEN = n => "¥ " + n.toLocaleString("en-US");
+
+const BLANK = {
+  id: 0, name: "Loading the archive", brand: "TSUMUGI", year: 1990, price: 0, category: "Outerwear",
+  size: "M", colour: "—", material: "—", condition: "B", short: "", story: "", era: "1990s", soldOut: false,
+  gallery: [U(GARMENTS[0], 900)], galleryThumbs: [U(GARMENTS[0], 220)],
+  card: U(GARMENTS[0], 700), thumb: U(GARMENTS[0], 220),
+  meta: "—", priceLabel: YEN(0), shot: "Archive photograph", measurements: []
+};
+
+const ROLE_KEYS = {
+  "front": "roleFront", "back": "roleBack", "fit": "roleFit", "brand label": "roleBrandLabel",
+  "care label": "roleCareLabel", "fabric detail": "roleFabricDetail", "damage": "roleDamage", "repair": "roleRepair"
+};
+
+class Component extends DCLogic {
+  state = {
+    page: "home", productId: null, slug: null,
+    coStep: null, coOrderId: null, coErrors: {}, coSubmitted: false, coPlacing: false,
+    /* Receipt token for the completion screen: this tab, this session, no URL. */
+    coReceipt: "", coError: "",
+    co: {
+      email: "", firstName: "", lastName: "", postalCode: "", prefecture: "",
+      city: "", address: "", phone: "", marketing: true
+    },
+    coDelivery: "Standard shipping", coPayment: "Demo credit card",
+    coCard: { number: "", name: "", expiry: "" },
+    vw: typeof window !== "undefined" ? window.innerWidth : 1440,
+    menuOpen: false, searchOpen: false, cartOpen: false, filtersOpen: false, sortOpen: false,
+    langOpen: false, headerLangOpen: false,
+    query: "", shopQuery: "", newsletter: "", newsletterKey: "idle",
+    contact: { name: "", email: "", message: "" }, contactSent: false,
+    contactSending: false, contactErr: {},
+    filters: { Category: [], Brand: [], Era: [], Size: [], Colour: [], Material: [], Condition: [], Price: [] },
+    sort: "Newest first", pageNo: 1,
+    cart: [], gallery: 0, zoom: false, accordion: ["Condition"],
+    fading: false, pageReady: true, toast: "",
+    heroIndex: 0, heroPaused: false,
+    /* customer account — the "customer" scope of the shared auth service.
+       Nothing here is a second session: custStatus/custSession are a mirror of
+       what the service reports for this scope. */
+    custStatus: "booting", custSession: null,
+    accSub: "", accOrderId: null,
+    accEmail: "", accPassword: "", accConfirm: "",
+    accBusy: false, accError: "", accNotice: "",
+    accForm: null, profileSaved: false, addressSaved: false, coPrefilled: false
+  };
+
+  /* ---- home hero ----
+     One timer for the whole session. It advances only while home is the visible
+     route and nothing is holding it: hover, keyboard focus, a hidden tab, or a
+     manual step (which restarts the interval so the next change is not abrupt).
+     Reduced-motion visitors get the first feature and no movement at all. */
+  _heroCount = 4;
+  _heroReduced() {
+    try { return window.matchMedia("(prefers-reduced-motion: reduce)").matches; } catch (e) { return false; }
+  }
+  _heroStart = () => {
+    clearInterval(this._heroTimer);
+    if (this._heroReduced()) return;
+    this._heroTimer = setInterval(() => {
+      const s = this.state;
+      if (s.page !== "home" || s.heroPaused || document.hidden) return;
+      this.setState(st => ({ heroIndex: (st.heroIndex + 1) % Math.max(1, this._heroCount) }));
+    }, 7000);
+  };
+  heroStep = (d) => {
+    const n = Math.max(1, this._heroCount);
+    this.setState(s => ({ heroIndex: (s.heroIndex + d + n) % n }));
+    this._heroStart();
+  };
+  heroPause = () => { if (!this.state.heroPaused) this.setState({ heroPaused: true }); };
+  heroResume = () => { if (this.state.heroPaused) this.setState({ heroPaused: false }); };
+  heroKey = (e) => {
+    if (e.key === "ArrowLeft") { e.preventDefault(); this.heroStep(-1); }
+    else if (e.key === "ArrowRight") { e.preventDefault(); this.heroStep(1); }
+  };
+
+  componentDidMount() {
+    this._syncDocumentMeta();
+    this._measure = () => {
+      const h = document.querySelector("header");
+      const vw = window.innerWidth;
+      this.setState({ vw, headerH: h ? Math.round(h.getBoundingClientRect().height) : 63 });
+      // Compact-only overlays: crossing to desktop must never leave the page locked.
+      if (vw >= 1120 && (this.state.menuOpen || this.state.filtersOpen || this.state.sortOpen)) {
+        this._unlock();
+        this.setState({ menuOpen: false, filtersOpen: false, sortOpen: false, langOpen: false });
+      }
+    };
+    this._onResize = this._measure;
+    this._measure();
+    window.addEventListener("resize", this._onResize);
+    this._onKey = e => {
+      if (e.key !== "Escape") return;
+      // One layer at a time, so each close can restore its own scroll lock and focus.
+      // The language list is a layer inside the menu: it closes first, alone.
+      if (this.state.langOpen) return this.closeLangMenu();
+      if (this.state.headerLangOpen) return this.closeHeaderLang();
+      if (this.state.menuOpen) return this.closeMenu();
+      if (this.state.filtersOpen) return this.closeFilters();
+      if (this.state.sortOpen) return this.toggleSort();
+      if (this.state.searchOpen) return this.closeSearch();
+      if (this.state.cartOpen) return this.closeCart();
+      if (this.state.zoom) return this.setState({ zoom: false });
+    };
+    window.addEventListener("keydown", this._onKey);
+    /* Scroll memory: a forward navigation always lands at the top of the new
+       page, while back/forward through the browser's history returns to where
+       the visitor was standing on that page. Positions are keyed by hash and
+       recorded the moment a link is followed. */
+    if ("scrollRestoration" in history) history.scrollRestoration = "manual";
+    this._scrollMem = this._scrollMem || {};
+    this._syncHash = () => {
+      const raw = (location.hash || "").replace(/^#\/?/, "");
+      const [seg, id, third] = raw.split("/");
+      // "#/" and "" both mean home; without this the previous page's state persisted.
+      const p = seg || "home";
+      const isArticle = p === "journal" || p === "news";
+      const nextSlug = (isArticle || p === "feature") && id ? decodeURIComponent(id) : null;
+      const nextProduct = p === "product" && id ? Number(id) : null;
+      const nextStep = p === "checkout" ? (id || "information") : null;
+      const nextOrder = p === "checkout" && id === "complete" && third ? decodeURIComponent(third) : null;
+      const nextAccSub = p === "account" ? (id || "") : "";
+      const nextAccOrder = p === "account" && id === "order" && third ? decodeURIComponent(third) : null;
+      if (p !== this.state.page || nextProduct !== this.state.productId || nextSlug !== this.state.slug
+          || nextStep !== this.state.coStep || nextOrder !== this.state.coOrderId
+          || nextAccSub !== this.state.accSub || nextAccOrder !== this.state.accOrderId) {
+        this.setState({
+          page: p, productId: nextProduct, slug: nextSlug,
+          coStep: nextStep, coOrderId: nextOrder || this.state.coOrderId,
+          accSub: nextAccSub, accOrderId: nextAccOrder,
+          accError: "", accNotice: "",
+          gallery: 0, zoom: false
+        });
+      }
+      this._syncDocumentMeta();
+      // A history move (back/forward) restores that entry's position; a
+       // navigation we made ourselves lands at the top instead.
+      if (this._navByApp) {
+        this._navByApp = false;
+        this._forceTop();
+        if (!this._gating) this._gatePage();
+      } else {
+        this._gateId = (this._gateId || 0) + 1;
+        this._gating = false;
+        clearTimeout(this._gateTimer);
+        if (!this.state.pageReady) this.setState({ pageReady: true });
+        const y = this._scrollMem[location.hash] || 0;
+        requestAnimationFrame(() => requestAnimationFrame(() => {
+          const h = document.documentElement, sb = h.style.scrollBehavior;
+          h.style.scrollBehavior = "auto";
+          window.scrollTo(0, y);
+          h.style.scrollBehavior = sb;
+        }));
+      }
+      // Entering checkout is when an account's own details are worth offering.
+      if (p === "checkout") setTimeout(() => this._prefillCheckout(), 0);
+    };
+    this._syncHash();
+    window.addEventListener("hashchange", this._syncHash);
+    this._heroStart();
+    this._bindStore();
+  }
+  componentWillUnmount() {
+    clearInterval(this._heroTimer);
+    window.removeEventListener("resize", this._onResize);
+    window.removeEventListener("keydown", this._onKey);
+    this._unlock();
+    if (this._unsub) this._unsub();
+    if (this._unsubAuth) this._unsubAuth();
+  }
+
+  /* ---- shared overlay behaviour (menu / shop filter / mobile sort) ----
+     The shell owns every overlay, so scroll locking, focus entry and focus
+     restoration live here rather than in the page children. The body is pinned
+     with position:fixed at the saved offset: the background cannot scroll at
+     all while a panel is open, and the exact position is put back on close. */
+  _lock() {
+    if (this._locked) return;
+    const b = document.body;
+    this._lockY = window.scrollY || window.pageYOffset || 0;
+    this._lockPrev = { position: b.style.position, top: b.style.top, left: b.style.left, right: b.style.right, width: b.style.width, overflow: b.style.overflow };
+    b.style.position = "fixed";
+    b.style.top = -this._lockY + "px";
+    b.style.left = "0";
+    b.style.right = "0";
+    b.style.width = "100%";
+    b.style.overflow = "hidden";
+    this._locked = true;
+  }
+  /* keepScroll: navigation unlocks a page that is already back at the top, so
+     the saved offset must not be put back under the new route. */
+  _unlock(keepScroll) {
+    if (!this._locked) return;
+    const b = document.body, p = this._lockPrev || {};
+    b.style.position = p.position || "";
+    b.style.top = p.top || "";
+    b.style.left = p.left || "";
+    b.style.right = p.right || "";
+    b.style.width = p.width || "";
+    b.style.overflow = p.overflow || "";
+    this._locked = false;
+    if (keepScroll) return;
+    // html{scroll-behavior:smooth} would animate the restore; jump instead.
+    const h = document.documentElement, sb = h.style.scrollBehavior;
+    h.style.scrollBehavior = "auto";
+    window.scrollTo(0, this._lockY || 0);
+    h.style.scrollBehavior = sb;
+  }
+  _focusPanel(sel, tries, fallback) {
+    const el = document.querySelector(sel) || (fallback ? document.querySelector(fallback) : null);
+    if (el) {
+      // Guarantee focusability regardless of how the template attribute landed.
+      if (!el.hasAttribute("tabindex")) el.setAttribute("tabindex", "-1");
+      el.focus({ preventScroll: true });
+      if (document.activeElement === el) return;
+    }
+    // The panel mounts with the overlay; retry briefly until focus lands inside.
+    if ((tries || 0) < 8) setTimeout(() => this._focusPanel(sel, (tries || 0) + 1, fallback), 50);
+  }
+  /* Re-assert focus after any re-render that remounts an open panel, but never
+     pull focus back from something the user has tabbed to inside it. */
+  _ensureFocus(sel) {
+    const p = document.querySelector(sel);
+    if (!p || p.contains(document.activeElement)) return;
+    if (!p.hasAttribute("tabindex")) p.setAttribute("tabindex", "-1");
+    p.focus({ preventScroll: true });
+  }
+  componentDidUpdate(prevProps, prevState) {
+    /* Metadata follows committed state, not the route handler: setState is
+       asynchronous, so syncing inside the hashchange handler read the previous
+       page and every route ended up with the home page's title. */
+    if (!prevState
+      || prevState.page !== this.state.page
+      || prevState.slug !== this.state.slug
+      || prevState.productId !== this.state.productId
+      || prevState.lang !== this.state.lang) {
+      this._syncDocumentMeta();
+    }
+    if (this.state.menuOpen) this._ensureFocus('[data-panel="menu"]');
+    else if (this.state.filtersOpen) this._ensureFocus('[data-panel="filters"]');
+    else if (this.state.searchOpen) this._ensureFocus('[data-panel="search"]');
+    else if (this.state.cartOpen) this._ensureFocus('[data-panel="cart"]');
+  }
+  /* Focus goes back to the control that opened the panel. activeElement is only
+     a hint (a mouse click does not focus buttons everywhere), so each overlay
+     also names its trigger. Re-asserted briefly: closing re-renders the header,
+     and a remounted trigger would otherwise drop focus to <body>. */
+  _restore(el, sel, tries) {
+    const t = tries || 0;
+    const back = (el && el !== document.body && document.contains(el))
+      ? el : (sel ? document.querySelector(sel) : null);
+    const a = document.activeElement;
+    if (back && back.focus && (!a || a === document.body)) back.focus({ preventScroll: true });
+    if (t < 6) setTimeout(() => this._restore(el, sel, t + 1), 70);
+  }
+
+  openMenu = (e) => {
+    this._menuReturn = (e && e.currentTarget) || document.activeElement;
+    this._lock();
+    // Every opener clears its siblings: two overlays must never coexist, or the
+    // single shared scroll lock would be released by the first close.
+    this.setState({ menuOpen: true, searchOpen: false, cartOpen: false, filtersOpen: false, sortOpen: false },
+      () => this._focusPanel('[data-panel="menu"]'));
+  };
+  closeMenu = () => {
+    this._unlock();
+    const back = this._menuReturn;
+    this.setState({ menuOpen: false, langOpen: false }, () => this._restore(back, '[data-trigger="menu"]'));
+  };
+  onMenuBackdrop = (e) => { if (e.target === e.currentTarget) this.closeMenu(); };
+
+  /* Language picker inside the menu. The store stays the only owner of the
+     language; this holds nothing but whether the list is expanded. */
+  toggleLangMenu = () => this.setState(s => ({ langOpen: !s.langOpen }));
+  closeLangMenu = () => {
+    this.setState({ langOpen: false }, () => this._focusLangTrigger(0));
+  };
+  /* Collapsing the list unmounts whatever was focused inside it; hand focus
+     back to the trigger, re-asserting past the panel's own focus guard. */
+  _focusLangTrigger(tries) {
+    const b = document.querySelector('[data-panel="menu"] [aria-controls="tsumugi-lang"]');
+    if (b && b.focus && document.activeElement !== b) b.focus({ preventScroll: true });
+    if ((tries || 0) < 4) setTimeout(() => this._focusLangTrigger((tries || 0) + 1), 60);
+  }
+  pickLang = (l) => {
+    const S = this.store;
+    // Re-selecting the current language only closes the list.
+    if (S && S.setLang && S.lang() !== l) S.setLang(l);
+    this.closeLangMenu();
+  };
+
+  /* The header carries the same picker as the menu overlay — same two named
+     languages, same check mark, same dismissal — in its own open state, since
+     the two triggers can both be on screen at once. */
+  toggleHeaderLang = () => this.setState(s => ({ headerLangOpen: !s.headerLangOpen }));
+  closeHeaderLang = () => {
+    this.setState({ headerLangOpen: false }, () => {
+      const b = document.querySelector('header [aria-controls="tsumugi-lang-header"]');
+      if (b && b.focus) b.focus({ preventScroll: true });
+    });
+  };
+  pickHeaderLang = (l) => {
+    const S = this.store;
+    if (S && S.setLang && S.lang() !== l) S.setLang(l);
+    this.closeHeaderLang();
+  };
+
+  /* Search and cart run the same interaction model as the menu: only one
+     overlay open at a time, the page locked behind it, focus moved into the
+     panel and handed back to the trigger on close. */
+  openSearch = (e) => this._openSearch((e && e.currentTarget) || document.activeElement);
+  _openSearch(back) {
+    this._searchReturn = (back && back !== document.body) ? back : null;
+    this._lock();
+    this.setState({ searchOpen: true, menuOpen: false, cartOpen: false, filtersOpen: false, sortOpen: false },
+      () => this._focusPanel('[data-panel="search"] [data-search-input]', 0, '[data-panel="search"]'));
+  }
+  closeSearch = () => {
+    this._unlock();
+    const back = this._searchReturn;
+    this.setState({ searchOpen: false }, () => this._restore(back, '[data-trigger="search"]'));
+  };
+  onSearchBackdrop = (e) => { if (e.target === e.currentTarget) this.closeSearch(); };
+
+  openCart = (e) => this._openCart((e && e.currentTarget) || document.activeElement);
+  _openCart(back) {
+    this._cartReturn = (back && back !== document.body) ? back : null;
+    this._lock();
+    this.setState({ cartOpen: true, menuOpen: false, searchOpen: false, filtersOpen: false, sortOpen: false },
+      () => this._focusPanel('[data-panel="cart"]'));
+  }
+  closeCart = () => {
+    this._unlock();
+    const back = this._cartReturn;
+    this.setState({ cartOpen: false }, () => this._restore(back, '[data-trigger="cart"]'));
+  };
+  onCartBackdrop = (e) => { if (e.target === e.currentTarget) this.closeCart(); };
+
+  openFilters = (e) => {
+    this._filterReturn = (e && e.currentTarget) || document.activeElement;
+    this._lock();
+    this.setState({ filtersOpen: true, menuOpen: false, searchOpen: false, cartOpen: false, sortOpen: false },
+      () => this._focusPanel('[data-panel="filters"]'));
+  };
+  closeFilters = () => {
+    this._unlock();
+    const back = this._filterReturn;
+    this.setState({ filtersOpen: false }, () => this._restore(back, '[data-trigger="filters"]'));
+  };
+  toggleFilters = (e) => { if (this.state.filtersOpen) this.closeFilters(); else this.openFilters(e); };
+  onFilterBackdrop = (e) => { if (e.target === e.currentTarget) this.closeFilters(); };
+
+  /* The sort control is an inline dropdown on desktop and a sheet on compact
+     widths — only the sheet locks the page behind it. */
+  toggleSort = (e) => {
+    const sheet = this.state.vw < 1120;
+    if (this.state.sortOpen) {
+      if (sheet) this._unlock();
+      const back = this._sortReturn;
+      this.setState({ sortOpen: false }, () => { if (sheet) this._restore(back, '[data-trigger="sort"]'); });
+    } else {
+      this._sortReturn = (e && e.currentTarget) || document.activeElement;
+      if (sheet) this._lock();
+      this.setState({ sortOpen: true, menuOpen: false, searchOpen: false, cartOpen: false, filtersOpen: false });
+    }
+  };
+  onSortBackdrop = (e) => { if (e.target === e.currentTarget) this.toggleSort(); };
+
+  _bindStore() {
+    const S = window.TSUMUGI_STORE;
+    if (!S) { this._storeT = setTimeout(() => this._bindStore(), 40); return; }
+    this.store = S;
+    this._unsub = S.subscribe(() => this.forceUpdate());
+    this._bindAuth();
+    this.forceUpdate();
+  }
+
+  /* ---- customer account ----
+     The storefront reads the "customer" scope of the shared auth service. It
+     never waits for it: shop, journal, cart and checkout paint immediately for
+     an unauthenticated visitor, and only the account route holds back its own
+     first paint until the status is known — so opening the home page cannot
+     flicker on a session check. */
+  _bindAuth() {
+    const A = window.TSUMUGI_CUSTOMER_AUTH;
+    if (!A) { this.setState({ custStatus: "signed_out" }); return; }
+    this._unsubAuth = A.subscribe(st => {
+      const lost = this.state.custStatus === "authenticated" && st.status !== "authenticated";
+      this.setState({ custStatus: st.status, custSession: st.session, accForm: null });
+      if (lost) this._clearPrefill();
+      if (st.status === "authenticated") this._prefillCheckout();
+    });
+    A.boot().then(() => {
+      this.setState({ custStatus: A.status(), custSession: A.session() });
+      if (A.status() === "authenticated") this._prefillCheckout();
+    });
+  }
+
+  goAccount = (sub, extra) => {
+    this._unlock(true);
+    this.setState({ menuOpen: false, searchOpen: false, cartOpen: false, filtersOpen: false, sortOpen: false, langOpen: false, headerLangOpen: false });
+    const target = "#/account" + (sub ? "/" + sub : "") + (extra ? "/" + encodeURIComponent(extra) : "");
+    this._rememberScroll();
+    this._navByApp = true;
+    if (location.hash === target) this._syncHash(); else location.hash = target;
+    window.scrollTo({ top: 0, behavior: "auto" });
+  };
+
+  /* One generic failure message whichever way it failed, so the screen never
+     reveals whether an address has an account. */
+  _authSubmit(T, e) {
+    if (e && e.preventDefault) e.preventDefault();
+    const s = this.state;
+    if (s.accBusy) return;
+    const A = window.TSUMUGI_CUSTOMER_AUTH;
+    if (!A) return this.setState({ accError: T.accFailed });
+    const create = s.accSub === "create";
+    const email = String(s.accEmail || "").trim();
+    const pw = String(s.accPassword || "");
+    if (!email) return this.setState({ accError: T.accNeedEmail });
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return this.setState({ accError: T.accBadEmail });
+    if (!pw) return this.setState({ accError: T.accNeedPassword });
+    if (create) {
+      if (pw.length < 8) return this.setState({ accError: T.accWeak });
+      if (pw !== s.accConfirm) return this.setState({ accError: T.accMismatch, accConfirm: "" });
+    }
+    this.setState({ accBusy: true, accError: "", accNotice: "" });
+    const run = create ? A.signUp(email, pw) : A.signIn(email, pw, true);
+    run.then(res => {
+      if (!res || !res.ok) {
+        const code = res && res.code;
+        const msg = code === "duplicate" ? T.accDuplicate
+          : code === "weakPassword" ? T.accWeak
+          : code === "invalidEmail" ? T.accBadEmail
+          : code === "notCustomer" ? T.accNotCustomer
+          : create ? T.accCreateFailed : T.accFailed;
+        // The address is kept; the password is not.
+        this.setState({ accBusy: false, accPassword: "", accConfirm: "", accError: msg });
+        return;
+      }
+      if (res.status === "verification_required") {
+        this.setState({ accBusy: false, accPassword: "", accConfirm: "", accNotice: "verify" });
+        return;
+      }
+      this.setState({ accBusy: false, accPassword: "", accConfirm: "", accError: "", accForm: null });
+      this._toastOnce(create ? T.accCreated : T.accSignedIn);
+      this.goAccount("");
+    });
+  }
+
+  /* Only ever called when the provider says it can actually send the email. */
+  _authReset(T) {
+    const A = window.TSUMUGI_CUSTOMER_AUTH;
+    const email = String(this.state.accEmail || "").trim();
+    if (!A || !A.capabilities().passwordReset) return;
+    if (!email) return this.setState({ accError: T.accNeedEmail });
+    this.setState({ accBusy: true, accError: "" });
+    A.resetPassword(email).then(() => {
+      // Same answer whether or not the address is registered.
+      this.setState({ accBusy: false, accNotice: "reset" });
+    });
+  }
+
+  _toastOnce(msg) {
+    this.setState({ toast: msg });
+    clearTimeout(this._toast);
+    this._toast = setTimeout(() => this.setState({ toast: "" }), 2600);
+  }
+
+  _accForm() {
+    if (this.state.accForm) return this.state.accForm;
+    const S = this.store;
+    const p = (S && S.myProfile && S.myProfile()) || {};
+    const a = (S && S.myAddress && S.myAddress()) || {};
+    return {
+      name: p.displayName || "", phone: p.phone || "",
+      postalCode: a.postalCode || "", prefecture: a.prefecture || "",
+      city: a.city || "", address: a.address || ""
+    };
+  }
+  _setAcc(k, v) {
+    const next = { ...this._accForm(), [k]: v };
+    this.setState({ accForm: next, profileSaved: false, addressSaved: false });
+  }
+  _saveProfile() {
+    const S = this.store; if (!S) return;
+    const f = this._accForm();
+    S.saveMyProfile({ displayName: f.name, phone: f.phone });
+    this.setState({ profileSaved: true });
+    clearTimeout(this._pSaved);
+    this._pSaved = setTimeout(() => this.setState({ profileSaved: false }), 3000);
+  }
+  _saveAddress() {
+    const S = this.store; if (!S) return;
+    const f = this._accForm();
+    S.saveMyAddress({ postalCode: f.postalCode, prefecture: f.prefecture, city: f.city, address: f.address });
+    this.setState({ addressSaved: true });
+    clearTimeout(this._aSaved);
+    this._aSaved = setTimeout(() => this.setState({ addressSaved: false }), 3000);
+  }
+  /* Signing out of an account returns the visitor to ordinary public browsing —
+     not to a sign-in wall, which is what the console does. */
+  _customerSignOut(T) {
+    const A = window.TSUMUGI_CUSTOMER_AUTH;
+    if (!A) return;
+    A.signOut().then(() => {
+      this.setState({ accForm: null, accEmail: "", accPassword: "", accConfirm: "", accError: "", accNotice: "" });
+      this._toastOnce(T.accSignedOut);
+      this.go("home");
+    });
+  }
+
+  /* Losing the session, however it was lost, takes the account's own details out
+     of the checkout form with it: on a shared device the next visitor must not
+     find the previous one's address sitting there. The cart is not account data
+     and is left alone. */
+  _clearPrefill() {
+    this.setState({
+      co: {
+        email: "", firstName: "", lastName: "", postalCode: "", prefecture: "",
+        city: "", address: "", phone: "", marketing: true
+      },
+      coPrefilled: false, coErrors: {}, coSubmitted: false
+    });
+  }
+
+  /* Checkout keeps working for guests; for a signed-in customer it starts from
+     what the account already knows. Only empty fields are filled, so anything
+     typed — including a one-off address for this order — is never overwritten. */
+  _prefillCheckout() {
+    const S = this.store;
+    if (!S || !S.me || !S.me()) return;
+    const p = S.myProfile() || {}, a = S.myAddress() || {};
+    const name = String(p.displayName || "").trim().split(/\s+/).filter(Boolean);
+    const src = {
+      email: p.email, firstName: name[0] || "", lastName: name.slice(1).join(" "),
+      phone: p.phone, postalCode: a.postalCode, prefecture: a.prefecture,
+      city: a.city, address: a.address
+    };
+    const patch = {};
+    Object.keys(src).forEach(k => {
+      if (src[k] && !String(this.state.co[k] || "").trim()) patch[k] = src[k];
+    });
+    if (!Object.keys(patch).length) return;
+    this.setState(st => ({ co: { ...st.co, ...patch }, coPrefilled: true }));
+  }
+
+  journalEntries() {
+    const S = this.store;
+    if (!S) return [];
+    return S.publicNews().map(n => {
+      let date = n.publishDate || "";
+      const lg = S.lang ? S.lang() : "en";
+      try {
+        date = new Date(n.publishDate + "T00:00:00").toLocaleDateString(lg === "ja" ? "ja-JP" : "en-GB", { day: "2-digit", month: "long", year: "numeric" });
+        if (lg !== "ja") date = date.toUpperCase();
+      } catch (e) { }
+      const I = window.TSUMUGI_I18N;
+      const AR = v => (I && I.art ? I.art(v, lg) : v);
+      return {
+        id: n.id, slug: n.slug, type: n.type,
+        img: n.image || n.thumb, shot: n.alt || n.title, date, title: AR(n.title),
+        dek: AR(n.summary), body: AR(n.summary),
+        onOpen: () => this.go(n.type === "news" ? "news" : "journal", n.slug)
+      };
+    });
+  }
+
+  /* ---- contact page: form validation ---- */
+  cSubmit = (T) => {
+    const s = this.state;
+    if (s.contactSending) return;
+    const c = s.contact;
+    const err = {};
+    if (!c.name.trim()) err.name = T.cErrName;
+    if (!c.email.trim()) err.email = T.cErrEmail;
+    else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(c.email.trim())) err.email = T.cErrEmailForm;
+    if (!c.message.trim()) err.message = T.cErrMessage;
+    if (Object.keys(err).length) {
+      this.setState({ contactErr: err }, () => {
+        const id = err.name ? "c-name" : err.email ? "c-email" : "c-msg";
+        const el = document.getElementById(id);
+        if (el) el.focus();
+      });
+      return;
+    }
+    this.setState({ contactErr: {}, contactSending: true });
+    clearTimeout(this._cSend);
+    this._cSend = setTimeout(() => this.setState({ contactSending: false, contactSent: true }), 800);
+  };
+
+  _fmtDate(d, isJa) {
+    if (!d) return "";
+    try {
+      const out = new Date(d + "T00:00:00").toLocaleDateString(isJa ? "ja-JP" : "en-GB",
+        { day: "2-digit", month: "long", year: "numeric" });
+      return isJa ? out : out.toUpperCase();
+    } catch (e) { return d; }
+  }
+
+  _articleVals(T, isJa, TX) {
+    const S = this.store, s = this.state;
+    const isNews = s.page === "news";
+    const kicker = isNews ? T.newsDetail : T.journalDetail;
+    const backLabel = isNews ? T.backToNews : T.backToJournal;
+    const blank = {
+      kicker, backLabel, crumb: "", title: "", summary: "", meta: [], tags: [], related: [],
+      hasImage: false, hasTags: false, hasRelated: false, hasPrev: false, hasNext: false,
+      onBack: () => this.go("journal"), onPrev: () => { }, onNext: () => { },
+      prevTitle: "", nextTitle: "", image: "", imageAlt: "", bodyNode: null
+    };
+    if (!S || !s.slug) return blank;
+    const n = this.publicArticle(s.slug);
+    if (!n) return blank;
+
+    // One uniform sequence across every published entry, strictly newest-first by date.
+    const siblings = S.publicNews().slice().sort((a, b) =>
+      String(b.publishDate).localeCompare(String(a.publishDate)) || (b.id - a.id));
+    const idx = siblings.findIndex(x => x.slug === n.slug);
+    const next = idx > 0 ? siblings[idx - 1] : null;
+    const prev = idx >= 0 && idx < siblings.length - 1 ? siblings[idx + 1] : null;
+
+    let date = n.publishDate || "";
+    try {
+      date = new Date(n.publishDate + "T00:00:00").toLocaleDateString(isJa ? "ja-JP" : "en-GB",
+        { day: "2-digit", month: "long", year: "numeric" });
+      if (!isJa) date = date.toUpperCase();
+    } catch (e) { }
+
+    const relatedIds = n.relatedProducts || [];
+    const related = this.products().filter(p => relatedIds.indexOf(p.id) >= 0).map(p => this.shopCard(p));
+
+    const I = window.TSUMUGI_I18N;
+    const lg = isJa ? "ja" : "en";
+    const AR = v => (I && I.art ? I.art(v, lg) : v);
+    const jaBody = isJa && I && I.artBody ? I.artBody(n.title, lg) : "";
+    const bodyHtml = jaBody || n.body || "";
+
+    return {
+      kicker, backLabel,
+      crumb: (isJa ? "ホーム / " : "HOME / ") + kicker.toUpperCase() + " / " + (isJa ? AR(n.title) : String(n.title).toUpperCase()),
+      title: AR(n.title), summary: AR(n.summary),
+      meta: [
+        { k: T.publishedOn, v: date },
+        { k: T.writtenBy, v: AR(n.author) },
+        { k: T.kCategory, v: TX(n.category) }
+      ],
+      image: n.image || n.thumb, imageAlt: AR(n.alt || n.title), hasImage: !!(n.image || n.thumb),
+      // Rich text stored as HTML; rendered here because a template hole cannot hold markup.
+      bodyNode: React.createElement("div", { dangerouslySetInnerHTML: { __html: window.TSUMUGI_SAN(bodyHtml) } }),
+      tags: (n.tags || []).map(AR), hasTags: !!(n.tags || []).length,
+      related, hasRelated: related.length > 0,
+      hasPrev: !!prev, hasNext: !!next,
+      prevTitle: prev ? AR(prev.title) : "", nextTitle: next ? AR(next.title) : "",
+      prevDate: prev ? this._fmtDate(prev.publishDate, isJa) : "",
+      nextDate: next ? this._fmtDate(next.publishDate, isJa) : "",
+      onPrev: () => { if (prev) this.go(prev.type === "news" ? "news" : "journal", prev.slug); },
+      onNext: () => { if (next) this.go(next.type === "news" ? "news" : "journal", next.slug); },
+      onBack: () => this.go("journal")
+    };
+  }
+
+  /* Only published entries whose publish date has arrived are publicly reachable. */
+  publicArticle(slug) {
+    const S = this.store;
+    if (!S || !slug) return null;
+    return S.publicNews().find(n => n.slug === slug) || null;
+  }
+
+  products() {
+    const S = this.store;
+    if (!S) return [];
+    const GRADE = { Excellent: "A", "Very Good": "B", Good: "C", Fair: "D" };
+    const I = window.TSUMUGI_I18N;
+    const lang = S.lang ? S.lang() : "en";
+    const PN = n => (I && I.pname ? I.pname(n, lang) : n);
+    return S.publicProducts().map(p => {
+      const urls = (p.images || []).map(im => im.url).filter(Boolean);
+      const thumbs = (p.images || []).map(im => im.thumb || im.url).filter(Boolean);
+      const m = p.measurements || {};
+      const keys = p.category === "Trousers"
+        ? [["Waist", "waist"], ["Rise", "rise"], ["Inseam", "inseam"], ["Hem", "hem"]]
+        : [["Shoulder", "shoulder"], ["Chest", "chest"], ["Length", "length"], ["Sleeve", "sleeve"]];
+      return {
+        id: p.id, name: PN(p.name), brand: p.brand, year: p.year, price: p.price,
+        category: p.category, size: p.size, colour: p.colour, material: p.material,
+        condition: GRADE[p.condition] || "B", conditionName: p.condition,
+        short: (I && I.note ? I.note(p.curatorNote, lang) : p.curatorNote), story: (I && I.story ? I.story(p.story, lang) : p.story), era: p.era, country: p.country,
+        stock: Number(p.stock) || 0,
+        soldOut: p.status === "soldout" || Number(p.stock) <= 0,
+        gallery: urls.length ? urls : [U(GARMENTS[0], 900)],
+        galleryThumbs: thumbs.length ? thumbs : [U(GARMENTS[0], 220)],
+        imageRoles: (p.images || []).map(im => im.role || "front"),
+        imageAlts: (p.images || []).map(im => im.alt || (p.name + " — " + (im.role || "front"))),
+        card: urls[0] || U(GARMENTS[0], 700),
+        thumb: thumbs[0] || U(GARMENTS[0], 220),
+        meta: "C. " + p.year + " · " + String(p.brand).toUpperCase() + " · " + p.size,
+        metaNoBrand: "C. " + p.year + " · " + p.size,
+        priceLabel: YEN(p.price),
+        shot: ((p.images || [])[0] || {}).alt || (p.name + " — " + p.brand + ", photographed in daylight"),
+        measurements: keys.filter(k => m[k[1]] != null).map(k => ({
+          k: (window.TSUMUGI_I18N && S.lang) ? window.TSUMUGI_I18N.tx(k[0], S.lang()) : k[0],
+          v: m[k[1]] + " cm"
+        }))
+      };
+    });
+  }
+
+  /* Richer card for shop, search and related rows. The home "Newest Arrivals"
+     grid deliberately keeps the plain card() so its composition is unchanged. */
+  shopCard(p) {
+    const S = this.store;
+    const I = window.TSUMUGI_I18N;
+    const lang = S && S.lang ? S.lang() : "en";
+    const T = I ? I.t(lang) : {};
+    const isJa = lang === "ja";
+    const gradeKey = { A: "conditionGradeA", B: "conditionGradeB", C: "conditionGradeC", D: "conditionGradeD" }[p.condition];
+    const first = (p.measurements || [])[0];
+    return Object.assign(this.card(p), {
+      brandLine: String(p.brand).toUpperCase(),
+      nameLine: p.name,
+      eraOrigin: [p.era, (isJa ? "" : "Made in ") + ((I ? I.tx(p.country, lang) : p.country) || "—")]
+        .filter(Boolean).join(" · "),
+      sizeMeasure: [T.sizeLabel + " " + p.size, first ? first.k + " " + first.v : null]
+        .filter(Boolean).join(" · "),
+      gradeLine: T[gradeKey] || p.condition,
+      soldOutLabel: T.soldOut,
+      isSoldOut: !!p.soldOut, notSoldOut: !p.soldOut
+    });
+  }
+
+  _checkoutVals(T, isJa, TX) {
+    const S = this.store, st = this.state, c = st.co, errs = st.coErrors;
+    const step = st.coStep || "information";
+    const items = st.cart;
+    const subtotal = items.reduce((t, x) => t + x.price, 0);
+    const fee = 0;
+    const err = k => (errs[k] ? (T[errs[k]] || T.required) : "");
+    const field = (k, label, auto, placeholder, type) => ({
+      id: "co-" + k, name: k, label, auto, placeholder, type: type || "text",
+      value: c[k], error: err(k), hasError: !!errs[k],
+      invalid: errs[k] ? "true" : "false",
+      describedBy: errs[k] ? "co-" + k + "-err" : null,
+      errId: "co-" + k + "-err",
+      border: errs[k] ? "#A2493C" : "#D9D1C4",
+      onInput: e => this._coField(k, e.target.value)
+    });
+
+    /* Completion is resolved from this tab's receipt token, not from an id in
+       the address bar, and what comes back is the customer projection \u2014 no
+       internal notes, no status history, no audit trail. Without a token there
+       is nothing to show: signed-in customers have the order under Account,
+       guests have their emailed copy (once a mail service is connected). */
+    const order = st.coReceipt && S && S.receiptOrder ? S.receiptOrder(st.coReceipt) : null;
+
+    return {
+      step,
+      // An empty cart replaces the step UI rather than rendering alongside it.
+      isInformation: step === "information" && items.length > 0,
+      isDelivery: step === "delivery" && items.length > 0,
+      isReview: step === "review" && items.length > 0,
+      isComplete: step === "complete" && !!order,
+      empty: items.length === 0 && step !== "complete",
+
+      steps: [
+        { n: "1", label: T.stepInformation, active: step === "information", done: step !== "information" },
+        { n: "2", label: T.stepDelivery, active: step === "delivery", done: step === "review" || step === "complete" },
+        { n: "3", label: T.stepReview, active: step === "review", done: step === "complete" },
+        { n: "4", label: T.stepComplete, active: step === "complete", done: false }
+      ].map(x => ({
+        ...x,
+        tone: x.active ? "#222222" : x.done ? "#6D7761" : "#B5AEA3",
+        weight: x.active ? "500" : "400"
+      })),
+
+      fields: [
+        field("email", T.email, "email", "you@example.com", "email"),
+        field("firstName", T.firstName, "given-name", isJa ? "紬" : "Yuki"),
+        field("lastName", T.lastName, "family-name", isJa ? "田中" : "Tanaka"),
+        field("postalCode", T.postalCode, "postal-code", "151-0074"),
+        field("city", T.city, "address-level2", isJa ? "渋谷区" : "Shibuya-ku"),
+        field("address", T.address || T.addressLine, "address-line1", isJa ? "霧ヶ谷4-11-6" : "4-11-6 Kirigaya"),
+        field("phone", T.telephone, "tel", "03-5843-0000", "tel")
+      ],
+      prefectureField: {
+        id: "co-prefecture", label: T.prefecture, value: c.prefecture,
+        error: err("prefecture"), hasError: !!errs.prefecture,
+        invalid: errs.prefecture ? "true" : "false",
+        describedBy: errs.prefecture ? "co-prefecture-err" : null,
+        errId: "co-prefecture-err",
+        border: errs.prefecture ? "#A2493C" : "#D9D1C4",
+        options: [{ v: "", t: isJa ? "選択してください" : "Select…" }]
+          .concat((S ? S.PREFECTURES : []).map(p => ({ v: p, t: TX(p) }))),
+        onChange: e => this._coField("prefecture", e.target.value)
+      },
+      marketing: c.marketing,
+      onMarketing: e => this._coField("marketing", e.target.checked),
+      hasErrors: st.coSubmitted && Object.keys(errs).length > 0,
+      /* Shown only when an account actually supplied something: a guest never
+         sees it, and the values stay editable for this order. */
+      prefilled: !!st.coPrefilled && !!(S && S.me && S.me()),
+      prefillNote: T.accPrefill,
+
+      deliveryOptions: (S ? S.DELIVERY_METHODS : []).map(m => ({
+        value: m,
+        label: T[{ "Standard shipping": "standardShipping", "Store pickup": "storePickup" }[m]] || m,
+        note: m === "Store pickup"
+          ? (isJa ? "霧ヶ谷の店舗で受け取り · 送料無料" : "Collect at the Kirigaya shop · no shipping fee")
+          : (isJa ? "2営業日以内に発送 · 日本国内送料無料" : "Dispatched within two business days · free within Japan"),
+        checked: st.coDelivery === m,
+        onSelect: () => this.setState({ coDelivery: m }),
+        border: st.coDelivery === m ? "#222222" : "#E0D8CB"
+      })),
+      paymentOptions: [
+        { value: "Demo credit card", key: "demoCard" },
+        { value: "Demo cash on delivery", key: "demoCod" }
+      ].map(o => ({
+        value: o.value, label: T[o.key],
+        note: T.noPaymentProcessed,
+        checked: st.coPayment === o.value,
+        onSelect: () => this.setState({ coPayment: o.value }),
+        border: st.coPayment === o.value ? "#222222" : "#E0D8CB"
+      })),
+      showCard: st.coPayment === "Demo credit card",
+      card: st.coCard,
+      onCardNumber: e => this.setState(x => ({ coCard: { ...x.coCard, number: e.target.value } })),
+      onCardName: e => this.setState(x => ({ coCard: { ...x.coCard, name: e.target.value } })),
+      onCardExpiry: e => this.setState(x => ({ coCard: { ...x.coCard, expiry: e.target.value } })),
+
+      lines: items.map(x => ({
+        name: x.name, brand: x.brand, thumb: x.thumb,
+        alt: x.shot || (x.name + " — " + x.brand),
+        qty: isJa ? "数量 1" : "Qty 1",
+        price: YEN(x.price)
+      })),
+      subtotal: YEN(subtotal),
+      shippingLabel: isJa ? "無料" : "Free",
+      total: YEN(subtotal + fee),
+
+      orderNumber: order ? order.number : "",
+      completeEmail: order ? order.email : "",
+      receiptLost: st.coStep === "complete" && !order,
+      coError: st.coError || "",
+      hasCoError: !!st.coError,
+      placing: st.coPlacing,
+      placeLabel: st.coPlacing ? (isJa ? "処理中…" : "PLACING…") : T.placeOrder,
+
+      onBackToCart: () => this.go("cart"),
+      onBackInformation: () => this.goCheckout("information"),
+      onBackDelivery: () => this.goCheckout("delivery"),
+      onContinueDelivery: this._coContinue,
+      onContinueReview: () => this.goCheckout("review"),
+      onPlace: this._coPlace,
+      onShop: () => this.go("shop"),
+      reviewBlocks: [
+        {
+          label: T.contactInfo, editLabel: T.editInformation,
+          onEdit: () => this.goCheckout("information"),
+          rows: [
+            [c.firstName, c.lastName].filter(Boolean).join(" "),
+            c.email, c.phone
+          ].filter(Boolean)
+        },
+        {
+          label: T.shippingInfo, editLabel: T.editInformation,
+          onEdit: () => this.goCheckout("information"),
+          rows: [
+            [c.postalCode, TX(c.prefecture)].filter(Boolean).join(" "),
+            [c.city, c.address].filter(Boolean).join(" ")
+          ].filter(Boolean)
+        },
+        {
+          label: T.deliveryMethod, editLabel: T.editInformation,
+          onEdit: () => this.goCheckout("delivery"),
+          rows: [
+            T[{ "Standard shipping": "standardShipping", "Store pickup": "storePickup" }[st.coDelivery]] || st.coDelivery,
+            T[{ "Demo credit card": "demoCard", "Demo cash on delivery": "demoCod" }[st.coPayment]] || st.coPayment,
+            T.noPaymentProcessed
+          ]
+        }
+      ]
+    };
+  }
+
+  /* Checkout validation. Field keys match the i18n message keys. */
+  _coValidate() {
+    const c = this.state.co, e = {};
+    const need = ["email", "firstName", "lastName", "postalCode", "prefecture", "city", "address", "phone"];
+    need.forEach(k => { if (!String(c[k] || "").trim()) e[k] = "required"; });
+    if (c.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(c.email)) e.email = "invalidEmail";
+    if (c.postalCode && !/^\d{3}-?\d{4}$/.test(c.postalCode.trim())) e.postalCode = "invalidPostal";
+    if (c.phone && !/^[\d+][\d\s-]{7,}$/.test(c.phone.trim())) e.phone = "invalidPhone";
+    return e;
+  }
+
+  _coField(k, v) {
+    this.setState(st => {
+      const co = { ...st.co, [k]: v };
+      const errs = { ...st.coErrors };
+      delete errs[k];
+      return { co, coErrors: errs };
+    });
+  }
+
+  goCheckout = (step) => {
+    this._unlock(true);
+    this.setState({ cartOpen: false, menuOpen: false });
+    this._rememberScroll();
+    this._navByApp = true;
+    location.hash = "#/checkout/" + step;
+    window.scrollTo({ top: 0, behavior: "auto" });
+  };
+
+  _coContinue = (ev) => {
+    // Reached as the form's onSubmit (button click or Enter): without this the
+    // browser would navigate and drop everything typed.
+    if (ev && ev.preventDefault) ev.preventDefault();
+    const e = this._coValidate();
+    this.setState({ coErrors: e, coSubmitted: true });
+    if (Object.keys(e).length) {
+      // Move focus to the first field in error so keyboard users land on it.
+      window.setTimeout(() => {
+        const el = document.getElementById("co-" + Object.keys(e)[0]);
+        if (el && el.focus) el.focus();
+      }, 30);
+      return;
+    }
+    this.goCheckout("delivery");
+  };
+
+  /* The store validates and refuses; this only reports. The cart is emptied and
+     the completion screen shown for a confirmed order and for nothing else \u2014 a
+     refusal keeps the cart, keeps the form and names the reason. */
+  _coPlace = () => {
+    const S = this.store;
+    if (!S || !this.state.cart.length || this.state.coPlacing) return;
+    this.setState({ coPlacing: true, coError: "" });
+    const res = S.placeOrder({
+      items: this.state.cart.map(c => ({ productId: c.id, qty: 1 })),
+      info: this.state.co,
+      deliveryMethod: this.state.coDelivery,
+      paymentMethod: this.state.coPayment
+    });
+    const T = this._dict();
+    if (!res || res.ok !== true) {
+      const code = (res && res.code) || "failed";
+      const map = {
+        in_flight: T.ordErrInFlight, empty_cart: T.ordErrEmpty,
+        too_many_items: T.ordErrTooMany, unknown_product: T.ordErrUnavailable,
+        duplicate_line: T.ordErrUnavailable, bad_qty: T.ordErrQty,
+        qty_limit: T.ordErrQty, not_purchasable: T.ordErrUnavailable,
+        out_of_stock: T.ordErrSold, insufficient_stock: T.ordErrSold,
+        bad_price: T.ordErrUnavailable, portfolio_only: T.ordErrPortfolio,
+        persist_failed: T.ordErrStorage
+      };
+      this.setState({ coPlacing: false, coError: map[code] || T.ordErrFailed });
+      return;
+    }
+    /* The receipt token lives in state and sessionStorage, never in the URL: a
+       shared or guessed link reaches no order data. */
+    this.setState({
+      cart: [], coReceipt: res.receiptToken, coOrderId: res.orderId,
+      coPlacing: false, coSubmitted: false, coError: ""
+    }, () => {
+      this._rememberScroll();
+      this._navByApp = true;
+      location.hash = "#/checkout/complete";
+      window.scrollTo({ top: 0, behavior: "auto" });
+    });
+  };
+
+  /* Language and dictionary, for the handlers that need them outside
+     renderVals(). Both tolerate a store or i18n bundle that has not loaded. */
+  _lang() {
+    const S = this.store;
+    return (S && S.lang) ? S.lang() : "en";
+  }
+  _dict() {
+    const I = window.TSUMUGI_I18N;
+    return I ? I.t(this._lang()) : {};
+  }
+
+  /* ---- document metadata per route ----
+     The browser tab used to read as a URL, because the page that renders the
+     shop had no <title> and the entry point only forwarded. Title, description
+     and canonical are now rewritten on every route change, and products and
+     articles carry their own.
+
+     This is client-side metadata: it fixes the tab, the bookmark, the share
+     sheet and every crawler that runs JavaScript. It does NOT give a non-JS
+     crawler per-route metadata — that needs build-time prerendering, which
+     BUILD.md specifies and this snapshot does not ship. Said plainly rather
+     than implied. */
+  _syncDocumentMeta() {
+    const S = this.store;
+    const st = this.state;
+    const isJa = this._lang() === "ja";
+    const T = this._dict();
+    const SITE = "TSUMUGI";
+    const plain = (s) => {
+      const P = window.TSUMUGI_SANITIZE;
+      return P ? P.plain(s) : String(s || "").replace(/<[^>]*>/g, " ").replace(/\s+/g, " ").trim();
+    };
+
+    let title = isJa ? "古着とアーカイブの店" : "Vintage & archive clothing";
+    let desc = isJa
+      ? "生地・仕立て・今も着られるか。一点ずつ選んだ古着を扱う東京の店。"
+      : "Chosen for cloth, making and whether it can still be worn. One of one, no restock.";
+    let ogType = "website";
+
+    switch (st.page) {
+      case "shop":
+        title = isJa ? "オンラインショップ" : "Online Shop";
+        desc = isJa ? "在庫はすべて一点物です。再入荷はありません。" : "Every piece is one of one. Nothing is restocked.";
+        break;
+      case "about":
+        title = isJa ? "私たちについて" : "About";
+        break;
+      case "contact":
+        title = isJa ? "お問い合わせ" : "Contact";
+        break;
+      case "cart":
+        title = isJa ? "カート" : "Cart";
+        break;
+      case "checkout":
+        title = isJa ? "ご購入手続き" : "Checkout";
+        break;
+      case "account":
+        title = "Account";
+        break;
+      case "product": {
+        const p = st.productId && S ? S.getProduct(st.productId) : null;
+        if (p) {
+          ogType = "product";
+          title = [p.brand, p.name].filter(Boolean).join(" · ");
+          desc = plain([p.curatorNote, p.material, p.size].filter(Boolean).join(" / ")).slice(0, 160)
+            || (isJa ? "一点物のアーカイブ。" : "A one-of-one archive piece.");
+        }
+        break;
+      }
+      case "journal":
+      case "news": {
+        const n = st.slug ? this.publicArticle(st.slug) : null;
+        if (n) {
+          ogType = "article";
+          title = n.seoTitle || n.title;
+          desc = plain(n.seoDescription || n.summary || n.body).slice(0, 160) || desc;
+        } else if (!st.slug) {
+          title = "Journal";
+        }
+        break;
+      }
+      case "feature": {
+        const f = st.slug && S && S.getSpecialFeatureBySlug ? S.getSpecialFeatureBySlug(st.slug) : null;
+        if (f) {
+          title = (isJa ? (f.titleJa || f.titleEn) : (f.titleEn || f.titleJa)) || "Special Feature";
+          desc = plain(isJa ? (f.descriptionJa || f.descriptionEn) : (f.descriptionEn || f.descriptionJa)).slice(0, 160) || desc;
+        } else {
+          title = "Special Feature";
+        }
+        break;
+      }
+    }
+
+    /* seoTitle is an editor-controlled full title and may already carry the
+       site suffix. Route labels and product names do not, so add it only once. */
+    const titleText = String(title || "").trim();
+    const full = st.page === "home"
+      ? SITE + " — " + titleText
+      : (/\|\s*TSUMUGI$/i.test(titleText) ? titleText : titleText + " | " + SITE);
+    try {
+      document.title = full;
+      const set = (sel, attr, value) => {
+        let el = document.head.querySelector(sel);
+        if (!el) {
+          el = document.createElement("meta");
+          if (sel.indexOf("property=") >= 0) el.setAttribute("property", sel.replace(/.*property="([^"]+)".*/, "$1"));
+          else el.setAttribute("name", sel.replace(/.*name="([^"]+)".*/, "$1"));
+          document.head.appendChild(el);
+        }
+        el.setAttribute(attr, value);
+      };
+      set('meta[name="description"]', "content", desc);
+      set('meta[property="og:title"]', "content", full);
+      set('meta[property="og:description"]', "content", desc);
+      set('meta[property="og:type"]', "content", ogType);
+      set('meta[name="twitter:title"]', "content", full);
+      set('meta[name="twitter:description"]', "content", desc);
+      /* Canonical carries the hash route: it is the only address this route has,
+         and omitting it would point every page at the home page. */
+      let link = document.head.querySelector('link[rel="canonical"]');
+      if (!link) { link = document.createElement("link"); link.setAttribute("rel", "canonical"); document.head.appendChild(link); }
+      link.setAttribute("href", location.pathname + (location.hash || ""));
+      document.documentElement.lang = isJa ? "ja" : "en";
+    } catch (e) { }
+  }
+
+  /* Landing at the top has to survive late layout shifts (images resolving,
+     fonts settling), so the jump is re-asserted across the next few frames
+     rather than fired once against a DOM that has not committed yet. */
+  _forceTop() {
+    const jump = () => {
+      const h = document.documentElement, sb = h.style.scrollBehavior;
+      h.style.scrollBehavior = "auto";
+      window.scrollTo(0, 0);
+      h.style.scrollBehavior = sb;
+    };
+    jump();
+    requestAnimationFrame(() => { jump(); requestAnimationFrame(jump); });
+  }
+
+  /* Hold the incoming page invisible until its imagery has actually arrived,
+     then reveal the whole thing in one fade. The cap is deliberately short:
+     a slow image must never leave the page untouchable. */
+  _gatePage() {
+    clearTimeout(this._gateTimer);
+    const id = (this._gateId || 0) + 1;
+    this._gateId = id;
+    this._gating = true;
+    this.setState({ pageReady: false });
+    const finish = () => {
+      if (id !== this._gateId) return;
+      clearTimeout(this._gateTimer);
+      this._gating = false;
+      this._forceTop();
+      this.setState({ pageReady: true });
+      requestAnimationFrame(() => this._forceTop());
+    };
+    this._gateTimer = setTimeout(finish, 700);
+    const poll = (tries) => {
+      if (id !== this._gateId) return;
+      const main = document.querySelector("main");
+      const imgs = main ? Array.from(main.querySelectorAll("img")) : [];
+      // Only the imagery the visitor can actually see is worth waiting for —
+      // anything below the fold arrives while they are already reading.
+      const vh = window.innerHeight || 800;
+      const pending = imgs.filter(i => !i.complete && i.getBoundingClientRect().top < vh * 1.1);
+      if (main && !pending.length && tries >= 1) return finish();
+      if (tries < 30) setTimeout(() => poll(tries + 1), 25);
+      else finish();
+    };
+    setTimeout(() => poll(0), 20);
+  }
+
+  /* The position to come back to for the entry being left. While the body is
+     scroll-locked (cart or menu open) the real offset is the locked one. */
+  _rememberScroll() {
+    this._scrollMem = this._scrollMem || {};
+    this._scrollMem[location.hash] = this._locked ? (this._lockY || 0) : (window.scrollY || 0);
+  }
+
+  go = (page, id) => {
+    this._rememberScroll();
+    this._unlock(true);
+    this.setState({ fading: true, menuOpen: false, searchOpen: false, cartOpen: false, filtersOpen: false, sortOpen: false, langOpen: false, headerLangOpen: false });
+    setTimeout(() => {
+      const isArticle = page === "journal" || page === "news";
+      const isSlugPage = isArticle || page === "feature";
+      this.setState({
+        page,
+        productId: isSlugPage ? null : (id ?? null),
+        slug: isSlugPage ? (id ?? null) : null,
+        fading: false, gallery: 0, zoom: false, pageNo: 1
+      });
+      this._navByApp = true;
+      location.hash = "#/" + page + (id ? "/" + id : "");
+      this._forceTop();
+      this._gatePage();
+    }, 220);
+  };
+
+  addToCart = (p) => {
+    const back = document.activeElement;
+    this.setState(s => ({ cart: s.cart.find(c => c.id === p.id) ? s.cart : [...s.cart, p], toast: p.name.toUpperCase() + " ADDED" }));
+    this._openCart(back);
+    clearTimeout(this._toast);
+    this._toast = setTimeout(() => this.setState({ toast: "" }), 2600);
+  };
+  removeFromCart = (id) => this.setState(s => ({ cart: s.cart.filter(c => c.id !== id) }));
+
+  /* ---- saved pieces ----
+     The list lives in the store as rows of (owner, product id): a visitor who
+     has not signed in owns the "anon" bucket, a signed-in customer owns theirs,
+     and signing in merges the first into the second. Nothing about a product is
+     copied into it — only the id — and the store subscription repaints. */
+  wishIds() {
+    const S = this.store;
+    return (S && S.wishlistIds) ? S.wishlistIds() : [];
+  }
+  isWished(id) { return this.wishIds().indexOf(id) >= 0; }
+  toggleWish = (id) => { const S = this.store; if (S && S.toggleWishlist) S.toggleWishlist(id); };
+  toggleFilter = (group, value) => this.setState(s => {
+    const cur = s.filters[group] || [];
+    return { filters: { ...s.filters, [group]: cur.includes(value) ? cur.filter(v => v !== value) : [...cur, value] }, pageNo: 1 };
+  });
+
+  filtered() {
+    const { filters, shopQuery, sort } = this.state;
+    const inPrice = p => !filters.Price.length || filters.Price.some(b =>
+      (b === "Under ¥20,000" && p.price < 20000) || (b === "¥20,000—35,000" && p.price >= 20000 && p.price <= 35000) || (b === "Over ¥35,000" && p.price > 35000));
+    const q = shopQuery.trim().toLowerCase();
+    let list = this.products().filter(p =>
+      (!filters.Category.length || filters.Category.includes(p.category)) &&
+      (!filters.Brand.length || filters.Brand.includes(p.brand)) &&
+      (!filters.Era.length || filters.Era.includes(p.era)) &&
+      (!filters.Size.length || filters.Size.includes(p.size)) &&
+      (!filters.Colour.length || filters.Colour.includes(p.colour)) &&
+      (!filters.Material.length || filters.Material.includes(p.material)) &&
+      (!filters.Condition.length || filters.Condition.includes(p.condition)) &&
+      inPrice(p) &&
+      (!q || (p.name + " " + p.brand + " " + p.category + " " + p.material + " " + p.era).toLowerCase().includes(q))
+    );
+    const by = {
+      "Newest first": (a, b) => b.year - a.year,
+      "Oldest first": (a, b) => a.year - b.year,
+      "Price: low to high": (a, b) => a.price - b.price,
+      "Price: high to low": (a, b) => b.price - a.price,
+      "Alphabetical": (a, b) => a.name.localeCompare(b.name)
+    };
+    return list.sort(by[sort]);
+  }
+
+  /* ---- special features ----
+     The store decides what may be shown (enabled, dates, product eligibility)
+     and resolves the three frames; this only turns the result into strings,
+     images and handlers. A frame the shopkeeper chose is used exactly as
+     chosen — including when its garment sells, which withdraws the product
+     card but not the editorial picture. Only a frame left automatic follows
+     the candidate order. */
+  _specialFeatureVals(f, T, isJa, TX) {
+    const S = this.store;
+    if (!S || !f) return null;
+    const all = this.products();
+    const prodViews = S.specialFeatureProducts(f)
+      .map(p => all.find(v => v.id === p.id))
+      .filter(Boolean);
+    /* A frame with no usable image is left out rather than drawn broken. */
+    const visuals = S.specialFeatureVisuals(f)
+      .filter(v => v.img)
+      .map(v => ({ img: v.img, alt: v.alt || "" }));
+    if (!visuals.length) return null;
+    const cat = f.category ? (isJa ? TX(f.category) : String(f.category).toUpperCase()) : "";
+    const meta = [cat, f.eraLabel].filter(Boolean).join(" / ");
+    const title = (isJa ? (f.titleJa || f.titleEn) : (f.titleEn || f.titleJa)) || "";
+    const dek = (isJa ? (f.descriptionJa || f.descriptionEn) : (f.descriptionEn || f.descriptionJa)) || "";
+    const n = prodViews.length;
+    const countLabel = n === 1 ? T.sfOnePiece : String(T.sfPieceCount).split("{n}").join(n);
+    const blank = { img: "", alt: "" };
+    return {
+      id: f.id, slug: f.slug, title, dek, meta, countLabel,
+      a: visuals[0] || blank, b: visuals[1] || blank, c: visuals[2] || blank,
+      isThree: visuals.length >= 3, isTwo: visuals.length === 2, isOne: visuals.length === 1,
+      hasSide: visuals.length >= 2, hasThird: visuals.length >= 3,
+      products: prodViews.map(p => this.card(p)),
+      linkLabel: title,
+      href: "#/feature/" + f.slug,
+      onOpen: (e) => { if (e && e.preventDefault) e.preventDefault(); this.go("feature", f.slug); }
+    };
+  }
+
+  card = (p) => ({
+    ...p,
+    wished: this.isWished(p.id),
+    wishLabel: this.isWished(p.id) ? "♥" : "♡",
+    onOpen: () => this.go("product", p.id),
+    onWish: (e) => { if (e && e.stopPropagation) e.stopPropagation(); this.toggleWish(p.id); },
+    onAdd: () => this.addToCart(p)
+  });
+
+  /* ---- customer account view models ----
+     Both are assembled here, in the shell, from the store's own scoped reads.
+     The views receive strings and handlers only: no session object, no auth
+     call, no store access. */
+  /* Completes a password recovery. Both fields must match and clear the length
+     floor before any call is made; an expired or already-used link is reported
+     as exactly that, rather than as a generic failure the visitor cannot act
+     on. On success the visitor is signed in and sent to their account. */
+  _authRecoverSubmit = (T, e) => {
+    if (e && e.preventDefault) e.preventDefault();
+    const A = window.TSUMUGI_CUSTOMER_AUTH;
+    const s = this.state;
+    if (this.state.accBusy) return;
+    if (!A || !A.updatePassword) { this.setState({ accError: T.accRecoverUnsupported }); return; }
+    if (!A.isRecovering || !A.isRecovering()) { this.setState({ accError: T.accRecoverExpired }); return; }
+    const pw = String(s.accPassword || "");
+    if (pw.length < 8) { this.setState({ accError: T.accPasswordHint }); return; }
+    if (pw !== String(s.accConfirm || "")) { this.setState({ accError: T.accMismatch }); return; }
+
+    this.setState({ accBusy: true, accError: "" });
+    A.updatePassword(pw).then(r => {
+      if (r && r.ok) {
+        this.setState({ accBusy: false, accPassword: "", accConfirm: "", accNotice: "recovered" }, () => {
+          this.goAccount("");
+        });
+        return;
+      }
+      const code = (r && r.code) || "failed";
+      const msg = code === "expired" ? T.accRecoverExpired
+        : code === "weak" ? T.accPasswordHint
+        : code === "unsupported" ? T.accRecoverUnsupported
+        : T.accRecoverFailed;
+      this.setState({ accBusy: false, accError: msg });
+    }).catch(() => this.setState({ accBusy: false, accError: T.accRecoverFailed }));
+  };
+
+  _authVals(T) {
+    const s = this.state, S = this.store;
+    const A = window.TSUMUGI_CUSTOMER_AUTH;
+    const caps = (A && A.capabilities()) || { passwordReset: false };
+    const isLocal = !!(A && !A.isConfigured());
+    const demo = (isLocal && S) ? S.DEMO_CUSTOMER : null;
+    const create = s.accSub === "create";
+    /* Recovery is its own mode, reached by the link in the reset email
+       (#/account/recover). It asks for a new password twice and asks for no
+       email address: the address is already established by the recovery
+       session, and inviting one back would let a visitor aim the change
+       elsewhere. */
+    const recover = s.accSub === "recover";
+    const recoveryLive = !!(A && A.isRecovering && A.isRecovering());
+    if (recover) {
+      return {
+        t: T, isCreate: false, isSignIn: false, isRecover: true,
+        heading: T.accRecoverHead,
+        intro: recoveryLive ? T.accRecoverIntro : T.accRecoverExpired,
+        recoveryLive,
+        email: "", password: s.accPassword, confirm: s.accConfirm,
+        onEmail: () => {},
+        onPassword: e => this.setState({ accPassword: e.target.value, accError: "" }),
+        onConfirm: e => this.setState({ accConfirm: e.target.value, accError: "" }),
+        onSubmit: e => this._authRecoverSubmit(T, e),
+        hasError: !!s.accError, error: s.accError, invalid: s.accError ? "true" : "false",
+        busy: s.accBusy,
+        submitLabel: s.accBusy ? T.accSaving : T.accSetPassword,
+        submitCursor: s.accBusy ? "progress" : "pointer",
+        submitOpacity: s.accBusy ? 0.6 : 1,
+        pwAutoComplete: "new-password",
+        pwDescribedBy: "acc-password-hint",
+        switchPrompt: T.accRecoverBack,
+        switchCta: T.accSignInCaps,
+        onSwitch: () => this.goAccount("sign-in"),
+        showForgot: false, showForgotOff: false, onForgot: () => {},
+        hasNotice: !!s.accNotice,
+        noticeHead: T.accRecoverHead,
+        noticeBody: s.accNotice === "recovered" ? T.accRecoverDone : T.accRecoverIntro,
+        showDemo: false, demoEmail: "", demoPassword: "", onFillDemo: () => {}
+      };
+    }
+    return {
+      t: T, isCreate: create, isSignIn: !create, isRecover: false,
+      heading: create ? T.accCreate : T.accTitle,
+      intro: create ? T.accCreateIntro : T.accSignInIntro,
+      email: s.accEmail, password: s.accPassword, confirm: s.accConfirm,
+      onEmail: e => this.setState({ accEmail: e.target.value, accError: "" }),
+      onPassword: e => this.setState({ accPassword: e.target.value, accError: "" }),
+      onConfirm: e => this.setState({ accConfirm: e.target.value, accError: "" }),
+      onSubmit: e => this._authSubmit(T, e),
+      hasError: !!s.accError, error: s.accError, invalid: s.accError ? "true" : "false",
+      busy: s.accBusy,
+      submitLabel: s.accBusy ? (create ? T.accCreating : T.accSigningIn) : (create ? T.accCreateCaps : T.accSignInCaps),
+      submitCursor: s.accBusy ? "progress" : "pointer",
+      submitOpacity: s.accBusy ? 0.6 : 1,
+      pwAutoComplete: create ? "new-password" : "current-password",
+      pwDescribedBy: create ? "acc-password-hint" : undefined,
+      switchPrompt: create ? T.accHaveAccount : T.accNewTo,
+      switchCta: create ? T.accSignInCaps : T.accCreateCaps,
+      onSwitch: () => this.goAccount(create ? "sign-in" : "create"),
+      /* The reset link appears only if the provider can genuinely send one. */
+      showForgot: !create && !!caps.passwordReset,
+      showForgotOff: !create && !caps.passwordReset,
+      onForgot: () => this._authReset(T),
+      hasNotice: !!s.accNotice,
+      noticeHead: s.accNotice === "verify" ? T.accVerifyHead : T.accForgot,
+      noticeBody: s.accNotice === "verify" ? T.accVerifyBody : T.accResetSent,
+      showDemo: !!demo && !create,
+      demoEmail: demo ? demo.email : "",
+      demoPassword: demo ? demo.password : "",
+      onFillDemo: () => this.setState({ accEmail: demo ? demo.email : "", accPassword: demo ? demo.password : "", accError: "" })
+    };
+  }
+
+  _accountVals(T, isJa, TX) {
+    const s = this.state, S = this.store;
+    const A = window.TSUMUGI_CUSTOMER_AUTH;
+    const isLocal = !!(A && !A.isConfigured());
+    const p = (S && S.myProfile && S.myProfile()) || { displayName: "", email: "", phone: "" };
+    const f = this._accForm();
+    const orders = (S && S.myOrders) ? S.myOrders() : [];
+    const all = this.products();
+    const saved = this.wishIds()
+      .map(id => all.find(x => x.id === id))
+      .filter(Boolean)
+      .map(x => Object.assign(this.shopCard(x), {
+        onRemove: (e) => { if (e && e.stopPropagation) e.stopPropagation(); this.toggleWish(x.id); }
+      }));
+    const ful = v => T["ful" + String(v || "").replace(/\s+/g, "")] || v || "";
+    const pay = v => T["pay" + String(v || "").replace(/\s+/g, "")] || v || "";
+    const method = v => T[{ "Standard shipping": "standardShipping", "Store pickup": "storePickup" }[v]] || v || "";
+    const tone = v => v === "Delivered" ? "#4F5C42" : (v === "Cancelled" || v === "Returned") ? "#A2493C" : "#6D7761";
+    const count = n => isJa ? n + "件" : String(n);
+    /* The detail is the store's customer projection, fetched by id with the
+       ownership test inside: another account's order number returns nothing. */
+    const d = (s.accOrderId && S && S.myOrder) ? S.myOrder(s.accOrderId) : null;
+    const detailRows = d ? [
+      { k: T.accOrderStatus, v: ful(d.fulfilmentStatus) },
+      { k: T.accOrderPayment, v: pay(d.paymentStatus) },
+      { k: T.accOrderDelivery, v: method(d.deliveryMethod) },
+      d.tracking ? { k: T.accOrderTracking, v: d.tracking } : null,
+      { k: T.accOrderTotal, v: YEN(d.total) }
+    ].filter(Boolean) : [];
+    return {
+      t: T,
+      isAccount: !s.accOrderId, isDetail: !!s.accOrderId,
+      displayName: p.displayName || String(p.email || "").split("@")[0] || "—",
+      email: p.email || "",
+      yes: true,
+      formCols: (s.vw || 1440) >= 900 ? "minmax(0,1fr) minmax(0,1fr)" : "minmax(0,1fr)",
+      ordersHead: T.accOrders, ordersCount: count(orders.length),
+      noOrders: orders.length === 0,
+      orders: orders.map(o => ({
+        number: o.number,
+        dateLabel: this._fmtDate(o.date, isJa),
+        totalLabel: YEN(o.total),
+        statusLabel: ful(o.fulfilmentStatus),
+        statusTone: tone(o.fulfilmentStatus),
+        onOpen: () => this.goAccount("order", o.number)
+      })),
+      savedHead: T.accSaved, savedCount: count(saved.length),
+      saved, hasSaved: saved.length > 0, noSaved: saved.length === 0,
+      pName: f.name, pPhone: f.phone,
+      onPName: e => this._setAcc("name", e.target.value),
+      onPPhone: e => this._setAcc("phone", e.target.value),
+      onSaveProfile: () => this._saveProfile(),
+      profileSaved: s.profileSaved,
+      phoneLabel: T.accPhone,
+      namePlaceholder: isJa ? "瞬 紬" : "Yuki Tanaka",
+      cityPlaceholder: isJa ? "渋谷区" : "Shibuya-ku",
+      addressPlaceholder: isJa ? "霧ヶ谷4-11-6" : "4-11-6 Kirigaya",
+      aPostal: f.postalCode, aPrefecture: f.prefecture, aCity: f.city, aAddress: f.address,
+      onAPostal: e => this._setAcc("postalCode", e.target.value),
+      onAPrefecture: e => this._setAcc("prefecture", e.target.value),
+      onACity: e => this._setAcc("city", e.target.value),
+      onAAddress: e => this._setAcc("address", e.target.value),
+      onSaveAddress: () => this._saveAddress(),
+      addressSaved: s.addressSaved,
+      prefOptions: [{ v: "", t: isJa ? "選択してください" : "Select…" }]
+        .concat((S ? S.PREFECTURES : []).map(x => ({ v: x, t: TX(x) }))),
+      onSignOut: () => this._customerSignOut(T),
+      providerNote: isLocal ? T.accDemoBody : "",
+      detailCrumb: (isJa ? "ホーム / アカウント / " : "HOME / ACCOUNT / ") + (s.accOrderId || ""),
+      detailMissing: !!s.accOrderId && !d,
+      detailFound: !!d,
+      dNumber: d ? d.number : "",
+      dDateLabel: d ? this._fmtDate(d.date, isJa) : "",
+      dItems: d ? d.items.map(it => ({
+        thumb: it.thumb, name: it.name,
+        brandLine: String(it.brand || "").toUpperCase(),
+        priceLabel: YEN(it.price)
+      })) : [],
+      dRows: detailRows,
+      dShipping: d ? [
+        d.shipping.name,
+        [d.shipping.postalCode, TX(d.shipping.prefecture)].filter(Boolean).join(" "),
+        [d.shipping.city, d.shipping.address].filter(Boolean).join(" ")
+      ].filter(Boolean) : [],
+      onBack: () => this.goAccount("")
+    };
+  }
+
+  renderVals() {
+    const s = this.state;
+    const St = this.store, I = window.TSUMUGI_I18N;
+    const lang = St && St.lang ? St.lang() : "en";
+    const T = I ? I.t(lang) : {};
+    const L = I ? I.lists(lang) : null;
+    const isJa = lang === "ja";
+    const TX = v => (I ? I.tx(v, lang) : v);
+    const all = this.products();
+    const journal = this.journalEntries();
+    const featIds = this.store ? this.store.featuredProducts().map(p => p.id) : [];
+    const featured = all.filter(p => featIds.indexOf(p.id) >= 0);
+    const isMobile = s.vw < 760, isDesktop = s.vw >= 1120, isCompact = s.vw < 1120;
+    /* Special features: the shop shows the one the store elects, and the
+       feature route resolves its own by slug. Both go through the store's
+       eligibility rules, so a scheduled, archived, disabled or empty feature
+       is never reachable from the storefront. */
+    const St2 = this.store;
+    const shopSpecial = St2 ? St2.activeSpecialFeature() : null;
+    const sfVals = shopSpecial ? this._specialFeatureVals(shopSpecial, T, isJa, TX) : null;
+    const routeSpecial = (s.page === "feature" && s.slug && St2) ? St2.getSpecialFeatureBySlug(s.slug) : null;
+    const routeVals = (routeSpecial && St2.specialFeatureRenderable(routeSpecial))
+      ? this._specialFeatureVals(routeSpecial, T, isJa, TX) : null;
+    // An unpublished or deleted piece must show the not-found state, never fall
+    // through to an unrelated record.
+    const matched = all.find(p => p.id === Number(s.productId));
+    const productMissing = s.page === "product" && s.productId != null && !matched;
+    const onAccount = s.page === "account";
+    const cur = matched || all[14] || all[0] || BLANK;
+    const ED = (I && I.editorial) ? I.editorial(cur, lang) : { note: cur.story, condition: cur.short, styling: "", care: "", details: ["", "", ""] };
+    const nav = [[T.navAbout, "about"], [T.navShop, "shop"], [T.navJournal, "journal"], [T.navContact, "contact"]];
+    const q = s.query.trim().toLowerCase();
+    const results = q ? all.filter(p => (p.name + " " + p.brand + " " + p.material).toLowerCase().includes(q)).slice(0, 6) : all.slice(0, 4);
+    const filtered = this.filtered();
+    const PAGE_SIZE = 50;
+    const pageCount = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
+    const curPage = Math.min(Math.max(1, s.pageNo || 1), pageCount);
+    const shown = filtered.length <= PAGE_SIZE ? filtered : filtered.slice((curPage - 1) * PAGE_SIZE, curPage * PAGE_SIZE);
+    const uniq = key => [...new Set(all.map(p => p[key]))];
+    const groups = [
+      ["Category", uniq("category")], ["Brand", uniq("brand")], ["Era", ["1970s", "1980s", "1990s", "2000s"]],
+      ["Size", ["S", "M", "L", "XL"]], ["Colour", uniq("colour")], ["Material", uniq("material")],
+      ["Price", ["Under ¥20,000", "¥20,000—35,000", "Over ¥35,000"]], ["Condition", ["A", "B", "C"]]
+    ];
+    const chips = [];
+    Object.keys(s.filters).forEach(g => s.filters[g].forEach(v => chips.push({
+      label: (g === "Price" ? (I ? I.lists(lang).price(v) : v) : (I ? I.tx(v, lang) : v)) + " ✕",
+      onClick: () => this.toggleFilter(g, v)
+    })));
+
+    /* ---- home hero: featured content ----
+       The list is configuration held in the store and edited in the console —
+       nothing here selects by category or date. Resolution order: enabled →
+       store order → resolve the source → publication gate → drop anything
+       unresolvable. A journal feature reads its title, image, alt and slug from
+       the article record (one source of truth, both languages); a page feature
+       resolves against the router. If the whole list resolves to nothing, the
+       two permanent pages keep the hero standing. */
+    const AR = v => (I && I.art ? I.art(v, lang) : v);
+    /* The eyebrow stays Latin in both languages, like the arrivals titles. */
+    const monthMeta = (n) => {
+      const d = new Date((n.publishDate || "") + "T00:00:00");
+      if (isNaN(d.getTime())) return "";
+      return d.toLocaleDateString("en-GB", { month: "long", year: "numeric" }).toUpperCase();
+    };
+    const heroPage = {
+      shop: {
+        eyebrow: "",
+        title: T.heroShopTitle, cta: T.heroShopCta,
+        image: U("1544022613-e87ca75a784a", 1800),
+        alt: isJa ? "ヴィンテージのフィールドジャケットを着た人物" : "Model outdoors in a vintage field jacket"
+      },
+      about: {
+        eyebrow: "", title: T.heroAboutTitle, cta: T.heroAboutCta,
+        image: U(INTERIORS[0], 1800),
+        alt: isJa ? "服が掛かる店内" : "Interior of the shop with a clothing rail"
+      },
+      journal: {
+        eyebrow: isJa ? "読みもの" : "READING",
+        title: T.journal, cta: T.allEntries,
+        image: U(GARMENTS[4], 1800),
+        alt: isJa ? "木のハンガーに掛かるニット" : "Cream knitwear on a wooden hanger"
+      },
+      contact: {
+        eyebrow: isJa ? "霧ヶ谷" : "KIRIGAYA",
+        title: T.navContact, cta: T.heroAboutCta,
+        image: U(INTERIORS[2], 1800),
+        alt: isJa ? "店内の様子" : "Inside the shop"
+      }
+    };
+    const heroCfg = (this.store && this.store.publicHeroFeatures) ? this.store.publicHeroFeatures() : [];
+    const heroSrc = heroCfg.map(cfg => {
+      const ovTitle = isJa ? cfg.titleOverrideJa : cfg.titleOverrideEn;
+      const ovAlt = isJa ? cfg.altOverrideJa : cfg.altOverrideEn;
+      if (cfg.sourceType === "page") {
+        const p = heroPage[cfg.route];
+        if (!p) return null;
+        return {
+          id: cfg.id, type: "page", route: cfg.route, order: cfg.order,
+          eyebrow: p.eyebrow, title: ovTitle || p.title, cta: p.cta,
+          image: cfg.imageOverride || p.image, alt: ovAlt || p.alt,
+          target: "#/" + cfg.route,
+          onOpen: (e) => { if (e) e.preventDefault(); this.go(cfg.route); }
+        };
+      }
+      const n = this.store ? this.store.getNews(cfg.sourceId) : null;
+      if (!n) return null;
+      const page = n.type === "news" ? "news" : "journal";
+      return {
+        id: cfg.id, type: "journal", order: cfg.order,
+        eyebrow: monthMeta(n), title: ovTitle || AR(n.title), cta: T.heroStory,
+        image: cfg.imageOverride || n.image || n.thumb, alt: ovAlt || AR(n.alt) || n.alt,
+        target: "#/" + page + "/" + n.slug,
+        onOpen: (e) => { if (e) e.preventDefault(); this.go(page, n.slug); }
+      };
+    }).filter(Boolean);
+    if (!heroSrc.length) {
+      ["shop", "about"].forEach((route, i) => {
+        const p = heroPage[route];
+        heroSrc.push({
+          id: "fallback-" + route, type: "page", route, order: i + 1,
+          eyebrow: p.eyebrow, title: p.title, cta: p.cta, image: p.image, alt: p.alt,
+          target: "#/" + route,
+          onOpen: (e) => { if (e) e.preventDefault(); this.go(route); }
+        });
+      });
+    }
+    this._heroCount = heroSrc.length;
+    const heroIdx = Math.min(Math.max(0, s.heroIndex || 0), heroSrc.length - 1);
+    const heroCur = heroSrc[heroIdx] || heroSrc[0];
+    const pad2 = n => String(n).padStart(2, "0");
+
+    const V = {
+      t: T,
+      heroFeatures: heroSrc.map((f, i) => ({
+        ...f,
+        hasEyebrow: !!f.eyebrow,
+        // CJK glyphs fill the em square, so a Japanese title is set a step
+        // smaller to read at the same optical size as the Latin ones.
+        titleSize: /[\u3040-\u30ff\u4e00-\u9fff]/.test(String(f.title || ""))
+          ? "clamp(27px,4.3vw,53px)" : "clamp(32px,5vw,62px)",
+        op: i === heroIdx ? 1 : 0,
+        /* Titles are stacked in one grid cell, so two of them must never be
+           visible at once: the outgoing caption drops out first, the incoming
+           one fades in after it has gone, and visibility keeps the hidden
+           slides out of the box entirely. */
+        vis: i === heroIdx ? "visible" : "hidden",
+        textTrans: i === heroIdx
+          ? "opacity 520ms ease 210ms, visibility 0s"
+          : "opacity 200ms ease, visibility 0s linear 200ms",
+        pe: i === heroIdx ? "auto" : "none",
+        inert: i === heroIdx ? "false" : "true",
+        tab: i === heroIdx ? 0 : -1
+      })),
+      heroCounter: pad2(heroIdx + 1) + " / " + pad2(heroSrc.length),
+      heroHref: heroCur.target,
+      heroOpen: heroCur.onOpen,
+      heroPause: this.heroPause, heroResume: this.heroResume, heroKey: this.heroKey,
+      heroPrev: () => this.heroStep(-1),
+      heroNext: () => this.heroStep(1),
+      toggleLang: () => { if (St && St.toggleLang) St.toggleLang(); },
+      /* The header names the language in use, as the menu overlay does, rather
+         than the one a press would switch to. */
+      langCurrentLabel: isJa ? T.langNameJa : T.langNameEn,
+      isDesktop, isCompact,
+      /* The header is a three-column grid, so the wordmark's position no longer
+         depends on how wide the side content happens to be — English and
+         Japanese labels differ enough to visibly shift it otherwise. Compact:
+         menu | wordmark (centred) | actions. Desktop: wordmark | nav | actions. */
+      logoJustify: isCompact ? "center" : "start",
+      showHeaderLang: !isMobile,
+      showHeaderAccount: !isMobile,
+      goAccountHeader: () => this.goAccount(""),
+      goAccountMenu: (e) => { if (e) e.preventDefault(); this.goAccount(""); },
+      /* The account route is the only one that waits for the auth status, and a
+         signed-in customer who asks for /sign-in or /create simply gets their
+         account — the guard is here, not in the views. */
+      isAccountBooting: onAccount && s.custStatus === "booting" && s.accSub !== "recover",
+      /* Recovery renders the auth view whatever the session says: the visitor
+         arrives holding a recovery session, which is authenticated as far as
+         Supabase is concerned but must not be treated as a sign-in. */
+      isAccountAuth: onAccount && (s.accSub === "recover" || s.custStatus === "signed_out"),
+      isAccountHome: onAccount && s.custStatus === "authenticated" && s.accSub !== "recover",
+      filterBarTop: (s.headerH || 63) + "px",
+      isHome: s.page === "home", isAbout: s.page === "about", isShop: s.page === "shop",
+      isProduct: s.page === "product" && !productMissing, isContact: s.page === "contact",
+      isCartPage: s.page === "cart",
+      is404: productMissing || !["home", "about", "shop", "product", "journal", "news", "contact", "cart",
+               "checkout", "complete", "account", "feature"].includes(s.page),
+      isJournal: s.page === "journal" && !s.slug,
+      isArticle: (s.page === "journal" || s.page === "news") && !!s.slug,
+      articleFound: !!s.slug && !!this.publicArticle(s.slug),
+      articleMissing: !!s.slug && !this.publicArticle(s.slug),
+      pageOpacity: (s.fading || !s.pageReady) ? 0 : 1,
+      // While a page is held back, main reserves a viewport so the footer
+      // cannot flash into view above the content that is still loading.
+      mainMinH: (s.fading || !s.pageReady) ? "100vh" : "0px",
+      navItems: nav.map(([label, page]) => ({ label, href: "#/" + page, onClick: (e) => { e.preventDefault(); this.go(page); } })),
+      goHome: (e) => { if (e) e.preventDefault(); this.go("home"); },
+      goShop: () => this.go("shop"), goAbout: () => this.go("about"), goJournal: () => this.go("journal"),
+      goCartPage: () => this.go("cart"),
+      goShopFromCart: () => this.go("shop"),
+      openMenu: this.openMenu, closeMenu: this.closeMenu, onMenuBackdrop: this.onMenuBackdrop,
+      menuExpanded: s.menuOpen ? "true" : "false",
+      openSearch: this.openSearch, closeSearch: this.closeSearch, onSearchBackdrop: this.onSearchBackdrop,
+      openCart: this.openCart, closeCart: this.closeCart, onCartBackdrop: this.onCartBackdrop,
+      searchExpanded: s.searchOpen ? "true" : "false", cartExpanded: s.cartOpen ? "true" : "false",
+      menuOpen: s.menuOpen, searchOpen: s.searchOpen, cartOpen: s.cartOpen,
+      langOpen: s.langOpen,
+      toggleLangMenu: this.toggleLangMenu,
+      closeLangMenu: this.closeLangMenu,
+      langExpanded: s.langOpen ? "true" : "false",
+      langCaret: s.langOpen ? "˄" : "⌄",
+      headerLangOpen: s.headerLangOpen,
+      toggleHeaderLang: this.toggleHeaderLang,
+      closeHeaderLang: this.closeHeaderLang,
+      headerLangExpanded: s.headerLangOpen ? "true" : "false",
+      headerLangCaret: s.headerLangOpen ? "˄" : "⌄",
+      headerLangOptions: [["ja", T.langNameJa], ["en", T.langNameEn]].map(([code, label]) => ({
+        label, mark: lang === code ? "✓" : "",
+        current: lang === code ? "true" : "false",
+        bg: lang === code ? "#EFE9E0" : "transparent",
+        color: lang === code ? "#222222" : "#4A4740",
+        weight: lang === code ? "600" : "400",
+        onSelect: () => this.pickHeaderLang(code)
+      })),
+      // CJK glyphs fill the em square, so the Japanese name is set a step
+      // smaller to sit at the same optical size as the Latin one.
+      isJaLang: isJa, isEnLang: !isJa,
+      langOptions: [["ja", T.langNameJa], ["en", T.langNameEn]].map(([code, label]) => ({
+        label, mark: lang === code ? "✓" : "",
+        current: lang === code ? "true" : "false",
+        bg: lang === code ? "#EFE9E0" : "transparent",
+        color: lang === code ? "#222222" : "#4A4740",
+        weight: lang === code ? "600" : "400",
+        onSelect: () => this.pickLang(code)
+      })),
+      cartLabel: "Cart (" + s.cart.length + ")",
+      cartEmpty: s.cart.length === 0,
+      cartHasItems: s.cart.length > 0,
+      cartTotal: YEN(s.cart.reduce((t, c) => t + c.price, 0)),
+      cartItems: s.cart.map(c => ({ ...c, onRemove: () => this.removeFromCart(c.id) })),
+      goCheckoutInfo: () => this.goCheckout("information"),
+      isCheckout: s.page === "checkout",
+      checkoutCols: s.vw >= 900 ? "minmax(0,1.5fr) minmax(0,1fr)" : "minmax(0,1fr)",
+      query: s.query,
+      onQuery: e => this.setState({ query: e.target.value }),
+      searchResults: results.map(p => ({ ...p, onOpen: () => this.go("product", p.id) })),
+      searchCountLabel: q ? (isJa ? results.length + "件" : results.length + " RESULTS") : L.recentlyAdded,
+      suggestions: ["reverse weave", "moleskin", "down", "1970s"].map(label => ({ label, onClick: () => this.setState({ query: label }) })),
+      newsletter: s.newsletter,
+      newsletterNote: s.newsletterKey === "ok" ? L.newsletterOk : s.newsletterKey === "bad" ? L.newsletterBad : "",
+      onNewsletter: e => this.setState({ newsletter: e.target.value }),
+      subscribe: () => this.setState(st => ({ newsletterKey: st.newsletter.includes("@") ? "ok" : "bad", newsletter: st.newsletter.includes("@") ? "" : st.newsletter })),
+      allPiecesLabel: "ALL " + all.length,
+      // Compact widths show the arrivals grid two-up, so six pieces fill three
+      // even rows; desktop keeps the original single row of four.
+      arrivals: (featured.length ? featured : all.slice().sort((a, b) => b.year - a.year)).slice(0, isCompact ? 6 : 4).map(p => this.card(p)),
+      journalHome: journal.slice(0, 3),
+      /* Shop feature block + the feature route's own view */
+      sfShow: !!sfVals,
+      sf: sfVals || {},
+      isFeature: s.page === "feature",
+      sfFound: !!routeVals,
+      sfMissing: s.page === "feature" && !routeVals,
+      feature: routeVals || {},
+      goShopLink: (e) => { if (e && e.preventDefault) e.preventDefault(); this.go("shop"); },
+      /* Special Feature collage: three real pieces, so clicking a shot opens the
+         product it shows rather than a decorative dead end. */
+      ...(() => {
+        const fs = (featured.length ? featured : all.slice().sort((a, b) => b.year - a.year)).slice(0, 3).map(p => ({
+          img: p.card, shot: p.shot, name: p.name,
+          href: "#/product/" + p.id,
+          onOpen: (e) => { if (e && e.preventDefault) e.preventDefault(); this.go("product", p.id); }
+        }));
+        return { featureA: fs[0] || {}, featureB: fs[1] || {}, featureC: fs[2] || {} };
+      })(),
+      art: this._articleVals(T, isJa, TX),
+      co: this._checkoutVals(T, isJa, TX),
+      gram: ["1512436991641-6745cdb1723f","1556905055-8f358a7a47b2","1519058082700-08a0b56da9b4","1523381210434-271e8be1f52b","1447752875215-b2761acb3c5d","1490114538077-0a7f8cb49891"]
+        .map((id, n) => ({ img: U(id, 420), shot: (isJa ? "アーカイブ写真 " : "Archive photograph ") + (n + 1) })),
+      // shop
+      showRelatedNotes: this.props.showRelatedNotes ?? true,
+      shopColumns: isDesktop ? "250px 1fr" : "1fr",
+      shopQuery: s.shopQuery,
+      onShopQuery: e => this.setState({ shopQuery: e.target.value, pageNo: 1 }),
+      shopIntro: isJa
+        ? "一着ずつ採寸し、自然光のもとで撮影しています。現在ご紹介しているのは" + filtered.length + "点です。"
+        : "Each garment is measured individually and photographed in natural light. " + filtered.length + (filtered.length === 1 ? " piece" : " pieces") + " shown at present.",
+      showResultsLabel: isJa ? filtered.length + " 点を見る" : "SHOW " + filtered.length + (filtered.length === 1 ? " PIECE" : " PIECES"),
+      prodSizeMeta: isJa ? "サイズ " + cur.size : "SIZE " + cur.size,
+      showingLabel: isJa ? filtered.length + " 点中 " + shown.length + " 点を表示" : "SHOWING " + shown.length + " OF " + filtered.length,
+      isPaged: pageCount > 1,
+      pageLinks: Array.from({ length: pageCount }, (_, n) => ({
+        label: String(n + 1),
+        current: n + 1 === curPage,
+        colour: n + 1 === curPage ? "#222222" : "#9C978F",
+        onSelect: () => this.setState({ pageNo: n + 1 })
+      })),
+      prevLabel: isJa ? "前へ" : "PREV",
+      nextLabel: isJa ? "次へ" : "NEXT",
+      hasPrev: curPage > 1,
+      hasNext: curPage < pageCount,
+      goPrev: () => this.setState(st => ({ pageNo: Math.max(1, (st.pageNo || 1) - 1) })),
+      goNext: () => this.setState(st => ({ pageNo: Math.min(pageCount, (st.pageNo || 1) + 1) })),
+      gridProducts: shown.map(p => this.shopCard(p)),
+
+      noResults: filtered.length === 0,
+      clearAll: () => this.setState({ filters: { Category: [], Brand: [], Era: [], Size: [], Colour: [], Material: [], Condition: [], Price: [] }, shopQuery: "", pageNo: 1 }),
+      chips, hasChips: chips.length > 0,
+      filterCountLabel: T.filterCaps + (chips.length ? " (" + chips.length + ")" : ""),
+      filterGroups: groups.map(([label, options]) => ({
+        label: L.group(label),
+        options: options.map(name => {
+          const key = label === "Category" ? "category" : label === "Brand" ? "brand" : label === "Era" ? "era" : label === "Size" ? "size" : label === "Colour" ? "colour" : label === "Material" ? "material" : label === "Condition" ? "condition" : null;
+          const count = key ? all.filter(p => p[key] === name).length : all.filter(p => (name === "Under ¥20,000" && p.price < 20000) || (name === "¥20,000—35,000" && p.price >= 20000 && p.price <= 35000) || (name === "Over ¥35,000" && p.price > 35000)).length;
+          const on = (s.filters[label] || []).includes(name);
+          const display = label === "Price" ? L.price(name) : TX(name);
+          return { name: display, count, mark: on ? "✓" : "", onToggle: () => this.toggleFilter(label, name) };
+        })
+      })),
+      filtersOpen: s.filtersOpen,
+      toggleFilters: this.toggleFilters,
+      closeFilters: this.closeFilters,
+      onFilterBackdrop: this.onFilterBackdrop,
+      filtersExpanded: s.filtersOpen ? "true" : "false",
+      sortExpanded: s.sortOpen ? "true" : "false",
+      onSortBackdrop: this.onSortBackdrop,
+      sortLabel: isJa ? "並び替え · " + L.sortOption(s.sort) : "SORT · " + s.sort.toUpperCase(),
+      sortOpen: s.sortOpen,
+      toggleSort: this.toggleSort,
+      sortOptions: L.sortOptions.map(o => ({
+        label: o.label, mark: s.sort === o.value ? "✓" : "", onSelect: () => this.setState({ sort: o.value, sortOpen: false })
+      })),
+      // product
+      prod: cur,
+      prodCrumb: isJa
+        ? "ホーム / ショップ / " + TX(cur.category) + " / " + cur.name
+        : "HOME / SHOP / " + cur.category.toUpperCase() + " / " + cur.name.toUpperCase(),
+      /* The trail is walkable: the category step opens the archive already
+         filtered to that category, and only the piece itself is inert. */
+      prodCrumbs: [
+        {
+          label: isJa ? "ホーム" : "HOME", href: "#/", isLink: true, isText: false, sep: false,
+          onClick: (e) => { if (e) e.preventDefault(); this.go("home"); }
+        },
+        {
+          label: isJa ? "ショップ" : "SHOP", href: "#/shop", isLink: true, isText: false, sep: true,
+          onClick: (e) => { if (e) e.preventDefault(); this.go("shop"); }
+        },
+        {
+          label: isJa ? TX(cur.category) : String(cur.category).toUpperCase(),
+          href: "#/shop", isLink: true, isText: false, sep: true,
+          onClick: (e) => {
+            if (e) e.preventDefault();
+            this.setState({
+              filters: { Category: [cur.category], Brand: [], Era: [], Size: [], Colour: [], Material: [], Condition: [], Price: [] },
+              shopQuery: "", pageNo: 1
+            });
+            this.go("shop");
+          }
+        },
+        {
+          label: isJa ? cur.name : String(cur.name).toUpperCase(),
+          href: "", isLink: false, isText: true, sep: true, onClick: undefined
+        }
+      ],
+      prodMainCss: 'url("' + (cur.gallery[Math.min(s.gallery, cur.gallery.length - 1)] || cur.card) + '")',
+      prodAlt: cur.name + " — " + cur.brand + ", " + cur.year,
+      prodGallery: cur.gallery.map((url, i) => {
+        const role = (cur.imageRoles || [])[i] || "front";
+        const roleLabel = T[ROLE_KEYS[role]] || role;
+        return {
+        thumb: (cur.galleryThumbs || [])[i] || url,
+        // alt comes from the record; the button announces the localized image role
+        shot: (cur.imageAlts || [])[i] || (cur.name + " — " + roleLabel),
+        roleLabel: cur.name + " — " + roleLabel,
+        onSelect: () => this.setState({ gallery: i, zoom: false }),
+        opacity: s.gallery === i ? 1 : 0.55
+      };
+      }),
+      zoomLabel: isJa ? (s.zoom ? "⌕ ドラッグで移動 / クリックで縮小" : "⌕ クリックで拡大") : (s.zoom ? "⌕ DRAG TO PAN / CLICK TO REDUCE" : "⌕ CLICK TO ZOOM"),
+      zoomScale: s.zoom ? "scale(2.2)" : "scale(1)",
+      zoomOrigin: (s.zoomX == null ? 50 : s.zoomX) + "% " + (s.zoomY == null ? 50 : s.zoomY) + "%",
+      zoomCursor: s.zoom ? "grab" : "zoom-in",
+      zoomTransition: s.zoom ? "transform 90ms linear" : "transform 420ms cubic-bezier(0.2,0.7,0.2,1)",
+      toggleZoom: (e) => {
+        if (this._dragged) { this._dragged = false; return; }
+        const r = e.currentTarget.getBoundingClientRect();
+        const x = Math.max(0, Math.min(100, ((e.clientX - r.left) / r.width) * 100));
+        const y = Math.max(0, Math.min(100, ((e.clientY - r.top) / r.height) * 100));
+        this.setState(st => (st.zoom ? { zoom: false } : { zoom: true, zoomX: x, zoomY: y }));
+      },
+      onZoomDown: (e) => {
+        if (!s.zoom) return;
+        const r = e.currentTarget.getBoundingClientRect();
+        this._drag = { x: e.clientX, y: e.clientY, ox: s.zoomX == null ? 50 : s.zoomX, oy: s.zoomY == null ? 50 : s.zoomY, w: r.width, h: r.height };
+        if (e.currentTarget.setPointerCapture && e.pointerId != null) e.currentTarget.setPointerCapture(e.pointerId);
+      },
+      onZoomMove: (e) => {
+        const d = this._drag;
+        if (!d) return;
+        const mx = e.clientX - d.x, my = e.clientY - d.y;
+        if (Math.abs(mx) + Math.abs(my) > 4) this._dragged = true;
+        this.setState({
+          zoomX: Math.max(0, Math.min(100, d.ox - (mx / d.w) * 100)),
+          zoomY: Math.max(0, Math.min(100, d.oy - (my / d.h) * 100))
+        });
+      },
+      onZoomUp: () => { this._drag = null; },
+      prodMeasurements: cur.measurements,
+      prodNote: ED.note,
+      detailCap1: ED.details[0],
+      detailCap2: ED.details[1],
+      detailCap3: ED.details[2],
+      prodAddLabel: cur.soldOut ? T.soldOutLong : T.addToCart + " — " + cur.priceLabel,
+      prodSoldOut: !!cur.soldOut,
+      prodCtaBg: cur.soldOut ? "#B8B1A6" : "#6B665D",
+      prodCtaCursor: cur.soldOut ? "not-allowed" : "pointer",
+      addCurrent: () => { if (!cur.soldOut) this.addToCart(cur); },
+      wishCurrent: () => this.toggleWish(cur.id),
+      wishCurrentLabel: this.isWished(cur.id) ? "♥" : "♡",
+      accordion: [
+        { key: "Condition", body: ED.condition },
+        { key: "Shipping & returns", body: L.body("shipping", {}) },
+        { key: "Care", body: ED.care }
+      ].map(a => ({
+        title: L.accordionTitle(a.key), body: a.body,
+        sign: (s.accordion || []).includes(a.key) ? "—" : "+", open: (s.accordion || []).includes(a.key),
+        onToggle: () => this.setState(st => {
+          const open = st.accordion || [];
+          return { accordion: open.includes(a.key) ? open.filter(k => k !== a.key) : [...open, a.key] };
+        })
+      })),
+      related: (() => {
+        // Same category first; top up with other published pieces so the row never sits half-empty.
+        const same = all.filter(p => p.category === cur.category && p.id !== cur.id);
+        const rest = all.filter(p => p.category !== cur.category && p.id !== cur.id);
+        return same.concat(rest).slice(0, 3).map(p => this.shopCard(p));
+      })(),
+      // journal + contact
+      journalAll: journal,
+      contactName: s.contact.name, contactEmail: s.contact.email, contactMessage: s.contact.message,
+      onContactName: e => this.setState(st => ({ contact: { ...st.contact, name: e.target.value }, contactErr: { ...st.contactErr, name: null } })),
+      onContactEmail: e => this.setState(st => ({ contact: { ...st.contact, email: e.target.value }, contactErr: { ...st.contactErr, email: null } })),
+      onContactMessage: e => this.setState(st => ({ contact: { ...st.contact, message: e.target.value }, contactErr: { ...st.contactErr, message: null } })),
+      sendContact: () => this.cSubmit(T),
+      contactSent: s.contactSent,
+      contactOpen: !s.contactSent,
+      contactSending: s.contactSending,
+      cSendLabel: s.contactSending ? T.cSending : T.sendMessage,
+      cNameInvalid: !!s.contactErr.name, cNameError: s.contactErr.name || "",
+      cNameDesc: s.contactErr.name ? "c-name-err" : undefined,
+      cNameBorder: s.contactErr.name ? "#8C5A46" : "#B8B1A6",
+      cEmailInvalid: !!s.contactErr.email, cEmailError: s.contactErr.email || "",
+      cEmailDesc: s.contactErr.email ? "c-email-err" : undefined,
+      cEmailBorder: s.contactErr.email ? "#8C5A46" : "#B8B1A6",
+      cMsgInvalid: !!s.contactErr.message, cMsgError: s.contactErr.message || "",
+      cMsgDesc: s.contactErr.message ? "c-msg-err" : undefined,
+      cMsgBorder: s.contactErr.message ? "#8C5A46" : "#DFD6C9",
+      contactHelp: L.contactHelp,
+      contactCols: (s.vw || 1440) >= 900 ? "minmax(0,0.82fr) minmax(0,1fr)" : "minmax(0,1fr)",
+      // cart page
+      cartPageItems: s.cart.map(c => ({ ...c, onRemove: () => this.removeFromCart(c.id) })),
+      shippingLabel: s.cart.length ? (isJa ? "無料" : "Free") : "—",
+      toast: s.toast, toastVisible: !!s.toast,
+      // about content — bundled into one view model for the PublicAbout child
+      aboutVm: {
+        t: T,
+        // Japanese shows the name in kanji with the roman signature beneath it;
+        // English carries the roman form alone.
+        founderRoman: isJa ? "R. Seo" : "",
+        showFounderRoman: isJa,
+        founderImage: (window.TSUMUGI_IMAGES && window.TSUMUGI_IMAGES.asset)
+          ? window.TSUMUGI_IMAGES.asset("uploads/RSeo.png")
+          : "uploads/RSeo.png",
+        steps: L.steps.map((x, n) => ({ ...x, img: U([INTERIORS[0], DETAILS[0], DETAILS[3], INTERIORS[3]][n], 700) })),
+        standards: L.standards
+      },
+      footerShop: L.footerShop.map((label, n) => ({
+        label,
+        onClick: () => {
+          if (n === 0) { this.setState({ filters: { Category: [], Brand: [], Era: [], Size: [], Colour: [], Material: [], Condition: [], Price: [] }, shopQuery: "", pageNo: 1 }); return this.go("shop"); }
+          if (n === 1) {
+            const sf = St2 ? St2.activeSpecialFeature() : null;
+            if (sf && sf.slug) return this.go("feature", sf.slug);
+            return this.go("shop");
+          }
+          this.setState({ sort: "Newest first", pageNo: 1 });
+          return this.go("shop");
+        }
+      })),
+      footerArchive: L.footerArchive.map((label, n) => ({ label, onClick: () => this.go(["about", "journal", "contact"][n]) }))
+        .concat([{ label: L.storeAdmin, onClick: () => { window.location.href = "./admin.html"; } }]),
+      // sticky mobile bar
+      showStickyBar: isCompact && (s.page === "product" || s.cart.length > 0),
+      stickyMeta: s.page === "product"
+        ? (isJa ? "サイズ " + cur.size : "SIZE " + cur.size)
+        : (isJa ? "カート · " + s.cart.length + " 点" : "CART · " + s.cart.length + (s.cart.length === 1 ? " ITEM" : " ITEMS")),
+      stickyTitle: s.page === "product" ? cur.priceLabel : YEN(s.cart.reduce((t, c) => t + c.price, 0)),
+      stickyLabel: s.page === "product" ? (cur.soldOut ? T.soldOut : T.addToCart) : (isJa ? "カートを見る" : "VIEW CART"),
+      stickyAction: s.page === "product" ? () => { if (!cur.soldOut) this.addToCart(cur); } : () => this._openCart(document.activeElement)
+    };
+
+    /* Page view models for the extracted child DCs. Each is assembled from the
+       values already computed above — the shell stays the single source of
+       truth; the children only render what they are handed. */
+    const vm = (keys) => keys.reduce((o, k) => { o[k] = V[k]; return o; }, { t: V.t });
+    V.cartVm = vm(["cartEmpty","goShop","cartHasItems","cartPageItems","cartTotal","shippingLabel","goCheckoutInfo"]);
+    V.checkoutVm = vm(["co","checkoutCols"]);
+    V.homeVm = vm(["goShop","goAbout","allPiecesLabel","arrivals","featureA","featureB","featureC","goJournal","journalHome","gram","newsletter","onNewsletter","subscribe","newsletterNote",
+                   "heroFeatures","heroCounter","heroHref","heroOpen","heroPause","heroResume","heroKey","heroPrev","heroNext"]);
+    V.shopVm = vm(["shopIntro","sfShow","sf","isDesktop","shopQuery","onShopQuery","toggleSort","sortLabel","sortOpen","sortOptions","sortExpanded","onSortBackdrop","isCompact","filterBarTop","toggleFilters","closeFilters","onFilterBackdrop","filtersExpanded","filterCountLabel","filtersOpen","filterGroups","clearAll","showResultsLabel","shopColumns","hasChips","chips","noResults","gridProducts","showingLabel","isPaged","hasPrev","goPrev","prevLabel","pageLinks","hasNext","goNext","nextLabel"]);
+    V.productVm = vm(["prodCrumb","prodCrumbs","toggleZoom","onZoomDown","onZoomMove","onZoomUp","zoomCursor","zoomScale","zoomOrigin","zoomTransition","prodAlt","prodMainCss","zoomLabel","prodGallery","prod","prodSizeMeta","prodNote","addCurrent","prodSoldOut","prodCtaCursor","prodCtaBg","prodAddLabel","wishCurrent","wishCurrentLabel","prodMeasurements","accordion","detailCap1","detailCap2","detailCap3","related"]);
+    V.contactVm = vm(["contactCols","contactHelp","contactSent","contactOpen","contactName","onContactName","cNameInvalid","cNameDesc","cNameBorder","cNameError","contactEmail","onContactEmail","cEmailInvalid","cEmailDesc","cEmailBorder","cEmailError","contactMessage","onContactMessage","cMsgInvalid","cMsgDesc","cMsgBorder","cMsgError","sendContact","contactSending","cSendLabel"]);
+    V.journalVm = vm(["journalAll"]);
+    V.featureVm = vm(["sfFound","sfMissing","feature","goShopLink"]);
+    V.articleVm = vm(["articleMissing","art","goJournal","articleFound"]);
+    /* Built only for the route that shows them, so no account read runs while
+       the visitor is browsing the shop. */
+    V.authVm = V.isAccountAuth ? this._authVals(T) : { t: T };
+    V.accountVm = V.isAccountHome ? this._accountVals(T, isJa, TX) : { t: T };
+    return V;
+  }
+}
+
+</script>
+</body>
+</html>

@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>PROD SMOKE — compiled storefront</title>
+
+<!-- Regression harness, not a deliverable.
+
+     This page mounts the COMPILED storefront (generated/TSUMUGI.js and its
+     twelve screen modules) instead of the authoring runtime, so the compiler's
+     output can be exercised in a browser before dist/ is assembled. React
+     comes from a CDN here purely because npm is unavailable in this
+     environment; the shipped shell resolves the same three specifiers to local
+     vendor files (see BUILD.md). Nothing else differs from production: no
+     support.js, no new Function, no .dc.html fetch. -->
+<script type="importmap">
+{
+  "imports": {
+    "react": "https://esm.sh/react@18.3.1",
+    "react-dom/client": "https://esm.sh/react-dom@18.3.1/client",
+    "@supabase/supabase-js": "https://esm.sh/@supabase/supabase-js@2.45.4"
+  }
+}
+</script>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,400;0,500;1,400&family=Hanken+Grotesk:wght@300;400;500;600&family=IBM+Plex+Mono:wght@400;500&family=Noto+Serif+JP:wght@400;500&family=Noto+Sans+JP:wght@300;400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../generated/pseudo.css">
+<style>
+  html, body { margin: 0; height: 100%; }
+  #smoke-log { position: fixed; z-index: 99999; right: 8px; bottom: 8px; max-width: 46ch;
+    font: 11px/1.5 ui-monospace, monospace; background: #111; color: #d8ffd8;
+    padding: 8px 10px; white-space: pre-wrap; }
+  #smoke-log.bad { background: #b00020; color: #fff; }
+</style>
+</head>
+<body>
+<div id="dc-root"></div>
+<div id="smoke-log">booting…</div>
+
+<script src="../tsumugi-sanitize.js"></script>
+<script src="../tsumugi-data.js"></script>
+<script src="../tsumugi-images.js"></script>
+<script src="../auth-config.js"></script>
+<script src="../tsumugi-auth.js"></script>
+<script src="../tsumugi-i18n-public.js"></script>
+<script src="../tsumugi-i18n-admin.js"></script>
+<script src="../tsumugi-i18n-orders.js"></script>
+<script src="../tsumugi-i18n-content.js"></script>
+<script src="../tsumugi-i18n.js"></script>
+
+<script type="module">
+  const log = document.getElementById("smoke-log");
+  const errors = [];
+  const say = (m, bad) => { log.textContent = m; if (bad) log.className = "bad"; };
+  window.addEventListener("error", (e) => {
+    errors.push(String(e.message));
+    say("ERROR: " + errors.join("\n"), true);
+  });
+  window.addEventListener("unhandledrejection", (e) => {
+    errors.push("rejection: " + (e.reason && e.reason.message || e.reason));
+    say("ERROR: " + errors.join("\n"), true);
+  });
+  try {
+    const [{ default: ReactDOM }, rt, mod] = await Promise.all([
+      import("react-dom/client").then((m) => ({ default: m })),
+      import("../runtime/dc-runtime.js"),
+      import("../generated/TSUMUGI.js"),
+    ]);
+    const { host, element } = rt.bootDC(mod.default, { fullPage: true });
+    ReactDOM.createRoot(host).render(element);
+    window.__smoke = { rt, mod };
+    requestAnimationFrame(() => requestAnimationFrame(() => {
+      const nodes = host.querySelectorAll("*").length;
+      const hosts = host.querySelectorAll(".sc-host").length;
+      say(errors.length
+        ? "ERROR: " + errors.join("\n")
+        : `mounted · ${nodes} nodes · ${hosts} sc-host · no eval`, errors.length > 0);
+    }));
+  } catch (e) {
+    say("BOOT FAILED: " + (e && e.message || e), true);
+  }
+</script>
+</body>
+</html>

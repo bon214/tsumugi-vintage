@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+<title>TSUMUGI — 古着とアーカイブの店 | Vintage &amp; Archive Clothing</title>
+<meta name="description" content="TSUMUGI は東京の古着店です。年代やブランドではなく、生地・仕立て・今の服と合わせて着られるかで一点ずつ選んでいます。すべて一点物、再入荷はありません。">
+<meta name="theme-color" content="#F8F7F4">
+<meta name="robots" content="index,follow">
+
+<!-- Relative, so the site works from a GitHub Pages repository subpath
+     (https://user.github.io/repo/) as well as from a custom domain root. -->
+<link rel="canonical" href="./">
+<link rel="icon" href="./favicon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="./favicon.svg">
+
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="TSUMUGI">
+<meta property="og:title" content="TSUMUGI — 古着とアーカイブの店">
+<meta property="og:description" content="生地・仕立て・今も着られるか。一点ずつ選んだ古着を扱う東京の店。">
+<meta property="og:image" content="./og-cover.jpg">
+<meta property="og:locale" content="ja_JP">
+<meta property="og:locale:alternate" content="en_US">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="TSUMUGI — 古着とアーカイブの店">
+<meta name="twitter:description" content="生地・仕立て・今も着られるか。一点ずつ選んだ古着を扱う東京の店。">
+<meta name="twitter:image" content="./og-cover.jpg">
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "ClothingStore",
+  "name": "TSUMUGI",
+  "description": "Vintage and archive clothing, chosen one piece at a time.",
+  "address": { "@type": "PostalAddress", "addressLocality": "Shibuya-ku", "addressRegion": "Tokyo", "postalCode": "151-0074", "addressCountry": "JP" },
+  "priceRange": "¥¥"
+}
+</script>
+
+<style>
+  html, body { margin: 0; height: 100%; }
+  body { background: #F8F7F4; color: #222222;
+         font-family: 'Hanken Grotesk', system-ui, -apple-system, sans-serif;
+         display: flex; align-items: center; justify-content: center; }
+  main { display: flex; flex-direction: column; align-items: center; gap: 18px; padding: 24px; text-align: center; }
+  h1 { margin: 0; font-family: 'EB Garamond', Georgia, serif; font-size: 22px; font-weight: 400; letter-spacing: 0.22em; }
+  p { margin: 0; font-size: 13px; line-height: 1.8; color: #6D7761; max-width: 34em; }
+  a { color: #222222; font-size: 12px; letter-spacing: 0.18em; text-decoration: none;
+      border-bottom: 1px solid #C9C2B7; padding-bottom: 6px; min-height: 44px;
+      display: inline-flex; align-items: center; }
+  a:hover { border-bottom-color: #222222; }
+</style>
+
+<script>
+  /* ONE forward, not two. The previous build carried both a <meta http-equiv=
+     "refresh"> and this replace(), so some browsers navigated twice and the
+     back button needed two presses to leave the site.
+
+     The storefront itself lives in TSUMUGI.dc.html because the component
+     runtime resolves its screens as siblings of that filename. This document
+     therefore holds the crawlable metadata and hands over immediately; the
+     storefront then keeps <title> and the description in step with the route
+     (see _syncDocumentMeta in TSUMUGI.dc.html).
+
+     Known limitation, stated rather than hidden: with a hash router, a crawler
+     that does not execute JavaScript sees only this page's metadata for every
+     route. Per-page metadata for products and articles needs build-time
+     prerendering — BUILD.md describes the generator and why it is not wired up
+     in this snapshot. */
+  (function () {
+    var hash = location.hash || "";
+    location.replace("./TSUMUGI.dc.html" + hash);
+  })();
+</script>
+</head>
+<body>
+<main>
+  <h1>TSUMUGI</h1>
+  <p>古着とアーカイブの店。<br>Vintage &amp; archive clothing, Tokyo.</p>
+  <noscript>
+    <p>このサイトの表示には JavaScript が必要です。<br>This site needs JavaScript to run.</p>
+  </noscript>
+  <a href="./TSUMUGI.dc.html">ENTER THE SHOP</a>
+</main>
+</body>
+</html>

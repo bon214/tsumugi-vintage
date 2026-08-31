@@ -1,0 +1,16 @@
+# TSUMUGI — crawler rules
+#
+# The storefront is public. The admin console is not: it is also protected by
+# noindex meta and by authentication, because robots.txt is a request, not a
+# control.
+
+User-agent: *
+Allow: /
+Disallow: /admin.html
+Disallow: /TSUMUGI%20Admin.dc.html
+Disallow: /Admin
+Disallow: /shots/
+Disallow: /supabase/
+
+# Replace with the deployed origin when the site goes live.
+# Sitemap: https://<user>.github.io/<repo>/sitemap.xml

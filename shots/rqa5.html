@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>TSUMUGI sweep tail 1024/1440</title>
+<style>
+  body { margin: 0; font: 13px/1.45 ui-monospace, monospace; background: #14140f; color: #e8e4da; display: flex; }
+  #wrap { flex: none; overflow: hidden; border-right: 2px solid #333; }
+  iframe { border: 0; display: block; background: #fff; transform-origin: 0 0; }
+  #log { flex: 1; padding: 10px 12px; white-space: pre-wrap; overflow: auto; height: 100vh; }
+</style>
+</head>
+<body>
+<div id="wrap"><iframe id="f" src="about:blank"></iframe></div>
+<pre id="log">running…</pre>
+<script>
+const F = document.getElementById("f"), WRAP = document.getElementById("wrap"), LOG = document.getElementById("log");
+let lines = [];
+const say = s => { lines.push(s); LOG.textContent = lines.join("\n"); };
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+const D = () => F.contentWindow.document;
+const W = () => F.contentWindow;
+const R = el => { const r = el.getBoundingClientRect(); return { w: Math.round(r.width), h: Math.round(r.height) }; };
+function size(w, h) {
+  const s = Math.min(1, 190 / w);
+  F.style.width = w + "px"; F.style.height = h + "px"; F.style.transform = "scale(" + s + ")";
+  WRAP.style.width = Math.round(w * s) + "px"; WRAP.style.height = Math.round(h * s) + "px";
+}
+async function load(w, h, hash) {
+  size(w, h);
+  await new Promise(res => { F.onload = res; F.src = "../TSUMUGI.dc.html?q=" + Date.now() + hash; });
+  await sleep(1700);
+}
+function overflow() {
+  const w = W(), d = D(), iw = w.innerWidth, out = [];
+  d.querySelectorAll("main *, header *, footer *").forEach(el => {
+    const r = el.getBoundingClientRect();
+    if (r.width > 0 && (r.right > iw + 1.5 || r.left < -1.5)) out.push(el.tagName.toLowerCase() + "[" + Math.round(r.left) + "→" + Math.round(r.right) + "]");
+  });
+  return { iw, sw: d.documentElement.scrollWidth, out };
+}
+async function sweep(w, h) {
+  for (const hash of ["#/", "#/shop", "#/product/1", "#/about", "#/contact"]) {
+    await load(w, h, hash);
+    const o = overflow();
+    const hdr = D().querySelector("header"), ftr = D().querySelector("footer");
+    const ids = [...D().querySelectorAll("[id]")].map(e => e.id);
+    const dup = ids.filter((v, i) => ids.indexOf(v) !== i);
+    const arts = D().querySelectorAll("main article");
+    const rows = {};
+    [...arts].forEach(c => { const t = Math.round(c.getBoundingClientRect().top); rows[t] = (rows[t] || 0) + 1; });
+    say("  " + (w + "×" + h).padEnd(9) + hash.padEnd(12) + " sw=" + o.sw + "/" + o.iw + (o.sw <= o.iw + 1 ? " ✓" : " ✗+" + (o.sw - o.iw)) +
+        " hdr=" + (hdr ? R(hdr).w + "w/" + R(hdr).h + "h" : "MISSING") + " ftr=" + (ftr ? R(ftr).w + "w" : "MISSING") +
+        " cards=" + arts.length + " cols=" + (arts.length ? Math.max(...Object.values(rows)) : "-") +
+        " dupIds=" + (dup.join(",") || "none") + " bodyPos=" + W().getComputedStyle(D().body).position +
+        (o.out.length ? "  OVF:" + o.out.slice(0, 3).join(" ") : ""));
+  }
+}
+(async () => {
+  const errs = [];
+  window.addEventListener("error", e => errs.push(e.message));
+  say("SWEEP TAIL — 1024 / 1440, all five routes");
+  await sweep(1024, 900);
+  await sweep(1440, 900);
+  say("DONE" + (errs.length ? "  harness errors: " + errs.join(" | ") : "  no harness errors"));
+})();
+</script>
+</body>
+</html>

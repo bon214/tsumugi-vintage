@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>TSUMUGI checkout prefecture probe</title>
+<style>
+  body { margin: 0; font: 13px/1.45 ui-monospace, monospace; background: #14140f; color: #e8e4da; display: flex; }
+  #wrap { flex: none; overflow: hidden; border-right: 2px solid #333; }
+  iframe { border: 0; display: block; background: #fff; transform-origin: 0 0; }
+  #log { flex: 1; padding: 10px 12px; white-space: pre-wrap; overflow: auto; height: 100vh; }
+</style>
+</head>
+<body>
+<div id="wrap"><iframe id="f" src="about:blank"></iframe></div>
+<pre id="log">running…</pre>
+<script>
+const F = document.getElementById("f"), WRAP = document.getElementById("wrap"), LOG = document.getElementById("log");
+let lines = [];
+const say = s => { lines.push(s); LOG.textContent = lines.join("\n"); };
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+const D = () => F.contentWindow.document;
+const W = () => F.contentWindow;
+const txt = el => (el ? (el.innerText || el.textContent || "").replace(/\s+/g, " ").trim() : "");
+const click = el => el && el.dispatchEvent(new (W().MouseEvent)("click", { bubbles: true, cancelable: true, view: W() }));
+const S = () => W().TSUMUGI_STORE;
+function size(w, h) {
+  const s = Math.min(1, 190 / w);
+  F.style.width = w + "px"; F.style.height = h + "px"; F.style.transform = "scale(" + s + ")";
+  WRAP.style.width = Math.round(w * s) + "px"; WRAP.style.height = Math.round(h * s) + "px";
+}
+async function load(w, h, hash) {
+  size(w, h);
+  await new Promise(res => { F.onload = res; F.src = "../TSUMUGI.dc.html?q=" + Date.now() + (hash || ""); });
+  await sleep(2100);
+}
+function setVal(el, v) {
+  const proto = el.tagName === "SELECT" ? W().HTMLSelectElement.prototype : W().HTMLInputElement.prototype;
+  Object.getOwnPropertyDescriptor(proto, "value").set.call(el, v);
+  el.dispatchEvent(new (W().Event)("input", { bubbles: true }));
+  el.dispatchEvent(new (W().Event)("change", { bubbles: true }));
+}
+const snap = tag => {
+  const m = D().querySelector("main");
+  const co = [...D().querySelectorAll('[id^="co-"]')].map(e => e.id);
+  say("  " + tag + ": hash=" + W().location.hash + " mainInputs=" + D().querySelectorAll("main input").length +
+      " co-ids=[" + co.join(",") + "] mainHead=\"" + txt(m).slice(0, 60) + "\"");
+};
+async function run390() {
+  await load(390, 900, "#/");
+  const st = S();
+  if (st.lang() !== "en") { st.setLang("en"); await sleep(600); }
+  const p = st.products().find(x => x.status === "published" && Number(x.stock) > 0);
+  W().location.hash = "#/product/" + p.id; await sleep(1600);
+  click([...D().querySelectorAll("main button")].find(b => /ADD TO CART/i.test(txt(b)))); await sleep(900);
+  W().location.hash = "#/checkout/information"; await sleep(1900);
+  say("<b>CHECKOUT PROBE 390</b> item=\"" + p.name + "\" cartHeader=\"" + txt(D().querySelector('[data-trigger="cart"]')) + "\"");
+  snap("initial");
+  const sel = () => D().querySelector("#co-prefecture");
+  say("  select present=" + !!sel() + " aria-invalid=" + (sel() && sel().getAttribute("aria-invalid")) + " describedby=" + ((sel() && sel().getAttribute("aria-describedby")) || "(absent)"));
+  // fill everything except the prefecture
+  const vals = { "co-email": "reader@example.com", "co-firstName": "Aki", "co-lastName": "Tanaka", "co-postalCode": "150-0001", "co-city": "Shibuya", "co-address": "1-2-3 Jingumae", "co-phone": "03-5843-0000" };
+  Object.keys(vals).forEach(id => { const el = D().getElementById(id); if (el) setVal(el, vals[id]); });
+  await sleep(900);
+  snap("after filling 7 fields");
+  const submit = [...D().querySelectorAll("main button")].find(b => /CONTINUE/i.test(txt(b)));
+  say("  submit=\"" + txt(submit) + "\"");
+  click(submit); await sleep(1400);
+  snap("after submit");
+  const s2 = sel(), db = s2 && s2.getAttribute("aria-describedby"), tgt = db ? D().getElementById(db) : null;
+  say("  PREFECTURE INVALID → present=" + !!s2 + " aria-invalid=" + (s2 && s2.getAttribute("aria-invalid")) +
+      " aria-describedby=" + (db || "(absent)") + " target=" + (tgt ? "\"" + txt(tgt) + "\" id=" + tgt.id : "MISSING") +
+      (db && tgt && txt(tgt) ? " ✓ resolves to the visible error" : " ✗"));
+  const ids = [...D().querySelectorAll("[id]")].map(e => e.id), dup = ids.filter((v, i) => ids.indexOf(v) !== i);
+  say("  dupIds=" + (dup.join(",") || "none") + " errSpans=[" + [...D().querySelectorAll("[id$='-err']")].map(e => e.id).join(",") + "]");
+  if (s2) { const opt = [...s2.options].find(o => o.value); setVal(s2, opt.value); await sleep(1000); }
+  const s3 = sel();
+  say("  PREFECTURE VALID → value=\"" + (s3 ? s3.value : "-") + "\" aria-invalid=" + (s3 && s3.getAttribute("aria-invalid")) +
+      " aria-describedby=" + ((s3 && s3.getAttribute("aria-describedby")) || "(absent)") +
+      (s3 && !s3.getAttribute("aria-describedby") ? " ✓ reference removed" : " ✗ stale reference") +
+      " sw=" + D().documentElement.scrollWidth + "/" + W().innerWidth);
+}
+(async () => {
+  try { await run390(); } catch (e) { say("  ✗ THREW: " + e.message + " @ " + String(e.stack).split("\n")[1]); }
+  say("DONE");
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+      <div style="animation:fadeUp 400ms ease both">
+        <section style="padding:clamp(40px,7vh,90px) clamp(20px,4vw,64px) clamp(64px,10vh,120px);display:flex;flex-direction:column;gap:clamp(22px,3.5vh,38px)">
+          <span style="font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:0.16em;color:#9C978F">{{ vm.t.accCrumb }}</span>
+          <h1 style="margin:0;font-family:'EB Garamond',serif;font-size:clamp(25px,3.2vw,36px);font-weight:400">{{ vm.heading }}</h1>
+          <p style="margin:0;max-width:34em;font-size:15px;line-height:2;color:#4A4740;text-wrap:pretty">{{ vm.intro }}</p>
+
+          <sc-if value="{{ vm.hasNotice }}" hint-placeholder-val="{{ false }}">
+            <div role="status" style="max-width:460px;display:flex;flex-direction:column;gap:8px;background:#EFE9E0;padding:20px 22px">
+              <span style="font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:0.18em;color:#6D7761">{{ vm.noticeHead }}</span>
+              <p style="margin:0;font-size:13px;line-height:1.85;color:#4A4740">{{ vm.noticeBody }}</p>
+            </div>
+          </sc-if>
+
+          <form onSubmit="{{ vm.onSubmit }}" style="max-width:460px;display:flex;flex-direction:column;gap:20px">
+            <sc-if value="{{ vm.hasError }}" hint-placeholder-val="{{ false }}">
+              <p role="alert" aria-live="assertive" style="margin:0;padding:13px 15px;background:#F6EAE7;border-left:2px solid #A2493C;font-size:13px;line-height:1.65;color:#7A392E">{{ vm.error }}</p>
+            </sc-if>
+
+            <sc-if value="{{ vm.isRecover }}" hint-placeholder-val="{{ false }}">
+              <p style="margin:0;font-size:12.5px;line-height:1.8;color:#9C978F;max-width:34em">{{ vm.t.accRecoverNote }}</p>
+            </sc-if>
+
+            <sc-if value="{{ vm.isSignIn }}" hint-placeholder-val="{{ true }}">
+              <div style="display:flex;flex-direction:column;gap:7px">
+                <label for="acc-email" style="font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:0.16em;color:#6D7761">{{ vm.t.accEmail }}</label>
+                <input id="acc-email" type="email" name="email" value="{{ vm.email }}" onChange="{{ vm.onEmail }}" autoComplete="email" autoCapitalize="none" spellCheck="false" placeholder="you@example.com" aria-invalid="{{ vm.invalid }}" style="border:1px solid #D9D1C4;background:#FFFFFF;padding:15px 14px;font-size:15px;color:#222222;min-height:52px;width:100%;outline:none" style-focus="border-color:#6D7761">
+              </div>
+            </sc-if>
+            <sc-if value="{{ vm.isCreate }}" hint-placeholder-val="{{ false }}">
+              <div style="display:flex;flex-direction:column;gap:7px">
+                <label for="acc-email-new" style="font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:0.16em;color:#6D7761">{{ vm.t.accEmail }}</label>
+                <input id="acc-email-new" type="email" name="email" value="{{ vm.email }}" onChange="{{ vm.onEmail }}" autoComplete="email" autoCapitalize="none" spellCheck="false" placeholder="you@example.com" aria-invalid="{{ vm.invalid }}" style="border:1px solid #D9D1C4;background:#FFFFFF;padding:15px 14px;font-size:15px;color:#222222;min-height:52px;width:100%;outline:none" style-focus="border-color:#6D7761">
+              </div>
+            </sc-if>
+
+            <div style="display:flex;flex-direction:column;gap:7px">
+              <label for="acc-password" style="font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:0.16em;color:#6D7761">{{ vm.t.accPassword }}</label>
+              <input id="acc-password" type="password" name="password" value="{{ vm.password }}" onChange="{{ vm.onPassword }}" autoComplete="{{ vm.pwAutoComplete }}" placeholder="••••••••" aria-invalid="{{ vm.invalid }}" aria-describedby="{{ vm.pwDescribedBy }}" style="border:1px solid #D9D1C4;background:#FFFFFF;padding:15px 14px;font-size:15px;color:#222222;min-height:52px;width:100%;outline:none" style-focus="border-color:#6D7761">
+              <sc-if value="{{ vm.isCreate }}" hint-placeholder-val="{{ false }}">
+                <span id="acc-password-hint" style="font-size:12px;color:#9C978F">{{ vm.t.accPasswordHint }}</span>
+              </sc-if>
+              <sc-if value="{{ vm.isRecover }}" hint-placeholder-val="{{ false }}">
+                <span id="acc-password-hint" style="font-size:12px;color:#9C978F">{{ vm.t.accPasswordHint }}</span>
+              </sc-if>
+            </div>
+
+            <sc-if value="{{ vm.isCreate }}" hint-placeholder-val="{{ false }}">
+              <div style="display:flex;flex-direction:column;gap:7px">
+                <label for="acc-confirm" style="font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:0.16em;color:#6D7761">{{ vm.t.accConfirm }}</label>
+                <input id="acc-confirm" type="password" name="confirm" value="{{ vm.confirm }}" onChange="{{ vm.onConfirm }}" autoComplete="new-password" placeholder="••••••••" aria-invalid="{{ vm.invalid }}" style="border:1px solid #D9D1C4;background:#FFFFFF;padding:15px 14px;font-size:15px;color:#222222;min-height:52px;width:100%;outline:none" style-focus="border-color:#6D7761">
+              </div>
+            </sc-if>
+            <sc-if value="{{ vm.isRecover }}" hint-placeholder-val="{{ false }}">
+              <div style="display:flex;flex-direction:column;gap:7px">
+                <label for="acc-confirm-recover" style="font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:0.16em;color:#6D7761">{{ vm.t.accConfirm }}</label>
+                <input id="acc-confirm-recover" type="password" name="confirm" value="{{ vm.confirm }}" onChange="{{ vm.onConfirm }}" autoComplete="new-password" placeholder="••••••••" aria-invalid="{{ vm.invalid }}" style="border:1px solid #D9D1C4;background:#FFFFFF;padding:15px 14px;font-size:15px;color:#222222;min-height:52px;width:100%;outline:none" style-focus="border-color:#6D7761">
+              </div>
+            </sc-if>
+
+            <div style="display:flex;flex-direction:column;gap:14px;align-items:flex-start;padding-top:2px">
+              <button type="submit" disabled="{{ vm.busy }}" style="border:none;background:#222222;color:#F8F7F4;font-family:'IBM Plex Mono',monospace;font-size:12px;letter-spacing:0.18em;padding:19px 34px;min-height:54px;white-space:nowrap;cursor:{{ vm.submitCursor }};opacity:{{ vm.submitOpacity }};transition:background 320ms ease" style-hover="background:#6D7761">{{ vm.submitLabel }}</button>
+              <sc-if value="{{ vm.showForgot }}" hint-placeholder-val="{{ false }}">
+                <button type="button" onClick="{{ vm.onForgot }}" style="border:none;background:transparent;padding:6px 0;min-height:40px;font-size:13px;color:#6D7761;cursor:pointer;text-decoration:underline;text-underline-offset:3px" style-hover="color:#222222">{{ vm.t.accForgot }}</button>
+              </sc-if>
+              <sc-if value="{{ vm.showForgotOff }}" hint-placeholder-val="{{ false }}">
+                <span style="font-size:12px;line-height:1.8;color:#9C978F;max-width:34em">{{ vm.t.accForgotOff }}</span>
+              </sc-if>
+            </div>
+          </form>
+
+          <div style="max-width:460px;display:flex;flex-direction:column;gap:10px;padding-top:clamp(14px,2vh,22px);border-top:1px solid #E6E0D7">
+            <span style="font-size:13px;color:#4A4740">{{ vm.switchPrompt }}</span>
+            <button type="button" onClick="{{ vm.onSwitch }}" style="border:1px solid #B8B1A6;background:transparent;font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:0.18em;padding:17px 28px;min-height:52px;width:fit-content;white-space:nowrap;cursor:pointer;color:#222222;transition:background 320ms ease" style-hover="background:#EFE9E0">{{ vm.switchCta }}</button>
+            <span style="font-size:12px;line-height:1.8;color:#9C978F">{{ vm.t.accGuestCheckout }}</span>
+          </div>
+
+          <sc-if value="{{ vm.showDemo }}" hint-placeholder-val="{{ false }}">
+            <div style="max-width:460px;display:flex;flex-direction:column;gap:12px;background:#EFE9E0;padding:clamp(18px,2.4vw,24px)">
+              <span style="font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:0.24em;color:#6D7761">{{ vm.t.accDemoHead }}</span>
+              <div style="display:flex;flex-direction:column;gap:3px">
+                <span style="font-family:'IBM Plex Mono',monospace;font-size:12px;color:#4A4740;word-break:break-all">{{ vm.demoEmail }}</span>
+                <span style="font-family:'IBM Plex Mono',monospace;font-size:12px;color:#4A4740">{{ vm.demoPassword }}</span>
+              </div>
+              <button type="button" onClick="{{ vm.onFillDemo }}" style="border:1px solid #B8B1A6;background:transparent;font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:0.16em;padding:13px 20px;min-height:44px;width:fit-content;white-space:nowrap;cursor:pointer;color:#222222" style-hover="background:#F8F7F4">{{ vm.t.accUseDemo }}</button>
+              <p style="margin:0;font-size:12px;line-height:1.85;color:#77736B">{{ vm.t.accDemoBody }}</p>
+            </div>
+          </sc-if>
+        </section>
+      </div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;vm&quot;:{&quot;editor&quot;:null,&quot;tsType&quot;:&quot;object&quot;}}">
+/* Customer sign-in / create-account view.
+   Presentational only: the email, the password, the error string and every
+   handler arrive in the `vm` prop built by TSUMUGI.dc.html, which owns the
+   customer auth scope. No credential and no auth logic lives in this file. */
+class Component extends DCLogic {
+  renderVals() { return {}; }
+}
+</script>
+</body>
+</html>

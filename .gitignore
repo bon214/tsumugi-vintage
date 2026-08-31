@@ -1,0 +1,14 @@
+node_modules/
+dist/
+dist-prerender/
+generated/
+vendor/
+.env
+.env.*
+!.env.example
+.DS_Store
+.thumbnail
+*.log
+backups/
+supabase/.temp/
+supabase/.branches/

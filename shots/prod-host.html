@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>TSUMUGI — compiled storefront host (diff target)</title>
+<!-- A bare host for the COMPILED storefront: no overlay, no instrumentation,
+     nothing that would show up in a DOM comparison against the authoring
+     runtime. Used by shots/dc-diff.html as the "after" side.
+     React resolves through esm.sh here only because vendor/ needs npm; the
+     shipped shells point the same specifiers at local files. -->
+<script type="importmap">
+{
+  "imports": {
+    "react": "https://esm.sh/react@18.3.1",
+    "react-dom/client": "https://esm.sh/react-dom@18.3.1/client",
+    "@supabase/supabase-js": "https://esm.sh/@supabase/supabase-js@2.45.4"
+  }
+}
+</script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,400;0,500;1,400&family=Hanken+Grotesk:wght@300;400;500;600&family=IBM+Plex+Mono:wght@400;500&family=Noto+Serif+JP:wght@400;500&family=Noto+Sans+JP:wght@300;400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../generated/pseudo.css">
+<style>html,body{margin:0;height:100%}</style>
+</head>
+<body>
+<div id="dc-root"></div>
+<script src="../tsumugi-sanitize.js"></script>
+<script src="../tsumugi-data.js"></script>
+<script src="../tsumugi-images.js"></script>
+<script src="../auth-config.js"></script>
+<script src="../tsumugi-auth.js"></script>
+<script src="../tsumugi-i18n-public.js"></script>
+<script src="../tsumugi-i18n-admin.js"></script>
+<script src="../tsumugi-i18n-orders.js"></script>
+<script src="../tsumugi-i18n-content.js"></script>
+<script src="../tsumugi-i18n.js"></script>
+<script type="module" src="../runtime/main-public.js"></script>
+</body>
+</html>

@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>TSUMUGI overlay + grid QA</title>
+<style>
+  body { margin: 0; font: 13px/1.4 ui-monospace, monospace; background: #14140f; color: #e8e4da; display: flex; }
+  #wrap { flex: none; overflow: hidden; border-right: 2px solid #333; }
+  iframe { border: 0; display: block; background: #fff; transform-origin: 0 0; }
+  #log { flex: 1; padding: 10px 12px; white-space: pre-wrap; overflow: auto; height: 100vh; }
+  b { color: #ffd479; font-weight: 400; }
+</style>
+</head>
+<body>
+<div id="wrap"><iframe id="f" src="about:blank"></iframe></div>
+<pre id="log">running…</pre>
+<script>
+const F = document.getElementById("f"), WRAP = document.getElementById("wrap"), LOG = document.getElementById("log");
+let lines = [];
+const say = s => { lines.push(s); LOG.innerHTML = lines.join("\n"); };
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+const D = () => F.contentWindow.document;
+const W = () => F.contentWindow;
+const CS = el => W().getComputedStyle(el);
+const R = el => { const r = el.getBoundingClientRect(); return { t: Math.round(r.top), b: Math.round(r.bottom), l: Math.round(r.left), r: Math.round(r.right), w: Math.round(r.width), h: Math.round(r.height) }; };
+const txt = el => (el ? (el.innerText || el.textContent || "").replace(/\s+/g, " ").trim() : "");
+const click = el => el && el.dispatchEvent(new (W().MouseEvent)("click", { bubbles: true, cancelable: true, view: W() }));
+const esc = () => W().dispatchEvent(new (W().KeyboardEvent)("keydown", { key: "Escape", bubbles: true }));
+const bodyPos = () => CS(D().body).position;
+const layers = () => [...D().querySelectorAll("div")].filter(d => { const c = CS(d); return c.position === "fixed" && c.zIndex === "60"; });
+const who = () => { const a = D().activeElement; if (!a) return "none"; return a.tagName.toLowerCase() + (a.getAttribute("data-panel") ? "[panel=" + a.getAttribute("data-panel") + "]" : a.getAttribute("data-trigger") ? "[trig=" + a.getAttribute("data-trigger") + "]" : a.getAttribute("data-search-input") ? "[search-input]" : "");
+};
+function size(w, h) {
+  const s = Math.min(1, 190 / w);
+  F.style.width = w + "px"; F.style.height = h + "px"; F.style.transform = "scale(" + s + ")";
+  WRAP.style.width = Math.round(w * s) + "px"; WRAP.style.height = Math.round(h * s) + "px";
+}
+async function load(w, h, hash) {
+  size(w, h);
+  await new Promise(res => { F.onload = res; F.src = "../TSUMUGI.dc.html?q=" + Date.now() + (hash || "#/"); });
+  await sleep(1900);
+  try { W().focus(); } catch (e) { }
+}
+function overflow() {
+  const w = W(), d = D(), iw = w.innerWidth, out = [];
+  d.querySelectorAll("main *, header *, footer *").forEach(el => {
+    const r = el.getBoundingClientRect();
+    if (r.width > 0 && (r.right > iw + 1.5 || r.left < -1.5)) out.push(el.tagName.toLowerCase() + "[" + Math.round(r.left) + "→" + Math.round(r.right) + "]");
+  });
+  return { iw, sw: d.documentElement.scrollWidth, out };
+}
+function fixedBlockers(el) {
+  const w = W(), hits = [];
+  let p = el && el.parentElement;
+  while (p && p !== D().documentElement) {
+    const c = w.getComputedStyle(p), why = [];
+    if (c.transform !== "none") why.push("transform");
+    if (c.filter !== "none") why.push("filter");
+    if (c.perspective !== "none") why.push("perspective");
+    if (c.contain && /paint|layout|strict|content/.test(c.contain)) why.push("contain");
+    if (why.length) hits.push(p.tagName.toLowerCase() + "{" + why.join(",") + "}");
+    p = p.parentElement;
+  }
+  return hits;
+}
+const ovl = k => D().querySelector('[data-overlay="' + k + '"]');
+const trig = k => D().querySelector('[data-trigger="' + k + '"]');
+
+/* ---------- SEARCH ---------- */
+async function tSearch(w, h) {
+  await load(w, h, "#/");
+  const wi = W();
+  wi.scrollTo({ top: 2000, behavior: "instant" }); await sleep(500);
+  const y0 = Math.round(wi.scrollY);
+  say("<b>SEARCH " + w + "×" + h + "</b> scrollY=" + y0 + " docH=" + D().documentElement.scrollHeight + " trigger=" + (trig("search") ? "\"" + txt(trig("search")) + "\" h=" + R(trig("search")).h : "MISSING"));
+  click(trig("search")); await sleep(650);
+  const ov = ovl("search");
+  if (!ov) { say("  ✗ search overlay not found"); return; }
+  const panel = ov.querySelector('[data-panel="search"]');
+  const input = panel.querySelector("[data-search-input]");
+  say("  overlay " + JSON.stringify(R(ov)) + " ih=" + wi.innerHeight + " blockers=" + (fixedBlockers(ov).join(",") || "none"));
+  say("  panel " + JSON.stringify(R(panel)) + " role=" + panel.getAttribute("role") + " modal=" + panel.getAttribute("aria-modal") + " label=\"" + panel.getAttribute("aria-label") + "\"" +
+      (R(panel).t >= 0 && R(panel).b <= wi.innerHeight + 1 ? " ✓ in viewport" : " ✗ out of viewport " + R(panel).b + ">" + wi.innerHeight));
+  say("  lock bodyPos=" + bodyPos() + " bodyTop=" + CS(D().body).top + " winScrollY=" + Math.round(wi.scrollY) + " focus=" + who() + " inputFocused=" + (D().activeElement === input) +
+      " inputLabel=\"" + (input ? input.getAttribute("aria-label") : "-") + "\" inputH=" + (input ? R(input).h : "-"));
+  // background must not scroll
+  wi.scrollTo({ top: 400, behavior: "instant" }); await sleep(200);
+  say("  bg scroll attempt → winScrollY=" + Math.round(wi.scrollY) + (Math.round(wi.scrollY) === 0 ? " ✓ locked" : " ✗ moved"));
+  click(panel); await sleep(300);
+  say("  click inside panel → open=" + !!ovl("search") + (ovl("search") ? " ✓" : " ✗ closed"));
+  click(ovl("search")); await sleep(600);
+  say("  backdrop click → open=" + !!ovl("search") + " bodyPos=" + bodyPos() + " scrollY=" + Math.round(wi.scrollY) + (Math.abs(wi.scrollY - y0) < 3 ? " ✓ restored" : " ✗ expected " + y0));
+  click(trig("search")); await sleep(600);
+  esc(); await sleep(900);
+  say("  Escape → open=" + !!ovl("search") + " bodyPos=" + bodyPos() + " scrollY=" + Math.round(wi.scrollY) + " focus=" + who() +
+      (D().activeElement === trig("search") ? " ✓ restored to trigger" : " ✗ not on trigger"));
+  // navigation out of the overlay
+  click(trig("search")); await sleep(600);
+  const res = ovl("search") ? ovl("search").querySelectorAll('[data-panel="search"] button') : [];
+  const card = [...res].find(b => b.querySelector("img"));
+  say("  reopen → results=" + [...res].filter(b => b.querySelector("img")).length + " firstResult=\"" + txt(card).slice(0, 34) + "\"");
+  click(card); await sleep(1400);
+  wi.scrollTo({ top: 250, behavior: "instant" }); await sleep(300);
+  say("  result → hash=" + wi.location.hash + " overlays=" + layers().length + " bodyPos=" + bodyPos() + " bodyOverflow=" + CS(D().body).overflow +
+      " scrollTest=" + Math.round(wi.scrollY) + (bodyPos() === "static" && Math.round(wi.scrollY) === 250 ? " ✓ unlocked" : " ✗ still locked"));
+}
+
+/* ---------- CART ---------- */
+async function tCart(w, h) {
+  await load(w, h, "#/");
+  const wi = W();
+  const sec = [...D().querySelectorAll("main section")].find(s => s.querySelector("article"));
+  click(sec.querySelector("article button")); await sleep(1500);
+  const add = [...D().querySelectorAll("main button")].find(b => /ADD TO CART|カートに入れる/i.test(txt(b)));
+  say("<b>CART " + w + "×" + h + "</b> product hash=" + wi.location.hash + " addBtn=\"" + txt(add).slice(0, 30) + "\"");
+  click(add); await sleep(800);
+  let ov = ovl("cart");
+  if (!ov) { say("  ✗ cart drawer did not open on add"); return; }
+  const panel = ov.querySelector('[data-panel="cart"]');
+  const scroller = [...panel.querySelectorAll("div")].find(d => /auto|scroll/.test(CS(d).overflowY));
+  say("  drawer " + JSON.stringify(R(panel)) + " role=" + panel.getAttribute("role") + " modal=" + panel.getAttribute("aria-modal") + " label=\"" + panel.getAttribute("aria-label") + "\" blockers=" + (fixedBlockers(ov).join(",") || "none"));
+  say("  add → bodyPos=" + bodyPos() + " focus=" + who() + " panelHasFocus=" + panel.contains(D().activeElement) + " items=" + panel.querySelectorAll("img").length +
+      " scroller=" + (scroller ? scroller.scrollHeight + "/" + scroller.clientHeight : "none"));
+  esc(); await sleep(900);
+  say("  Escape → open=" + !!ovl("cart") + " bodyPos=" + bodyPos() + " focus=" + who() + (D().activeElement === trig("cart") ? " ✓ restored to trigger" : " ✗ not on trigger"));
+  wi.scrollTo({ top: 700, behavior: "instant" }); await sleep(400);
+  const y0 = Math.round(wi.scrollY);
+  click(trig("cart")); await sleep(700);
+  say("  header open at scrollY=" + y0 + " → open=" + !!ovl("cart") + " bodyPos=" + bodyPos() + " focus=" + who() + " drawerTop=" + R(ovl("cart").querySelector('[data-panel="cart"]')).t + " ih=" + wi.innerHeight);
+  click(ovl("cart").querySelector('[data-panel="cart"]')); await sleep(350);
+  say("  click inside drawer → open=" + !!ovl("cart") + (ovl("cart") ? " ✓" : " ✗ closed"));
+  click(ovl("cart")); await sleep(700);
+  say("  backdrop click → open=" + !!ovl("cart") + " bodyPos=" + bodyPos() + " scrollY=" + Math.round(wi.scrollY) + (Math.abs(wi.scrollY - y0) < 3 ? " ✓ restored" : " ✗ expected " + y0));
+  click(trig("cart")); await sleep(700);
+  const review = [...ovl("cart").querySelectorAll("button")].find(b => /REVIEW ORDER|注文/i.test(txt(b)));
+  click(review); await sleep(1400);
+  wi.scrollTo({ top: 120, behavior: "instant" }); await sleep(300);
+  say("  → cart page hash=" + wi.location.hash + " overlays=" + layers().length + " bodyPos=" + bodyPos() + " scrollTest=" + Math.round(wi.scrollY) +
+      (bodyPos() === "static" ? " ✓ unlocked" : " ✗ locked"));
+}
+
+/* ---------- OVERLAY CONFLICT ---------- */
+async function tConflict(w, h) {
+  await load(w, h, "#/");
+  const hb = trig("menu");
+  say("<b>CONFLICT " + w + "×" + h + "</b> hamburger=" + !!hb);
+  click(hb); await sleep(600);
+  say("  menu open → layers=" + layers().length + " menu=" + !!ovl("menu") + " bodyPos=" + bodyPos());
+  click(trig("search")); await sleep(700);
+  say("  then search → menu=" + !!ovl("menu") + " search=" + !!ovl("search") + " layers=" + layers().length + " bodyPos=" + bodyPos() + (layers().length === 1 && !ovl("menu") ? " ✓ single" : " ✗"));
+  click(trig("cart")); await sleep(700);
+  say("  then cart → search=" + !!ovl("search") + " cart=" + !!ovl("cart") + " layers=" + layers().length + (layers().length === 1 && !ovl("search") ? " ✓ single" : " ✗"));
+  click(hb || trig("menu")); await sleep(700);
+  say("  then menu → cart=" + !!ovl("cart") + " menu=" + !!ovl("menu") + " layers=" + layers().length + (layers().length === 1 && !ovl("cart") ? " ✓ single" : " ✗"));
+  esc(); await sleep(700);
+  say("  Escape → layers=" + layers().length + " bodyPos=" + bodyPos() + (layers().length === 0 && bodyPos() === "static" ? " ✓ closed+unlocked" : " ✗"));
+}
+
+/* ---------- HOME ARRIVALS GRID ---------- */
+async function tArrivals(w, h) {
+  await load(w, h, "#/");
+  const o = overflow();
+  const sec = [...D().querySelectorAll("main section")].find(s => s.querySelector("article"));
+  const cards = [...sec.querySelectorAll("article")];
+  const rows = {};
+  cards.forEach(c => { const t = R(c).t; rows[t] = (rows[t] || 0) + 1; });
+  const cols = Math.max(...Object.values(rows));
+  const c0 = cards[0], img = c0.querySelector("img");
+  const meta = c0.querySelector("span"), name = c0.querySelector('button[style*="Garamond"]');
+  const price = [...c0.querySelectorAll("span")].pop();
+  const gap = CS(sec.querySelector("article").parentElement).gap;
+  say("<b>ARRIVALS " + w + "×" + h + "</b> cards=" + cards.length + " cols=" + cols + " rows=" + Object.keys(rows).length + " gap=" + gap +
+      " sw=" + o.sw + "/" + o.iw + (o.sw > o.iw + 1 ? " ✗ OVERFLOW" : " ✓ no h-overflow") + (o.out.length ? " ofnd=" + o.out.slice(0, 3).join(" ") : ""));
+  say("  card " + JSON.stringify(R(c0)) + " img " + JSON.stringify(R(img)) + " ratio=" + (R(img).h / R(img).w).toFixed(3));
+  say("  meta \"" + txt(meta) + "\" fs=" + CS(meta).fontSize + " clipped=" + (meta.scrollWidth > meta.clientWidth + 1));
+  say("  name \"" + txt(name) + "\" fs=" + CS(name).fontSize + " " + JSON.stringify(R(name)) + " tap=" + R(name).h);
+  say("  price \"" + txt(price) + "\" fs=" + CS(price).fontSize);
+  const sold = cards.map(c => txt([...c.querySelectorAll("span")].find(s => /SOLD|完売|SOLD OUT/i.test(txt(s))) || "")).filter(Boolean);
+  say("  soldOut badges=" + (sold.length ? sold.join(",") : "none in this set"));
+  let bad = 0, clip = 0;
+  cards.forEach(c => {
+    const els = [...c.querySelectorAll("span,button")].filter(e => txt(e) && !e.querySelector("img"));
+    els.forEach(e => { if (e.scrollHeight > e.clientHeight + 2 && !/Garamond/.test(e.getAttribute("style") || "")) clip++; });
+    for (let i = 0; i < els.length; i++) for (let j = i + 1; j < els.length; j++) {
+      const a = els[i], b = els[j];
+      if (a.contains(b) || b.contains(a)) continue;
+      const ra = R(a), rb = R(b);
+      if (ra.t < rb.b - 1 && rb.t < ra.b - 1 && ra.l < rb.r - 1 && rb.l < ra.r - 1) bad++;
+    }
+  });
+  say("  overlaps=" + bad + " clippedText=" + clip + (bad + clip === 0 ? " ✓" : " ✗"));
+  const other = [...D().querySelectorAll("main section")].indexOf(sec);
+  say("  arrivals section index=" + other + " of " + D().querySelectorAll("main section").length);
+}
+
+/* ---------- FOUNDER ---------- */
+async function tFounder(w, h) {
+  await load(w, h, "#/about");
+  const o = overflow();
+  const img = [...D().querySelectorAll("main img")].find(i => /RSeo/i.test(i.getAttribute("src") || ""));
+  if (!img) { say("<b>FOUNDER " + w + "</b> ✗ image not found"); return; }
+  const sec = img.closest("section");
+  const nodes = [...sec.querySelectorAll("span,h1,h2,h3,p,img")].filter(el => el.tagName === "IMG" || txt(el));
+  say("<b>FOUNDER " + w + "×" + h + "</b> sw=" + o.sw + "/" + o.iw + (o.sw > o.iw + 1 ? " ✗" : " ✓") + " cols=" + CS(sec).gridTemplateColumns);
+  nodes.forEach(el => say("  " + (el.tagName === "IMG" ? "[IMG]" : el.tagName.toLowerCase() + " \"" + txt(el).slice(0, 40) + "\"") + " top=" + R(el).t + " h=" + R(el).h + (el.tagName === "IMG" ? " alt=\"" + el.getAttribute("alt").slice(0, 30) + "\"" : "")));
+  const labels = nodes.filter(el => /FOUNDER|BUYER/i.test(txt(el)));
+  say("  founder-label occurrences=" + labels.length + " (" + labels.map(l => txt(l)).join(" | ") + ")" + (labels.length <= 1 ? " ✓ no duplication" : " ✗ duplicated"));
+  say("  headings=" + [...sec.querySelectorAll("h1,h2,h3")].map(hh => hh.tagName + ":\"" + txt(hh).slice(0, 20) + "\"").join(" "));
+}
+
+async function tWidth(w, h) {
+  for (const hash of ["#/", "#/shop", "#/about"]) {
+    await load(w, h, hash);
+    const o = overflow();
+    const sec = [...D().querySelectorAll("main section")].find(s => s.querySelector("article"));
+    const cards = sec ? [...sec.querySelectorAll("article")] : [];
+    const rows = {};
+    cards.forEach(c => { const t = R(c).t; rows[t] = (rows[t] || 0) + 1; });
+    const cols = cards.length ? Math.max(...Object.values(rows)) : "-";
+    say("  " + (w + "×" + h).padEnd(9) + hash.padEnd(9) + " sw=" + o.sw + "/" + o.iw + (o.sw > o.iw + 1 ? " ✗+" + (o.sw - o.iw) : " ✓") +
+        " cards=" + cards.length + " cols=" + cols + (o.out.length ? "  OVF:" + o.out.slice(0, 2).join(" ") : ""));
+  }
+}
+
+const QUEUE = [
+  [tSearch, 390, 844],
+  [tCart, 390, 844],
+  [tConflict, 390, 844],
+  [tArrivals, 390, 844],
+  [tArrivals, 390, 700],
+  [tArrivals, 768, 900],
+  [tArrivals, 900, 900],
+  [tArrivals, 1440, 900],
+  [tFounder, 390, 844],
+  [tFounder, 1440, 900],
+  [tWidth, 1024, 900]
+];
+async function run() {
+  const errs = [];
+  window.addEventListener("error", e => errs.push(e.message));
+  for (const [fn, w, h] of QUEUE) {
+    try { await fn(w, h); } catch (e) { say("  ✗ TEST THREW: " + (e && e.message) + " @ " + String(e && e.stack).split("\n")[1]); }
+  }
+  say("DONE" + (errs.length ? "  page errors: " + errs.join(" | ") : "  no page errors"));
+}
+run();
+</script>
+</body>
+</html>

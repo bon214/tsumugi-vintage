@@ -1,0 +1,775 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<div style="display:flex;flex-direction:column;gap:14px;max-width:1180px">
+
+  <sc-if value="{{ isList }}" hint-placeholder-val="{{ true }}">
+    <div style="display:flex;flex-direction:column;gap:14px">
+      <div style="background:#FFFFFF;border:1px solid #E3DFD7;padding:14px;display:flex;gap:12px;align-items:flex-start;flex-wrap:wrap">
+        <div style="flex:1 1 320px;min-width:0;display:flex;flex-direction:column;gap:6px">
+          <span style="font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:0.16em;color:#8C887F">{{ t.sfIntroHead }}</span>
+          <p style="margin:0;font-size:13px;line-height:1.65;color:#77736B;max-width:620px">{{ t.sfIntroNote }}</p>
+        </div>
+        <sc-if value="{{ canEdit }}" hint-placeholder-val="{{ true }}">
+          <button type="button" onClick="{{ onNew }}" style="border:none;background:#6D7761;color:#FFFFFF;padding:10px 16px;min-height:44px;font-size:13.5px;white-space:nowrap;cursor:pointer" style-hover="background:#59614F">{{ t.sfNew }}</button>
+        </sc-if>
+      </div>
+
+      <sc-if value="{{ readOnly }}" hint-placeholder-val="{{ false }}">
+        <div role="note" style="background:#F5F3EE;border:1px solid #E3DFD7;padding:12px 14px;font-size:13px;line-height:1.6;color:#55534C">{{ t.sfReadOnly }}</div>
+      </sc-if>
+
+      <sc-if value="{{ noLive }}" hint-placeholder-val="{{ false }}">
+        <div role="alert" style="background:#FBF3E4;border:1px solid #E7D6AE;padding:12px 14px;font-size:13px;line-height:1.6;color:#7E6224">{{ t.sfNoLiveFeature }}</div>
+      </sc-if>
+
+      <sc-if value="{{ isEmpty }}" hint-placeholder-val="{{ false }}">
+        <div style="background:#FFFFFF;border:1px solid #E3DFD7;padding:56px 24px;display:flex;flex-direction:column;align-items:center;gap:12px;text-align:center">
+          <h2 style="margin:0;font-size:16px;font-weight:600">{{ t.sfEmpty }}</h2>
+          <p style="margin:0;max-width:400px;font-size:13.5px;line-height:1.65;color:#77736B">{{ t.sfEmptyBody }}</p>
+        </div>
+      </sc-if>
+
+      <div style="display:flex;flex-direction:column;gap:10px">
+        <sc-for list="{{ rows }}" as="r" hint-placeholder-count="3">
+          <article style="background:#FFFFFF;border:1px solid {{ r.border }};padding:13px;display:flex;gap:13px;align-items:flex-start;flex-wrap:{{ wrapMode }}">
+            <span style="font-family:'IBM Plex Mono',monospace;font-size:12px;letter-spacing:0.1em;color:#8C887F;min-width:26px;padding-top:4px">{{ r.no }}</span>
+            <sc-if value="{{ r.hasThumb }}" hint-placeholder-val="{{ true }}">
+              <img loading="lazy" decoding="async" src="{{ r.thumb }}" alt="{{ r.thumbAlt }}" style="width:96px;height:72px;object-fit:cover;background:#EDE9E2;flex:0 0 96px;filter:saturate(0.9);opacity:{{ r.thumbOpacity }}">
+            </sc-if>
+            <sc-if value="{{ r.noThumb }}" hint-placeholder-val="{{ false }}">
+              <span aria-hidden="true" style="width:96px;height:72px;flex:0 0 96px;display:grid;place-items:center;background:#EDE9E2;color:#A8A398;font-family:'IBM Plex Mono',monospace;font-size:11px">—</span>
+            </sc-if>
+
+            <div style="flex:1 1 300px;min-width:0;display:flex;flex-direction:column;gap:8px">
+              <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+                <span style="font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:0.1em;padding:3px 7px;white-space:nowrap;background:{{ r.stateBg }};color:{{ r.stateFg }}">{{ r.stateLabel }}</span>
+                <span style="font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:0.1em;padding:3px 7px;white-space:nowrap;background:{{ r.liveBg }};color:{{ r.liveFg }}">{{ r.liveLabel }}</span>
+              </div>
+              <button type="button" onClick="{{ r.onEdit }}" style="border:none;background:transparent;padding:0;text-align:left;font-family:'EB Garamond',serif;font-size:19px;line-height:1.3;color:{{ r.titleColour }};cursor:pointer" style-hover="color:#6D7761">{{ r.title }}</button>
+              <span style="font-family:'IBM Plex Mono',monospace;font-size:11px;line-height:1.7;color:#8C887F">{{ r.meta }}</span>
+              <span style="font-size:12.5px;line-height:1.6;color:#77736B">{{ r.scheduleLine }}</span>
+              <sc-if value="{{ r.hasWarning }}" hint-placeholder-val="{{ false }}">
+                <p role="note" style="margin:0;background:#FBF3E4;border-left:2px solid #E7D6AE;padding:8px 10px;font-size:12.5px;line-height:1.6;color:#7E6224;max-width:560px">{{ r.warning }}</p>
+              </sc-if>
+              <sc-if value="{{ r.hasOverlap }}" hint-placeholder-val="{{ false }}">
+                <p role="alert" style="margin:0;background:#FBF3E4;border-left:2px solid #E7D6AE;padding:8px 10px;font-size:12.5px;line-height:1.6;color:#7E6224;max-width:560px">{{ r.overlap }}<br>{{ t.sfOverlapNote }}</p>
+              </sc-if>
+            </div>
+
+            <div style="display:flex;gap:7px;flex-wrap:wrap;align-items:flex-start">
+              <button type="button" onClick="{{ r.onEdit }}" style="border:1px solid #DAD5CB;background:#FFFFFF;padding:9px 13px;min-height:42px;font-size:13px;white-space:nowrap;cursor:pointer;color:#55534C" style-hover="border-color:#6D7761;color:#6D7761">{{ t.sfEdit }}</button>
+              <button type="button" onClick="{{ r.onToggle }}" disabled="{{ r.toggleLocked }}" style="border:1px solid {{ r.toggleBorder }};background:{{ r.toggleBg }};color:{{ r.toggleFg }};padding:9px 13px;min-height:42px;font-size:13px;white-space:nowrap;cursor:pointer;opacity:{{ r.toggleOpacity }}" style-hover="border-color:#6D7761">{{ r.toggleLabel }}</button>
+              <button type="button" onClick="{{ r.onDuplicate }}" disabled="{{ r.locked }}" style="border:1px solid #DAD5CB;background:#FFFFFF;padding:9px 13px;min-height:42px;font-size:13px;white-space:nowrap;cursor:pointer;color:#55534C;opacity:{{ r.lockedOpacity }}" style-hover="border-color:#6D7761;color:#6D7761">{{ t.sfDuplicate }}</button>
+              <button type="button" onClick="{{ r.onDelete }}" disabled="{{ r.locked }}" style="border:1px solid #DAD5CB;background:#FFFFFF;padding:9px 13px;min-height:42px;font-size:13px;white-space:nowrap;cursor:pointer;color:#77736B;opacity:{{ r.lockedOpacity }}" style-hover="border-color:#A2493C;color:#A2493C">{{ t.sfDelete }}</button>
+            </div>
+          </article>
+        </sc-for>
+      </div>
+    </div>
+  </sc-if>
+
+  <sc-if value="{{ isDetail }}" hint-placeholder-val="{{ false }}">
+    <div style="display:flex;flex-direction:column;gap:14px">
+      <div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap">
+        <button type="button" onClick="{{ onBack }}" style="border:1px solid #DAD5CB;background:#FFFFFF;padding:9px 14px;min-height:42px;font-size:13px;cursor:pointer;color:#55534C" style-hover="border-color:#6D7761;color:#6D7761">← {{ t.sfBack }}</button>
+        <sc-if value="{{ d.isShown }}" hint-placeholder-val="{{ false }}">
+          <a href="{{ d.publicHref }}" target="_blank" rel="noreferrer" style="font-size:13px;color:#6D7761;border-bottom:1px solid #DAD5CB;padding-bottom:3px">{{ t.sfViewInShop }}</a>
+        </sc-if>
+      </div>
+
+      <sc-if value="{{ notFound }}" hint-placeholder-val="{{ false }}">
+        <div style="background:#FFFFFF;border:1px solid #E3DFD7;padding:48px 24px;text-align:center;font-size:14px;color:#77736B">{{ t.sfNotFound }}</div>
+      </sc-if>
+
+      <sc-if value="{{ found }}" hint-placeholder-val="{{ true }}">
+        <div style="display:flex;flex-direction:column;gap:14px">
+          <sc-if value="{{ readOnly }}" hint-placeholder-val="{{ false }}">
+            <div role="note" style="background:#F5F3EE;border:1px solid #E3DFD7;padding:12px 14px;font-size:13px;line-height:1.6;color:#55534C">{{ t.sfReadOnly }}</div>
+          </sc-if>
+
+          <div style="background:#FFFFFF;border:1px solid #E3DFD7;padding:14px;display:flex;flex-direction:column;gap:14px">
+            <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+              <span style="font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:0.1em;padding:3px 7px;background:{{ d.stateBg }};color:{{ d.stateFg }}">{{ d.stateLabel }}</span>
+              <span style="font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:0.1em;padding:3px 7px;background:{{ d.liveBg }};color:{{ d.liveFg }}">{{ d.liveLabel }}</span>
+            </div>
+
+            <sc-if value="{{ d.hasOverlap }}" hint-placeholder-val="{{ false }}">
+              <p role="alert" style="margin:0;background:#FBF3E4;border-left:2px solid #E7D6AE;padding:10px 12px;font-size:12.5px;line-height:1.6;color:#7E6224;max-width:620px">{{ d.overlap }}<br>{{ t.sfOverlapNote }}</p>
+            </sc-if>
+            <sc-if value="{{ d.needsDate }}" hint-placeholder-val="{{ false }}">
+              <p role="note" style="margin:0;background:#F5F3EE;border-left:2px solid #DAD5CB;padding:10px 12px;font-size:12.5px;line-height:1.6;color:#55534C;max-width:620px">{{ t.sfNeedsDate }}</p>
+            </sc-if>
+
+            <div style="display:grid;grid-template-columns:{{ formCols }};gap:12px">
+              <label style="display:flex;flex-direction:column;gap:5px;min-width:0">
+                <span style="font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:0.14em;color:#8C887F">{{ t.sfTitleJa }}</span>
+                <input type="text" value="{{ d.titleJa }}" onChange="{{ d.onTitleJa }}" disabled="{{ readOnly }}" style="border:1px solid #DAD5CB;background:#FCFBF9;padding:10px;font-size:13.5px;min-height:42px;width:100%" style-focus="border-color:#6D7761">
+              </label>
+              <label style="display:flex;flex-direction:column;gap:5px;min-width:0">
+                <span style="font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:0.14em;color:#8C887F">{{ t.sfTitleEn }}</span>
+                <input type="text" value="{{ d.titleEn }}" onChange="{{ d.onTitleEn }}" disabled="{{ readOnly }}" style="border:1px solid #DAD5CB;background:#FCFBF9;padding:10px;font-size:13.5px;min-height:42px;width:100%" style-focus="border-color:#6D7761">
+              </label>
+              <label style="display:flex;flex-direction:column;gap:5px;min-width:0">
+                <span style="font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:0.14em;color:#8C887F">{{ t.sfCategory }}</span>
+                <select value="{{ d.category }}" onChange="{{ d.onCategory }}" disabled="{{ readOnly }}" style="border:1px solid #DAD5CB;background:#FCFBF9;padding:10px;font-size:13.5px;min-height:42px;width:100%" style-focus="border-color:#6D7761">
+                  <sc-for list="{{ categoryOptions }}" as="o" hint-placeholder-count="5">
+                    <option value="{{ o.v }}">{{ o.t }}</option>
+                  </sc-for>
+                </select>
+              </label>
+              <label style="display:flex;flex-direction:column;gap:5px;min-width:0">
+                <span style="font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:0.14em;color:#8C887F">{{ t.sfEra }}</span>
+                <input type="text" value="{{ d.eraLabel }}" onChange="{{ d.onEra }}" disabled="{{ readOnly }}" placeholder="1988—1999" style="border:1px solid #DAD5CB;background:#FCFBF9;padding:10px;font-size:13.5px;min-height:42px;width:100%" style-focus="border-color:#6D7761">
+              </label>
+              <label style="display:flex;flex-direction:column;gap:5px;min-width:0">
+                <span style="font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:0.14em;color:#8C887F">{{ t.sfPublishAt }}</span>
+                <input type="datetime-local" value="{{ d.publishAt }}" onChange="{{ d.onPublishAt }}" disabled="{{ readOnly }}" style="border:1px solid #DAD5CB;background:#FCFBF9;padding:10px;font-size:13.5px;min-height:42px;width:100%" style-focus="border-color:#6D7761">
+              </label>
+              <label style="display:flex;flex-direction:column;gap:5px;min-width:0">
+                <span style="font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:0.14em;color:#8C887F">{{ t.sfUnpublishAt }}</span>
+                <input type="datetime-local" value="{{ d.unpublishAt }}" onChange="{{ d.onUnpublishAt }}" disabled="{{ readOnly }}" style="border:1px solid #DAD5CB;background:#FCFBF9;padding:10px;font-size:13.5px;min-height:42px;width:100%" style-focus="border-color:#6D7761">
+              </label>
+            </div>
+            <p style="margin:0;font-size:12.5px;line-height:1.6;color:#8C887F;max-width:620px">{{ t.sfScheduleNote }}</p>
+
+            <div style="display:grid;grid-template-columns:{{ formCols }};gap:12px">
+              <label style="display:flex;flex-direction:column;gap:5px;min-width:0">
+                <span style="font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:0.14em;color:#8C887F">{{ t.sfDescJa }}</span>
+                <textarea value="{{ d.descJa }}" onChange="{{ d.onDescJa }}" disabled="{{ readOnly }}" rows="4" style="border:1px solid #DAD5CB;background:#FCFBF9;padding:10px;font-size:13.5px;line-height:1.7;width:100%;resize:vertical" style-focus="border-color:#6D7761"></textarea>
+              </label>
+              <label style="display:flex;flex-direction:column;gap:5px;min-width:0">
+                <span style="font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:0.14em;color:#8C887F">{{ t.sfDescEn }}</span>
+                <textarea value="{{ d.descEn }}" onChange="{{ d.onDescEn }}" disabled="{{ readOnly }}" rows="4" style="border:1px solid #DAD5CB;background:#FCFBF9;padding:10px;font-size:13.5px;line-height:1.7;width:100%;resize:vertical" style-focus="border-color:#6D7761"></textarea>
+              </label>
+            </div>
+
+            <sc-if value="{{ canEdit }}" hint-placeholder-val="{{ true }}">
+              <div style="display:flex;gap:10px;flex-wrap:wrap;border-top:1px solid #EDEAE3;padding-top:12px">
+                <button type="button" onClick="{{ d.onSave }}" style="border:none;background:#6D7761;color:#FFFFFF;padding:10px 18px;min-height:44px;font-size:13.5px;cursor:pointer" style-hover="background:#59614F">{{ saveLabel }}</button>
+                <button type="button" onClick="{{ d.onToggle }}" disabled="{{ d.toggleLocked }}" style="border:1px solid {{ d.toggleBorder }};background:{{ d.toggleBg }};color:{{ d.toggleFg }};padding:10px 16px;min-height:44px;font-size:13.5px;cursor:pointer;opacity:{{ d.toggleOpacity }}" style-hover="border-color:#6D7761">{{ d.toggleLabel }}</button>
+              </div>
+            </sc-if>
+          </div>
+
+          <div style="background:#FFFFFF;border:1px solid #E3DFD7;padding:14px;display:flex;flex-direction:column;gap:12px">
+            <div style="display:flex;align-items:baseline;justify-content:space-between;gap:12px;flex-wrap:wrap">
+              <span style="font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:0.16em;color:#8C887F">{{ t.sfCandidates }}</span>
+              <span style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:#8C887F">{{ d.candidateCount }}</span>
+            </div>
+            <p style="margin:0;font-size:12.5px;line-height:1.6;color:#77736B;max-width:620px">{{ t.sfCandidateNote }}</p>
+
+            <div style="display:flex;flex-direction:column">
+              <sc-for list="{{ d.selected }}" as="c" hint-placeholder-count="4">
+                <div style="display:flex;gap:11px;align-items:center;flex-wrap:wrap;padding:10px 0;border-bottom:1px solid #EDEAE3">
+                  <span style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:#8C887F;min-width:22px">{{ c.no }}</span>
+                  <sc-if value="{{ c.hasThumb }}" hint-placeholder-val="{{ true }}">
+                    <img loading="lazy" decoding="async" src="{{ c.thumb }}" alt="{{ c.thumbAlt }}" style="width:44px;height:56px;object-fit:cover;background:#EDE9E2;flex:0 0 44px;opacity:{{ c.opacity }}">
+                  </sc-if>
+                  <sc-if value="{{ c.noThumb }}" hint-placeholder-val="{{ false }}">
+                    <span aria-hidden="true" style="width:44px;height:56px;flex:0 0 44px;display:grid;place-items:center;background:#EDE9E2;color:#A8A398;font-family:'IBM Plex Mono',monospace;font-size:10px">—</span>
+                  </sc-if>
+                  <span style="flex:1 1 200px;min-width:0;display:flex;flex-direction:column;gap:3px">
+                    <span style="font-size:13.5px;color:{{ c.nameColour }}">{{ c.name }}</span>
+                    <span style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:#8C887F">{{ c.meta }}</span>
+                    <sc-if value="{{ c.hasWarning }}" hint-placeholder-val="{{ false }}">
+                      <span style="font-size:12px;color:#7E6224;background:#FBF3E4;padding:4px 7px;width:fit-content">{{ c.warning }}</span>
+                    </sc-if>
+                  </span>
+                  <span style="display:flex;gap:6px;align-items:center">
+                    <button type="button" onClick="{{ c.onUp }}" disabled="{{ c.atFirst }}" aria-label="{{ c.upLabel }}" style="border:1px solid #DAD5CB;background:#FFFFFF;width:38px;min-height:38px;display:grid;place-items:center;cursor:pointer;color:#77736B;opacity:{{ c.upOpacity }}" style-hover="border-color:#6D7761;color:#6D7761">↑</button>
+                    <button type="button" onClick="{{ c.onDown }}" disabled="{{ c.atLast }}" aria-label="{{ c.downLabel }}" style="border:1px solid #DAD5CB;background:#FFFFFF;width:38px;min-height:38px;display:grid;place-items:center;cursor:pointer;color:#77736B;opacity:{{ c.downOpacity }}" style-hover="border-color:#6D7761;color:#6D7761">↓</button>
+                    <button type="button" onClick="{{ c.onRemove }}" disabled="{{ readOnly }}" style="border:1px solid #DAD5CB;background:#FFFFFF;padding:8px 12px;min-height:38px;font-size:13px;cursor:pointer;color:#77736B;opacity:{{ lockedOpacity }}" style-hover="border-color:#A2493C;color:#A2493C">{{ t.sfRemove }}</button>
+                  </span>
+                </div>
+              </sc-for>
+            </div>
+
+            <sc-if value="{{ canEdit }}" hint-placeholder-val="{{ true }}">
+              <div style="display:flex;flex-direction:column;gap:10px;border-top:1px solid #EDEAE3;padding-top:12px">
+                <label style="display:flex;flex-direction:column;gap:5px;max-width:360px">
+                  <span style="font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:0.14em;color:#8C887F">{{ t.sfSearchProducts }}</span>
+                  <input type="search" value="{{ query }}" onChange="{{ onQuery }}" style="border:1px solid #DAD5CB;background:#FCFBF9;padding:10px;font-size:13.5px;min-height:42px;width:100%" style-focus="border-color:#6D7761">
+                </label>
+                <div style="max-height:320px;overflow-y:auto;display:flex;flex-direction:column">
+                  <sc-for list="{{ d.available }}" as="a" hint-placeholder-count="6">
+                    <div style="display:flex;gap:11px;align-items:center;padding:9px 0;border-bottom:1px solid #F2F0EA">
+                      <sc-if value="{{ a.hasThumb }}" hint-placeholder-val="{{ true }}">
+                        <img loading="lazy" decoding="async" src="{{ a.thumb }}" alt="{{ a.thumbAlt }}" style="width:40px;height:52px;object-fit:cover;background:#EDE9E2;flex:0 0 40px">
+                      </sc-if>
+                      <sc-if value="{{ a.noThumb }}" hint-placeholder-val="{{ false }}">
+                        <span aria-hidden="true" style="width:40px;height:52px;flex:0 0 40px;display:grid;place-items:center;background:#EDE9E2;color:#A8A398;font-family:'IBM Plex Mono',monospace;font-size:10px">—</span>
+                      </sc-if>
+                      <span style="flex:1 1 200px;min-width:0;display:flex;flex-direction:column;gap:2px">
+                        <span style="font-size:13.5px;color:{{ a.nameColour }}">{{ a.name }}</span>
+                        <span style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:#8C887F">{{ a.meta }}</span>
+                      </span>
+                      <sc-if value="{{ a.hasWarning }}" hint-placeholder-val="{{ false }}">
+                        <span style="font-size:12px;color:#7E6224;background:#FBF3E4;padding:4px 7px">{{ a.warning }}</span>
+                      </sc-if>
+                      <button type="button" onClick="{{ a.onAdd }}" style="border:1px solid #DAD5CB;background:#FFFFFF;padding:8px 14px;min-height:38px;font-size:13px;cursor:pointer;color:#55534C" style-hover="border-color:#6D7761;color:#6D7761">{{ t.sfAdd }}</button>
+                    </div>
+                  </sc-for>
+                </div>
+              </div>
+            </sc-if>
+          </div>
+
+          <div style="background:#FFFFFF;border:1px solid #E3DFD7;padding:14px;display:flex;flex-direction:column;gap:12px">
+            <span style="font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:0.16em;color:#8C887F">{{ t.sfMedia }}</span>
+            <p style="margin:0;font-size:12.5px;line-height:1.6;color:#77736B;max-width:620px">{{ t.sfMediaNote }}</p>
+
+            <sc-if value="{{ d.noCandidates }}" hint-placeholder-val="{{ false }}">
+              <p role="note" style="margin:0;background:#F5F3EE;border-left:2px solid #DAD5CB;padding:10px 12px;font-size:12.5px;line-height:1.6;color:#55534C;max-width:620px">{{ t.sfVisualNoCands }}</p>
+            </sc-if>
+
+            <div style="display:grid;grid-template-columns:{{ slotCols }};gap:14px">
+              <sc-for list="{{ d.slots }}" as="s" hint-placeholder-count="3">
+                <section style="min-width:0;display:flex;flex-direction:column;gap:9px;border-top:1px solid #EDEAE3;padding-top:11px">
+                  <div style="display:flex;align-items:baseline;justify-content:space-between;gap:8px">
+                    <span style="font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:0.16em;color:#55534C">{{ s.slotLabel }}</span>
+                    <span style="font-family:'IBM Plex Mono',monospace;font-size:10.5px;letter-spacing:0.1em;padding:2px 6px;background:{{ s.modeBg }};color:{{ s.modeFg }}">{{ s.modeLabel }}</span>
+                  </div>
+
+                  <sc-if value="{{ s.hasPreview }}" hint-placeholder-val="{{ true }}">
+                    <img loading="lazy" decoding="async" src="{{ s.preview }}" alt="{{ s.previewAlt }}" style="width:100%;aspect-ratio:4/3;object-fit:cover;object-position:center;background:#EDE9E2;display:block">
+                  </sc-if>
+                  <sc-if value="{{ s.noPreview }}" hint-placeholder-val="{{ false }}">
+                    <span style="width:100%;aspect-ratio:4/3;display:grid;place-items:center;background:#EDE9E2;color:#A8A398;font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:0.1em">{{ t.sfVisualNoImage }}</span>
+                  </sc-if>
+
+                  <span style="font-size:13px;line-height:1.5;color:#55534C">{{ s.caption }}</span>
+                  <sc-if value="{{ s.hasCount }}" hint-placeholder-val="{{ false }}">
+                    <span style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:#8C887F">{{ s.countLabel }}</span>
+                  </sc-if>
+                  <sc-if value="{{ s.hasWarning }}" hint-placeholder-val="{{ false }}">
+                    <p role="note" style="margin:0;background:#FBF3E4;border-left:2px solid #E7D6AE;padding:7px 9px;font-size:12px;line-height:1.55;color:#7E6224">{{ s.warning }}<br>{{ s.warningNote }}</p>
+                  </sc-if>
+
+                  <sc-if value="{{ canEdit }}" hint-placeholder-val="{{ true }}">
+                    <div style="display:flex;gap:7px;flex-wrap:wrap">
+                      <button type="button" onClick="{{ s.onPick }}" aria-expanded="{{ s.isOpen }}" style="border:1px solid #DAD5CB;background:#FFFFFF;padding:8px 12px;min-height:40px;font-size:12.5px;cursor:pointer;color:#55534C" style-hover="border-color:#6D7761;color:#6D7761">{{ s.pickLabel }}</button>
+                      <sc-if value="{{ s.isManual }}" hint-placeholder-val="{{ false }}">
+                        <button type="button" onClick="{{ s.onReset }}" style="border:1px solid #DAD5CB;background:#FFFFFF;padding:8px 12px;min-height:40px;font-size:12.5px;cursor:pointer;color:#77736B" style-hover="border-color:#6D7761;color:#6D7761">{{ t.sfVisualReset }}</button>
+                      </sc-if>
+                    </div>
+                  </sc-if>
+
+                  <sc-if value="{{ s.isOpen }}" hint-placeholder-val="{{ false }}">
+                    <div style="display:flex;flex-direction:column;gap:10px;background:#FBFAF7;border:1px solid #E9E5DD;padding:11px">
+                      <span style="font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:0.14em;color:#8C887F">{{ t.sfVisualProduct }}</span>
+                      <div role="radiogroup" aria-label="{{ t.sfVisualProduct }}" style="display:flex;flex-direction:column;gap:5px">
+                        <sc-for list="{{ s.productChoices }}" as="pc" hint-placeholder-count="3">
+                          <button type="button" role="radio" aria-checked="{{ pc.isCurrent }}" onClick="{{ pc.onSelect }}" style="display:flex;gap:9px;align-items:center;text-align:left;border:1px solid {{ pc.border }};background:{{ pc.bg }};padding:6px 8px;min-height:44px;cursor:pointer;color:#55534C" style-hover="border-color:#6D7761" style-focus="outline:2px solid #6D7761;outline-offset:1px">
+                            <sc-if value="{{ pc.hasThumb }}" hint-placeholder-val="{{ true }}">
+                              <img loading="lazy" decoding="async" src="{{ pc.thumb }}" alt="" style="width:32px;height:40px;object-fit:cover;background:#EDE9E2;flex:0 0 32px">
+                            </sc-if>
+                            <span style="min-width:0;display:flex;flex-direction:column;gap:2px">
+                              <span style="font-size:12.5px;line-height:1.4">{{ pc.name }}</span>
+                              <span style="font-family:'IBM Plex Mono',monospace;font-size:10.5px;color:#8C887F">{{ pc.meta }}</span>
+                            </span>
+                          </button>
+                        </sc-for>
+                      </div>
+
+                      <sc-if value="{{ s.hasImageChoices }}" hint-placeholder-val="{{ false }}">
+                        <div style="display:flex;flex-direction:column;gap:7px">
+                          <span style="font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:0.14em;color:#8C887F">{{ t.sfVisualImages }}</span>
+                          <div role="radiogroup" aria-label="{{ t.sfVisualImages }}" style="display:flex;gap:7px;flex-wrap:wrap">
+                            <sc-for list="{{ s.imageChoices }}" as="ic" hint-placeholder-count="4">
+                              <button type="button" role="radio" aria-checked="{{ ic.isCurrent }}" aria-label="{{ ic.label }}" onClick="{{ ic.onSelect }}" style="position:relative;border:2px solid {{ ic.border }};background:#FFFFFF;padding:0;width:60px;height:76px;cursor:pointer;display:block" style-hover="border-color:#6D7761" style-focus="outline:2px solid #6D7761;outline-offset:1px">
+                                <img loading="lazy" decoding="async" src="{{ ic.thumb }}" alt="" style="width:100%;height:100%;object-fit:cover;display:block">
+                                <span aria-hidden="true" style="position:absolute;bottom:0;left:0;right:0;background:{{ ic.numBg }};color:{{ ic.numFg }};font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:0.06em;padding:2px 0;text-align:center">{{ ic.no }}</span>
+                              </button>
+                            </sc-for>
+                          </div>
+                        </div>
+                      </sc-if>
+
+                      <details style="border-top:1px solid #EDEAE3;padding-top:9px">
+                        <summary style="font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:0.12em;color:#8C887F;cursor:pointer;min-height:32px;display:flex;align-items:center">{{ t.sfVisualCustom }}</summary>
+                        <div style="display:flex;flex-direction:column;gap:8px;padding-top:9px">
+                          <p style="margin:0;font-size:12px;line-height:1.55;color:#8C887F">{{ t.sfVisualCustomNote }}</p>
+                          <input type="url" value="{{ s.customSrc }}" onChange="{{ s.onCustomSrc }}" placeholder="https://…" style="border:1px solid #DAD5CB;background:#FFFFFF;padding:9px;font-size:12.5px;min-height:40px;width:100%" style-focus="border-color:#6D7761">
+                          <button type="button" onClick="{{ s.onCustomUse }}" style="border:1px solid #DAD5CB;background:#FFFFFF;padding:8px 12px;min-height:40px;font-size:12.5px;cursor:pointer;color:#55534C;width:fit-content" style-hover="border-color:#6D7761;color:#6D7761">{{ t.sfVisualCustomUse }}</button>
+                        </div>
+                      </details>
+
+                      <button type="button" onClick="{{ s.onClose }}" style="border:none;background:transparent;padding:4px 0;font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:0.12em;color:#8C887F;cursor:pointer;width:fit-content;min-height:32px" style-hover="color:#6D7761">{{ t.sfVisualClose }}</button>
+                    </div>
+                  </sc-if>
+                </section>
+              </sc-for>
+            </div>
+          </div>
+
+          <sc-if value="{{ canEdit }}" hint-placeholder-val="{{ true }}">
+            <div style="display:flex;gap:10px;flex-wrap:wrap">
+              <button type="button" onClick="{{ d.onDuplicate }}" style="border:1px solid #DAD5CB;background:#FFFFFF;padding:10px 16px;min-height:44px;font-size:13.5px;cursor:pointer;color:#55534C" style-hover="border-color:#6D7761;color:#6D7761">{{ t.sfDuplicate }}</button>
+              <button type="button" onClick="{{ d.onDelete }}" style="border:1px solid #DAD5CB;background:#FFFFFF;padding:10px 16px;min-height:44px;font-size:13.5px;cursor:pointer;color:#77736B" style-hover="border-color:#A2493C;color:#A2493C">{{ t.sfDelete }}</button>
+            </div>
+          </sc-if>
+        </div>
+      </sc-if>
+    </div>
+  </sc-if>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;view&quot;:{&quot;editor&quot;:null,&quot;tsType&quot;:&quot;string&quot;},&quot;entityId&quot;:{&quot;editor&quot;:null,&quot;tsType&quot;:&quot;string&quot;},&quot;nav&quot;:{&quot;editor&quot;:null,&quot;tsType&quot;:&quot;function&quot;},&quot;compact&quot;:{&quot;editor&quot;:null,&quot;tsType&quot;:&quot;boolean&quot;},&quot;tick&quot;:{&quot;editor&quot;:null,&quot;tsType&quot;:&quot;number&quot;}}">
+/* Special Features — curated product stories shown in the Shop.
+   A different object from Featured Content, which controls the home hero.
+   Every mutation goes through the shared store (saveSpecialFeature,
+   setSpecialFeatureEnabled, toggleSpecialCandidate, moveSpecialCandidate,
+   saveSpecialMedia, duplicateSpecialFeature, deleteSpecialFeature), which owns
+   persistence, permissions and the audit trail. Publication is never judged
+   here — specialFeatureState() and specialFeatureProducts() are the single
+   gates, and the list order comes from the store, not from this view.
+
+   Features have no manual order: the schedule decides what is on show, and an
+   overlap between two enabled windows is reported inline rather than resolved
+   by a hidden ranking. Candidate products keep their curated order — that is
+   what fills the slots and what moves up when a piece sells. */
+class Component extends DCLogic {
+  state = {
+    tick: 0, vw: typeof window !== "undefined" ? window.innerWidth : 1440,
+    draftId: null, draft: null, query: "",
+    /* which slot's picker is open, which candidate it is showing, and the
+       address typed into its external-image field */
+    openSlot: null, pickProduct: null, customSrc: ""
+  };
+
+  componentDidMount() {
+    this.S = window.TSUMUGI_STORE;
+    if (!this.S) setTimeout(() => { this.S = window.TSUMUGI_STORE; this.forceUpdate(); }, 60);
+    this._unsub = this.S && this.S.subscribe(() => this.setState(s => ({ tick: s.tick + 1 })));
+    this._onResize = () => this.setState({ vw: window.innerWidth });
+    window.addEventListener("resize", this._onResize);
+  }
+  componentWillUnmount() {
+    if (this._unsub) this._unsub();
+    window.removeEventListener("resize", this._onResize);
+  }
+
+  _lang() { const S = this.S || window.TSUMUGI_STORE; return (S && S.lang) ? S.lang() : "en"; }
+  _dict() { const I = window.TSUMUGI_I18N; return I ? I.t(this._lang()) : {}; }
+  _tx(v) { const I = window.TSUMUGI_I18N; return I ? I.tx(v, this._lang()) : v; }
+  _pname(n) { const I = window.TSUMUGI_I18N; return I && I.pname ? I.pname(n, this._lang()) : n; }
+
+  /* ISO ↔ the value a datetime-local input wants. Local time in, local time
+     out; the store keeps ISO so a Supabase timestamptz column takes it as-is. */
+  _toLocal(iso) {
+    if (!iso) return "";
+    const d = new Date(iso);
+    if (isNaN(d)) return "";
+    const p = n => String(n).padStart(2, "0");
+    return d.getFullYear() + "-" + p(d.getMonth() + 1) + "-" + p(d.getDate()) + "T" + p(d.getHours()) + ":" + p(d.getMinutes());
+  }
+  _fromLocal(v) {
+    if (!v) return null;
+    const d = new Date(v);
+    return isNaN(d) ? null : d.toISOString();
+  }
+  _fmt(iso, isJa) {
+    if (!iso) return isJa ? "未設定" : "—";
+    const d = new Date(iso);
+    if (isNaN(d)) return "—";
+    const p = n => String(n).padStart(2, "0");
+    return d.getFullYear() + "." + p(d.getMonth() + 1) + "." + p(d.getDate());
+  }
+
+  _draftFor(f) {
+    const s = this.state;
+    if (s.draftId === f.id && s.draft) return s.draft;
+    return {
+      titleJa: f.titleJa || "", titleEn: f.titleEn || "",
+      descriptionJa: f.descriptionJa || "", descriptionEn: f.descriptionEn || "",
+      category: f.category || "", eraLabel: f.eraLabel || "",
+      publishAt: f.publishAt || null, unpublishAt: f.unpublishAt || null
+    };
+  }
+
+  /* A product's first photograph, resolved from the product record each time —
+     never copied into the feature. */
+  _thumbOf(p) {
+    const im = p ? ((p.images || [])[0] || {}) : {};
+    return im.thumb || im.url || "";
+  }
+  _patch(f, patch) {
+    const d = Object.assign({}, this._draftFor(f), patch);
+    this.setState({ draftId: f.id, draft: d });
+  }
+
+  _stateChip(key, T) {
+    return {
+      active: [T.sfStateActive, "#EEF0EA", "#4F5C42"],
+      scheduled: [T.sfStateScheduled, "#EDF0F4", "#41546B"],
+      archived: [T.sfStateArchived, "#F1EFE9", "#6E6A62"],
+      draft: [T.sfStateDraft, "#F6EFDF", "#7E6224"]
+    }[key] || [key, "#F1EFE9", "#6E6A62"];
+  }
+
+  _candidateWarning(pid, T) {
+    const S = this.S || window.TSUMUGI_STORE;
+    const st = S.specialCandidateState(pid);
+    if (st === "soldout") return T.sfSoldWarn;
+    if (st === "draft") return T.sfDraftWarn;
+    if (st === "missing") return T.sfMissingWarn;
+    return "";
+  }
+
+  /* "Dates overlap: A, B" — named, so the operator can see which schedule to move. */
+  _overlapLine(f, T, isJa) {
+    const S = this.S || window.TSUMUGI_STORE;
+    const others = S.specialFeatureOverlaps(f);
+    if (!others.length) return "";
+    const names = others
+      .map(o => (isJa ? (o.titleJa || o.titleEn) : (o.titleEn || o.titleJa)) || o.slug)
+      .join(isJa ? "、" : ", ");
+    return String(T.sfOverlap).split("{names}").join(names);
+  }
+
+  renderVals() {
+    const S = this.S || window.TSUMUGI_STORE;
+    const T = this._dict();
+    const isJa = this._lang() === "ja";
+    const narrow = this.state.vw < 900;
+    const base = {
+      t: T, rows: [], categoryOptions: [], slotOptions: [],
+      wrapMode: narrow ? "wrap" : "nowrap",
+      formCols: narrow ? "minmax(0,1fr)" : "repeat(2,minmax(0,1fr))",
+      slotCols: narrow ? "minmax(0,1fr)" : "repeat(3,minmax(0,1fr))",
+      query: this.state.query,
+      onQuery: e => this.setState({ query: e.target.value }),
+      saveLabel: isJa ? "保存" : "Save"
+    };
+    if (!S) return Object.assign(base, { isList: true, isDetail: false });
+
+    const canEdit = S.can("content.edit");
+    const canPublish = S.can("content.publish");
+    const list = S.specialFeatures();
+    const activeId = (S.activeSpecialFeature() || {}).id || null;
+    const products = S.products ? S.products() : [];
+    const cats = products.map(p => p.category).filter((v, i, a) => v && a.indexOf(v) === i);
+
+    Object.assign(base, {
+      canEdit, readOnly: !canEdit,
+      lockedOpacity: canEdit ? 1 : 0.4,
+      categoryOptions: [{ v: "", t: isJa ? "未設定" : "—" }].concat(cats.map(c => ({ v: c, t: this._tx(c) }))),
+      slotOptions: [
+        { v: "primary", t: T.sfSlotPrimary },
+        { v: "secondary", t: T.sfSlotSecondary },
+        { v: "tertiary", t: T.sfSlotTertiary }
+      ]
+    });
+
+    const entityId = this.props.entityId;
+    const isDetail = this.props.view === "detail" && !!entityId;
+
+    if (!isDetail) {
+      const rows = list.map((f, i) => {
+        const st = S.specialFeatureState(f);
+        const [stateLabel, stateBg, stateFg] = this._stateChip(st, T);
+        const eligible = S.specialFeatureProducts(f).length;
+        const shown = activeId && String(activeId) === String(f.id);
+        const title = (isJa ? (f.titleJa || f.titleEn) : (f.titleEn || f.titleJa)) || (isJa ? "無題の特集" : "Untitled feature");
+        const media = (f.media || []).filter(m => m.src);
+        const firstProduct = S.specialFeatureProducts(f)[0];
+        const thumb = (media[0] && media[0].src)
+          || (firstProduct && ((firstProduct.images || [])[0] || {}).thumb)
+          || (firstProduct && ((firstProduct.images || [])[0] || {}).url)
+          || "";
+        const warning = st === "active" && eligible === 0 && !media.length ? T.sfNoEligible
+          : (f.enabled && !f.publishAt) ? T.sfNeedsDate : "";
+        const overlap = this._overlapLine(f, T, isJa);
+        return {
+          no: String(i + 1).padStart(2, "0"),
+          title, titleColour: shown ? "#232220" : "#55534C",
+          hasOverlap: !!overlap, overlap,
+          stateLabel, stateBg, stateFg,
+          liveLabel: shown ? T.sfShownNow : T.sfNotShown,
+          liveBg: shown ? "#EEF0EA" : "#F1EFE9",
+          liveFg: shown ? "#4F5C42" : "#6E6A62",
+          border: shown ? "#D8D3C7" : "#EAE6DE",
+          hasThumb: !!thumb, noThumb: !thumb, thumb, thumbAlt: title,
+          thumbOpacity: shown ? 1 : 0.6,
+          meta: [f.category ? this._tx(f.category) : "", f.eraLabel,
+                 String(T.sfCandidateCount).split("{n}").join((f.candidateProductIds || []).length),
+                 T.sfEligible + " " + eligible].filter(Boolean).join(" · "),
+          scheduleLine: T.sfPublishAt + " " + this._fmt(f.publishAt, isJa) + " — " + T.sfUnpublishAt + " " + this._fmt(f.unpublishAt, isJa),
+          hasWarning: !!warning, warning,
+          locked: !canEdit, lockedOpacity: canEdit ? 1 : 0.4,
+          toggleLabel: f.enabled ? T.sfDisable : T.sfEnable,
+          toggleLocked: !canPublish,
+          toggleOpacity: canPublish ? 1 : 0.4,
+          toggleBg: f.enabled ? "#FFFFFF" : "#6D7761",
+          toggleFg: f.enabled ? "#77736B" : "#FFFFFF",
+          toggleBorder: f.enabled ? "#DAD5CB" : "#6D7761",
+          onEdit: () => this.props.nav("/admin/specials/" + f.id),
+          onToggle: async () => { const ok = await S.setSpecialFeatureEnabled(f.id, !f.enabled); if (ok) S.toast(T.sfSavedToast, f.enabled ? "warning" : "success"); },
+          onDuplicate: async () => {
+            const id = await S.duplicateSpecialFeature(f.id);
+            if (id) S.toast(T.sfDuplicatedToast, "success");
+          },
+          onDelete: async () => {
+            const ok = await S.confirm({
+              title: T.sfDeleteQ, body: T.sfDeleteBody,
+              accept: T.sfDelete, cancel: T.cancel, tone: "#A2493C"
+            });
+            if (!ok) return;
+            const deleted = await S.deleteSpecialFeature(f.id);
+            if (deleted) S.toast(T.sfDeletedToast, "error");
+          }
+        };
+      });
+
+      return Object.assign(base, {
+        isList: true, isDetail: false,
+        rows,
+        isEmpty: list.length === 0,
+        noLive: !activeId,
+        onNew: async () => {
+          const blank = S.blankSpecialFeature();
+          const id = await S.saveSpecialFeature(blank);
+          if (id) { S.toast(T.sfSavedToast, "success"); this.props.nav("/admin/specials/" + id); }
+        }
+      });
+    }
+
+    /* ---- detail ---- */
+    const f = S.getSpecialFeature(entityId);
+    if (!f) {
+      return Object.assign(base, {
+        isList: false, isDetail: true, found: false, notFound: true, d: {},
+        onBack: () => this.props.nav("/admin/specials")
+      });
+    }
+
+    const draft = this._draftFor(f);
+    const st = S.specialFeatureState(f);
+    const [stateLabel, stateBg, stateFg] = this._stateChip(st, T);
+    const shown = activeId && String(activeId) === String(f.id);
+    const cand = (f.candidateProductIds || []);
+    const q = this.state.query.trim().toLowerCase();
+    const available = products
+      .filter(p => cand.indexOf(p.id) < 0)
+      .filter(p => !q || (p.name + " " + p.brand + " " + p.category + " " + p.sku).toLowerCase().includes(q))
+      .slice(0, 40)
+      .map(p => {
+        const w = this._candidateWarning(p.id, T);
+        const thumb = this._thumbOf(p);
+        const name = this._pname(p.name);
+        return {
+          name, nameColour: w ? "#77736B" : "#232220",
+          meta: p.sku + " · " + this._tx(p.category) + " · " + p.year,
+          thumb, hasThumb: !!thumb, noThumb: !thumb, thumbAlt: name,
+          hasWarning: !!w, warning: w,
+          onAdd: async () => {
+            const r = await S.toggleSpecialCandidate(f.id, p.id);
+            if (r === "full") S.toast(String(T.sfCandidateFull).split("{n}").join(S.SPECIAL_CANDIDATE_MAX), "warning");
+            else if (r) S.toast(T.sfSavedToast, "success");
+          }
+        };
+      });
+
+    const selected = cand.map((pid, i) => {
+      const p = S.getProduct(pid);
+      const w = this._candidateWarning(pid, T);
+      const thumb = this._thumbOf(p);
+      const name = p ? this._pname(p.name) : (isJa ? "削除された商品" : "Deleted product") + " #" + pid;
+      return {
+        no: String(i + 1).padStart(2, "0"),
+        name, nameColour: w ? "#77736B" : "#232220",
+        meta: p ? (p.sku + " · " + this._tx(p.category) + " · ¥ " + Number(p.price).toLocaleString("ja-JP")) : "—",
+        thumb, hasThumb: !!thumb, noThumb: !thumb, thumbAlt: name,
+        opacity: w ? 0.55 : 1,
+        hasWarning: !!w, warning: w,
+        atFirst: i === 0 || !canEdit, atLast: i === cand.length - 1 || !canEdit,
+        upOpacity: (i === 0 || !canEdit) ? 0.4 : 1,
+        downOpacity: (i === cand.length - 1 || !canEdit) ? 0.4 : 1,
+        upLabel: T.sfMoveUp + " — " + name,
+        downLabel: T.sfMoveDown + " — " + name,
+        onUp: async () => { await S.moveSpecialCandidate(f.id, pid, -1); },
+        onDown: async () => { await S.moveSpecialCandidate(f.id, pid, 1); },
+        onRemove: async () => { const ok = await S.toggleSpecialCandidate(f.id, pid); if (ok) S.toast(T.sfSavedToast, "warning"); }
+      };
+    });
+
+    /* ---- feature visuals ----
+       One panel per slot. A slot either holds a chosen photograph or is left to
+       the storefront's automatic resolution; the panel shows which, previews it,
+       and warns when a chosen image's garment has sold, gone unpublished or
+       disappeared — without changing the choice, which is the editor's. */
+    const slotLabels = { primary: T.sfSlotPrimary, secondary: T.sfSlotSecondary, tertiary: T.sfSlotTertiary };
+    /* The same resolution the storefront uses, so the preview is the truth. */
+    const resolved = {};
+    S.specialFeatureVisuals(f).forEach(v => { resolved[v.slot] = v; });
+    const slots = S.SPECIAL_SLOTS.map(slot => {
+      const row = S.specialVisualFor(f, slot);
+      const res = row ? S.resolveSpecialVisual(row) : null;
+      const isManual = !!row;
+      const isOpen = this.state.openSlot === slot;
+      const pickPid = this.state.pickProduct != null ? this.state.pickProduct
+        : (res && res.productId != null ? res.productId : cand[0]);
+      const pickProduct = S.getProduct(pickPid);
+      const pickImages = pickProduct ? (pickProduct.images || []) : [];
+
+      let warning = "", warningNote = "";
+      if (isManual && res) {
+        if (res.problem === "soldout") { warning = T.sfVisualSold; warningNote = T.sfVisualKept; }
+        else if (res.problem === "draft") { warning = T.sfVisualDraft; warningNote = T.sfVisualKept; }
+        else if (res.problem === "missing") { warning = T.sfVisualMissing; warningNote = T.sfVisualBroken; }
+        else if (res.problem === "unavailable") { warning = T.sfVisualBroken; warningNote = ""; }
+      }
+
+      const v = resolved[slot] || {};
+      const preview = v.img || "";
+      const previewAlt = isManual
+        ? (res && res.productName ? this._pname(res.productName) : (row.altJa || row.altEn || ""))
+        : (v.productName ? this._pname(v.productName) : (v.alt || ""));
+      let caption;
+      if (!isManual) caption = v.productName ? (T.sfVisualAutoBody + " — " + this._pname(v.productName)) : T.sfVisualAutoBody;
+      else if (res && res.sourceType === "custom") caption = T.sfVisualCustom;
+      else if (res && res.productName) caption = this._pname(res.productName);
+      else caption = T.sfVisualBroken;
+
+      return {
+        slotLabel: slotLabels[slot] || slot,
+        modeLabel: isManual ? T.sfVisualManual : T.sfVisualAuto,
+        modeBg: isManual ? "#EEF0EA" : "#F1EFE9",
+        modeFg: isManual ? "#4F5C42" : "#6E6A62",
+        isManual, isOpen,
+        preview, previewAlt,
+        hasPreview: !!preview, noPreview: !preview,
+        caption,
+        hasCount: !!(isManual && res && res.imageIndex != null && res.imageCount),
+        countLabel: (isManual && res && res.imageIndex != null)
+          ? String(T.sfVisualPicked).split("{n}").join(res.imageIndex + 1).split("{total}").join(res.imageCount)
+          : "",
+        hasWarning: !!warning, warning, warningNote,
+        pickLabel: isManual ? T.sfVisualChange : T.sfVisualChoose,
+        onPick: () => this.setState({
+          openSlot: isOpen ? null : slot,
+          pickProduct: res && res.productId != null ? res.productId : (cand[0] != null ? cand[0] : null),
+          customSrc: res && res.sourceType === "custom" ? res.src : ""
+        }),
+        onClose: () => this.setState({ openSlot: null }),
+        onReset: async () => { const ok = await S.clearSpecialVisual(f.id, slot); if (ok) S.toast(T.sfSavedToast, "warning"); },
+        /* Visuals are chosen from the curated candidates — the feature is that
+           set of pieces, so its pictures come from it. */
+        productChoices: cand.map(pid => {
+          const p = S.getProduct(pid);
+          const nm = p ? this._pname(p.name) : (isJa ? "削除された商品" : "Deleted product") + " #" + pid;
+          const thumb = this._thumbOf(p);
+          const current = String(pid) === String(pickPid);
+          return {
+            name: nm,
+            meta: p ? (p.sku + " · " + this._tx(p.category)) : "—",
+            thumb, hasThumb: !!thumb,
+            isCurrent: current,
+            border: current ? "#6D7761" : "#E3DFD7",
+            bg: current ? "#F3F5F0" : "#FFFFFF",
+            onSelect: () => this.setState({ pickProduct: pid })
+          };
+        }),
+        hasImageChoices: pickImages.length > 0,
+        imageChoices: pickImages.map((im, n) => {
+          const current = isManual && res && res.productId === pickPid && res.imageIndex === n;
+          return {
+            thumb: im.thumb || im.url || "",
+            no: String(n + 1).padStart(2, "0"),
+            label: (pickProduct ? this._pname(pickProduct.name) + " — " : "")
+              + String(T.sfVisualPicked).split("{n}").join(n + 1).split("{total}").join(pickImages.length),
+            isCurrent: !!current,
+            border: current ? "#6D7761" : "#E3DFD7",
+            numBg: current ? "#6D7761" : "rgba(255,255,255,0.86)",
+            numFg: current ? "#FFFFFF" : "#77736B",
+            onSelect: async () => {
+              const ok = await S.setSpecialVisual(f.id, slot, { sourceType: "product", productId: pickPid, imageIndex: n });
+              if (ok) { S.toast(T.sfSavedToast, "success"); this.setState({ openSlot: null }); }
+            }
+          };
+        }),
+        customSrc: this.state.customSrc,
+        onCustomSrc: e => this.setState({ customSrc: e.target.value }),
+        onCustomUse: async () => {
+          const src = (this.state.customSrc || "").trim();
+          if (!/^https?:\/\//.test(src)) return;
+          const ok = await S.setSpecialVisual(f.id, slot, { sourceType: "custom", src });
+          if (ok) { S.toast(T.sfSavedToast, "success"); this.setState({ openSlot: null, customSrc: "" }); }
+        }
+      };
+    });
+
+    const overlapLine = this._overlapLine(f, T, isJa);
+    const d = {
+      hasOverlap: !!overlapLine, overlap: overlapLine,
+      needsDate: !!f.enabled && !f.publishAt,
+      stateLabel, stateBg, stateFg,
+      liveLabel: shown ? T.sfShownNow : T.sfNotShown,
+      liveBg: shown ? "#EEF0EA" : "#F1EFE9",
+      liveFg: shown ? "#4F5C42" : "#6E6A62",
+      isShown: !!shown,
+      publicHref: "./#/feature/" + f.slug,
+      titleJa: draft.titleJa, titleEn: draft.titleEn,
+      descJa: draft.descriptionJa, descEn: draft.descriptionEn,
+      category: draft.category, eraLabel: draft.eraLabel,
+      publishAt: this._toLocal(draft.publishAt),
+      unpublishAt: this._toLocal(draft.unpublishAt),
+      onTitleJa: e => this._patch(f, { titleJa: e.target.value }),
+      onTitleEn: e => this._patch(f, { titleEn: e.target.value }),
+      onDescJa: e => this._patch(f, { descriptionJa: e.target.value }),
+      onDescEn: e => this._patch(f, { descriptionEn: e.target.value }),
+      onCategory: e => this._patch(f, { category: e.target.value }),
+      onEra: e => this._patch(f, { eraLabel: e.target.value }),
+      onPublishAt: e => this._patch(f, { publishAt: this._fromLocal(e.target.value) }),
+      onUnpublishAt: e => this._patch(f, { unpublishAt: this._fromLocal(e.target.value) }),
+      candidateCount: String(T.sfCandidateCount).split("{n}").join(cand.length),
+      selected, available, slots,
+      noCandidates: cand.length === 0,
+      toggleLabel: f.enabled ? T.sfDisable : T.sfEnable,
+      toggleLocked: !canPublish,
+      toggleOpacity: canPublish ? 1 : 0.4,
+      toggleBg: f.enabled ? "#FFFFFF" : "#6D7761",
+      toggleFg: f.enabled ? "#77736B" : "#FFFFFF",
+      toggleBorder: f.enabled ? "#DAD5CB" : "#6D7761",
+      onToggle: async () => { const ok = await S.setSpecialFeatureEnabled(f.id, !f.enabled); if (ok) S.toast(T.sfSavedToast, f.enabled ? "warning" : "success"); },
+      onSave: async () => {
+        const id = await S.saveSpecialFeature({
+          id: f.id,
+          titleJa: draft.titleJa, titleEn: draft.titleEn,
+          descriptionJa: draft.descriptionJa, descriptionEn: draft.descriptionEn,
+          category: draft.category, eraLabel: draft.eraLabel,
+          publishAt: draft.publishAt, unpublishAt: draft.unpublishAt
+        });
+        if (id) { this.setState({ draftId: null, draft: null }); S.toast(T.sfSavedToast, "success"); }
+      },
+      onDuplicate: async () => {
+        const id = await S.duplicateSpecialFeature(f.id);
+        if (id) { S.toast(T.sfDuplicatedToast, "success"); this.props.nav("/admin/specials/" + id); }
+      },
+      onDelete: async () => {
+        const ok = await S.confirm({
+          title: T.sfDeleteQ, body: T.sfDeleteBody,
+          accept: T.sfDelete, cancel: T.cancel, tone: "#A2493C"
+        });
+        if (!ok) return;
+        const deleted = await S.deleteSpecialFeature(f.id);
+        if (deleted) { S.toast(T.sfDeletedToast, "error"); this.props.nav("/admin/specials"); }
+      }
+    };
+
+    return Object.assign(base, {
+      isList: false, isDetail: true, found: true, notFound: false, d,
+      onBack: () => { this.setState({ draftId: null, draft: null }); this.props.nav("/admin/specials"); }
+    });
+  }
+}
+</script>
+</body>
+</html>

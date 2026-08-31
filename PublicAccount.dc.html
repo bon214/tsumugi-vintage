@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+      <div style="animation:fadeUp 400ms ease both">
+
+        <sc-if value="{{ vm.isAccount }}" hint-placeholder-val="{{ true }}">
+        <section style="padding:clamp(40px,7vh,90px) clamp(20px,4vw,64px) clamp(64px,10vh,120px);display:flex;flex-direction:column;gap:clamp(34px,5vh,60px);max-width:1120px">
+
+          <div style="display:flex;flex-direction:column;gap:clamp(14px,2vh,20px)">
+            <span style="font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:0.16em;color:#9C978F">{{ vm.t.accCrumb }}</span>
+            <h1 style="margin:0;font-family:'EB Garamond',serif;font-size:clamp(25px,3.2vw,36px);font-weight:400">{{ vm.t.accMy }}</h1>
+            <div style="display:flex;flex-direction:column;gap:4px">
+              <span style="font-family:'EB Garamond',serif;font-size:clamp(19px,2vw,23px);color:#222222">{{ vm.displayName }}</span>
+              <span style="font-family:'IBM Plex Mono',monospace;font-size:12px;color:#6D7761;word-break:break-all">{{ vm.email }}</span>
+            </div>
+          </div>
+
+          <section style="display:flex;flex-direction:column;gap:4px">
+            <div style="display:flex;justify-content:space-between;align-items:baseline;gap:16px;border-bottom:1px solid #C9C2B7;padding-bottom:10px">
+              <h2 style="margin:0;font-family:'IBM Plex Mono',monospace;font-size:11px;font-weight:400;letter-spacing:0.22em;color:#6D7761">{{ vm.ordersHead }}</h2>
+              <span style="font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:0.14em;color:#9C978F">{{ vm.ordersCount }}</span>
+            </div>
+            <sc-if value="{{ vm.noOrders }}" hint-placeholder-val="{{ false }}">
+              <div style="display:flex;flex-direction:column;gap:8px;padding:26px 0 10px;max-width:34em">
+                <p style="margin:0;font-family:'EB Garamond',serif;font-size:20px;color:#4A4740">{{ vm.t.accNoOrders }}</p>
+                <p style="margin:0;font-size:13px;line-height:1.9;color:#9C978F">{{ vm.t.accNoOrdersBody }}</p>
+              </div>
+            </sc-if>
+            <sc-for list="{{ vm.orders }}" as="o" hint-placeholder-count="2">
+              <button type="button" onClick="{{ o.onOpen }}" style="display:flex;flex-wrap:wrap;gap:6px clamp(16px,2.4vw,32px);align-items:baseline;justify-content:space-between;width:100%;text-align:left;border:none;border-bottom:1px solid #E6E0D7;background:transparent;padding:18px 4px;min-height:56px;cursor:pointer;transition:background 300ms ease" style-hover="background:#EFE9E0">
+                <span style="font-family:'IBM Plex Mono',monospace;font-size:12px;letter-spacing:0.08em;color:#222222">{{ o.number }}</span>
+                <span style="font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:0.14em;color:#9C978F">{{ o.dateLabel }}</span>
+                <span style="font-size:13px;color:#4A4740">{{ o.totalLabel }}</span>
+                <span style="font-size:13px;color:{{ o.statusTone }}">{{ o.statusLabel }}</span>
+                <span aria-hidden="true" style="font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:0.14em;color:#6D7761">{{ vm.t.accViewOrder }}</span>
+              </button>
+            </sc-for>
+          </section>
+
+          <section style="display:flex;flex-direction:column;gap:20px">
+            <div style="display:flex;justify-content:space-between;align-items:baseline;gap:16px;border-bottom:1px solid #C9C2B7;padding-bottom:10px">
+              <h2 style="margin:0;font-family:'IBM Plex Mono',monospace;font-size:11px;font-weight:400;letter-spacing:0.22em;color:#6D7761">{{ vm.savedHead }}</h2>
+              <span style="font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:0.14em;color:#9C978F">{{ vm.savedCount }}</span>
+            </div>
+            <sc-if value="{{ vm.noSaved }}" hint-placeholder-val="{{ false }}">
+              <div style="display:flex;flex-direction:column;gap:8px;padding:14px 0 10px;max-width:34em">
+                <p style="margin:0;font-family:'EB Garamond',serif;font-size:20px;color:#4A4740">{{ vm.t.accNoSaved }}</p>
+                <p style="margin:0;font-size:13px;line-height:1.9;color:#9C978F">{{ vm.t.accNoSavedBody }}</p>
+              </div>
+            </sc-if>
+            <sc-if value="{{ vm.hasSaved }}" hint-placeholder-val="{{ true }}">
+              <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,190px),1fr));gap:clamp(18px,2.4vw,32px)">
+                <sc-for list="{{ vm.saved }}" as="p" hint-placeholder-count="4">
+                  <div style="min-width:0;display:flex;flex-direction:column;gap:10px">
+                    <button type="button" onClick="{{ p.onOpen }}" style="border:none;background:#E4DCD1;padding:0;cursor:pointer;position:relative;display:block;width:100%;aspect-ratio:3/4;overflow:hidden">
+                      <img loading="lazy" decoding="async" src="{{ p.thumb }}" alt="{{ p.shot }}" style="width:100%;height:100%;object-fit:cover;display:block;filter:saturate(0.86) sepia(0.1) contrast(1.02);transition:transform 900ms cubic-bezier(0.2,0.7,0.2,1)" style-hover="transform:scale(1.04)">
+                      <sc-if value="{{ p.isSoldOut }}" hint-placeholder-val="{{ false }}">
+                        <span style="position:absolute;left:0;bottom:0;background:rgba(34,34,34,0.86);color:#F8F7F4;font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:0.18em;padding:6px 10px">{{ p.soldOutLabel }}</span>
+                      </sc-if>
+                    </button>
+                    <div style="display:flex;flex-direction:column;gap:3px;min-width:0">
+                      <span style="display:block;font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:0.18em;color:#9C978F">{{ p.brandLine }}</span>
+                      <span style="display:block;font-family:'EB Garamond',serif;font-size:17px;line-height:1.35;color:#222222">{{ p.nameLine }}</span>
+                      <span style="display:block;font-size:13px;color:#4A4740">{{ p.priceLabel }}</span>
+                    </div>
+                    <button type="button" onClick="{{ p.onRemove }}" style="align-self:flex-start;border:none;background:transparent;font-size:12px;color:#9C978F;cursor:pointer;padding:6px 0;min-height:40px" style-hover="color:#222222">{{ vm.t.remove }}</button>
+                  </div>
+                </sc-for>
+              </div>
+            </sc-if>
+          </section>
+
+          <div style="display:grid;grid-template-columns:{{ vm.formCols }};gap:clamp(28px,4vw,56px);align-items:start">
+            <section style="min-width:0;display:flex;flex-direction:column;gap:18px">
+              <h2 style="margin:0;font-family:'IBM Plex Mono',monospace;font-size:11px;font-weight:400;letter-spacing:0.22em;color:#6D7761;border-bottom:1px solid #C9C2B7;padding-bottom:10px">{{ vm.t.accProfile }}</h2>
+              <div style="display:flex;flex-direction:column;gap:7px">
+                <label for="acc-p-name" style="font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:0.16em;color:#6D7761">{{ vm.t.accName }}</label>
+                <input id="acc-p-name" value="{{ vm.pName }}" onChange="{{ vm.onPName }}" autoComplete="name" placeholder="{{ vm.namePlaceholder }}" style="border:1px solid #D9D1C4;background:#FFFFFF;padding:14px;font-size:15px;color:#222222;min-height:50px;width:100%;outline:none" style-focus="border-color:#6D7761">
+              </div>
+              <div style="display:flex;flex-direction:column;gap:7px">
+                <label for="acc-p-email" style="font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:0.16em;color:#6D7761">{{ vm.t.accEmail }}</label>
+                <input id="acc-p-email" value="{{ vm.email }}" readOnly="{{ vm.yes }}" aria-readonly="true" style="border:1px solid #E6E0D7;background:#EFE9E0;padding:14px;font-size:15px;color:#6D7761;min-height:50px;width:100%;outline:none">
+                <span style="font-size:12px;line-height:1.8;color:#9C978F">{{ vm.t.accEmailFixed }}</span>
+              </div>
+              <div style="display:flex;flex-direction:column;gap:7px">
+                <label for="acc-p-phone" style="font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:0.16em;color:#6D7761">{{ vm.phoneLabel }}</label>
+                <input id="acc-p-phone" value="{{ vm.pPhone }}" onChange="{{ vm.onPPhone }}" autoComplete="tel" inputMode="tel" placeholder="03-5843-0000" style="border:1px solid #D9D1C4;background:#FFFFFF;padding:14px;font-size:15px;color:#222222;min-height:50px;width:100%;outline:none" style-focus="border-color:#6D7761">
+              </div>
+              <div style="display:flex;gap:16px;align-items:center;flex-wrap:wrap">
+                <button type="button" onClick="{{ vm.onSaveProfile }}" style="border:none;background:#222222;color:#F8F7F4;font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:0.18em;padding:16px 28px;min-height:48px;white-space:nowrap;cursor:pointer;transition:background 320ms ease" style-hover="background:#6D7761">{{ vm.t.accSave }}</button>
+                <sc-if value="{{ vm.profileSaved }}" hint-placeholder-val="{{ false }}">
+                  <span role="status" style="font-size:13px;color:#4F5C42">{{ vm.t.accSavedNote }}</span>
+                </sc-if>
+              </div>
+            </section>
+
+            <section style="min-width:0;display:flex;flex-direction:column;gap:18px">
+              <h2 style="margin:0;font-family:'IBM Plex Mono',monospace;font-size:11px;font-weight:400;letter-spacing:0.22em;color:#6D7761;border-bottom:1px solid #C9C2B7;padding-bottom:10px">{{ vm.t.accAddress }}</h2>
+              <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,150px),1fr));gap:14px">
+                <div style="display:flex;flex-direction:column;gap:7px;min-width:0">
+                  <label for="acc-a-post" style="font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:0.16em;color:#6D7761">{{ vm.t.accPostal }}</label>
+                  <input id="acc-a-post" value="{{ vm.aPostal }}" onChange="{{ vm.onAPostal }}" autoComplete="postal-code" inputMode="numeric" placeholder="151-0074" style="border:1px solid #D9D1C4;background:#FFFFFF;padding:14px;font-size:15px;color:#222222;min-height:50px;width:100%;outline:none" style-focus="border-color:#6D7761">
+                </div>
+                <div style="display:flex;flex-direction:column;gap:7px;min-width:0">
+                  <label for="acc-a-pref" style="font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:0.16em;color:#6D7761">{{ vm.t.accPrefecture }}</label>
+                  <select id="acc-a-pref" value="{{ vm.aPrefecture }}" onChange="{{ vm.onAPrefecture }}" autoComplete="address-level1" style="border:1px solid #D9D1C4;background:#FFFFFF;padding:14px;font-size:15px;color:#222222;min-height:50px;width:100%;outline:none">
+                    <sc-for list="{{ vm.prefOptions }}" as="o" hint-placeholder-count="10">
+                      <option value="{{ o.v }}">{{ o.t }}</option>
+                    </sc-for>
+                  </select>
+                </div>
+              </div>
+              <div style="display:flex;flex-direction:column;gap:7px">
+                <label for="acc-a-city" style="font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:0.16em;color:#6D7761">{{ vm.t.accCity }}</label>
+                <input id="acc-a-city" value="{{ vm.aCity }}" onChange="{{ vm.onACity }}" autoComplete="address-level2" placeholder="{{ vm.cityPlaceholder }}" style="border:1px solid #D9D1C4;background:#FFFFFF;padding:14px;font-size:15px;color:#222222;min-height:50px;width:100%;outline:none" style-focus="border-color:#6D7761">
+              </div>
+              <div style="display:flex;flex-direction:column;gap:7px">
+                <label for="acc-a-line" style="font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:0.16em;color:#6D7761">{{ vm.t.accAddressLine }}</label>
+                <input id="acc-a-line" value="{{ vm.aAddress }}" onChange="{{ vm.onAAddress }}" autoComplete="address-line1" placeholder="{{ vm.addressPlaceholder }}" style="border:1px solid #D9D1C4;background:#FFFFFF;padding:14px;font-size:15px;color:#222222;min-height:50px;width:100%;outline:none" style-focus="border-color:#6D7761">
+              </div>
+              <div style="display:flex;gap:16px;align-items:center;flex-wrap:wrap">
+                <button type="button" onClick="{{ vm.onSaveAddress }}" style="border:none;background:#222222;color:#F8F7F4;font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:0.18em;padding:16px 28px;min-height:48px;white-space:nowrap;cursor:pointer;transition:background 320ms ease" style-hover="background:#6D7761">{{ vm.t.accSave }}</button>
+                <sc-if value="{{ vm.addressSaved }}" hint-placeholder-val="{{ false }}">
+                  <span role="status" style="font-size:13px;color:#4F5C42">{{ vm.t.accSavedNote }}</span>
+                </sc-if>
+              </div>
+            </section>
+          </div>
+
+          <div style="display:flex;flex-direction:column;gap:12px;padding-top:clamp(14px,2vh,20px);border-top:1px solid #E6E0D7">
+            <button type="button" onClick="{{ vm.onSignOut }}" style="border:1px solid #B8B1A6;background:transparent;font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:0.18em;padding:17px 30px;min-height:52px;width:fit-content;white-space:nowrap;cursor:pointer;color:#222222;transition:background 320ms ease" style-hover="background:#EFE9E0">{{ vm.t.accSignOutCaps }}</button>
+            <span style="font-size:12px;line-height:1.8;color:#9C978F">{{ vm.providerNote }}</span>
+          </div>
+        </section>
+        </sc-if>
+
+        <sc-if value="{{ vm.isDetail }}" hint-placeholder-val="{{ false }}">
+        <section style="padding:clamp(40px,7vh,90px) clamp(20px,4vw,64px) clamp(64px,10vh,120px);display:flex;flex-direction:column;gap:clamp(26px,4vh,44px);max-width:820px">
+          <span style="font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:0.16em;color:#9C978F">{{ vm.detailCrumb }}</span>
+
+          <sc-if value="{{ vm.detailMissing }}" hint-placeholder-val="{{ false }}">
+            <div style="display:flex;flex-direction:column;gap:20px;align-items:flex-start">
+              <h1 style="margin:0;font-family:'EB Garamond',serif;font-size:clamp(25px,3.2vw,36px);font-weight:400">{{ vm.t.accOrderMissing }}</h1>
+              <button type="button" onClick="{{ vm.onBack }}" style="border:1px solid #B8B1A6;background:transparent;font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:0.18em;padding:17px 28px;min-height:52px;white-space:nowrap;cursor:pointer;color:#222222" style-hover="background:#EFE9E0">{{ vm.t.accBackToAccount }}</button>
+            </div>
+          </sc-if>
+
+          <sc-if value="{{ vm.detailFound }}" hint-placeholder-val="{{ true }}">
+            <div style="display:flex;flex-direction:column;gap:clamp(24px,3.5vh,40px)">
+              <div style="display:flex;flex-direction:column;gap:8px">
+                <h1 style="margin:0;font-family:'EB Garamond',serif;font-size:clamp(25px,3.2vw,36px);font-weight:400">{{ vm.dNumber }}</h1>
+                <span style="font-family:'IBM Plex Mono',monospace;font-size:12px;letter-spacing:0.16em;color:#9C978F">{{ vm.dDateLabel }}</span>
+              </div>
+
+              <div style="display:flex;flex-direction:column">
+                <span style="font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:0.22em;color:#6D7761;border-bottom:1px solid #C9C2B7;padding-bottom:10px">{{ vm.t.accOrderItems }}</span>
+                <sc-for list="{{ vm.dItems }}" as="it" hint-placeholder-count="1">
+                  <div style="display:flex;gap:clamp(14px,2vw,22px);padding:20px 0;border-bottom:1px solid #E6E0D7">
+                    <div style="min-width:0;width:clamp(72px,9vw,104px);aspect-ratio:3/4;flex:none;background:#E4DCD1;overflow:hidden"><img loading="lazy" decoding="async" src="{{ it.thumb }}" alt="" style="width:100%;height:100%;object-fit:cover;display:block;filter:saturate(0.86) sepia(0.1) contrast(1.02)"></div>
+                    <div style="display:flex;flex-direction:column;gap:6px;flex:1;min-width:0">
+                      <span style="font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:0.18em;color:#9C978F">{{ it.brandLine }}</span>
+                      <span style="font-family:'EB Garamond',serif;font-size:clamp(19px,2vw,23px);line-height:1.3">{{ it.name }}</span>
+                      <span style="font-size:13px;color:#4A4740">{{ it.priceLabel }}</span>
+                    </div>
+                  </div>
+                </sc-for>
+              </div>
+
+              <div style="display:grid;grid-template-columns:{{ vm.formCols }};gap:clamp(24px,3.5vw,48px);align-items:start">
+                <dl style="margin:0;display:flex;flex-direction:column;gap:14px;min-width:0">
+                  <sc-for list="{{ vm.dRows }}" as="r" hint-placeholder-count="4">
+                    <div style="display:flex;justify-content:space-between;gap:16px;align-items:baseline;border-bottom:1px solid #E6E0D7;padding-bottom:12px">
+                      <dt style="font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:0.16em;color:#6D7761">{{ r.k }}</dt>
+                      <dd style="margin:0;font-size:13px;color:#222222;text-align:right">{{ r.v }}</dd>
+                    </div>
+                  </sc-for>
+                </dl>
+                <div style="min-width:0;display:flex;flex-direction:column;gap:8px;background:#EFE9E0;padding:clamp(18px,2.4vw,26px)">
+                  <span style="font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:0.22em;color:#6D7761">{{ vm.t.accOrderShipTo }}</span>
+                  <sc-for list="{{ vm.dShipping }}" as="line" hint-placeholder-count="3">
+                    <span style="font-size:13px;line-height:1.8;color:#4A4740">{{ line }}</span>
+                  </sc-for>
+                </div>
+              </div>
+
+              <button type="button" onClick="{{ vm.onBack }}" style="border:1px solid #B8B1A6;background:transparent;font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:0.18em;padding:17px 28px;min-height:52px;width:fit-content;white-space:nowrap;cursor:pointer;color:#222222;transition:background 320ms ease" style-hover="background:#EFE9E0">{{ vm.t.accBackToAccount }}</button>
+            </div>
+          </sc-if>
+        </section>
+        </sc-if>
+      </div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;vm&quot;:{&quot;editor&quot;:null,&quot;tsType&quot;:&quot;object&quot;}}">
+/* Customer account view — orders, saved pieces, profile, shipping address, and
+   one order's own detail. Presentational only: every value and handler arrives
+   in the `vm` prop built by TSUMUGI.dc.html, which owns the customer session.
+   The order detail is a customer projection assembled by the store: no internal
+   note, status history or staff field reaches this file. */
+class Component extends DCLogic {
+  renderVals() { return {}; }
+}
+</script>
+</body>
+</html>

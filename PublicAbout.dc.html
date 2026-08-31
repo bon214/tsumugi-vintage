@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+      <div style="animation:fadeUp 400ms ease both">
+        <section style="padding:clamp(40px,7vh,90px) clamp(20px,4vw,64px) clamp(36px,6vh,80px);display:flex;flex-direction:column;gap:clamp(28px,5vh,56px)">
+          <span style="font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:0.16em;color:#9C978F">{{ vm.t.crumbAbout }}</span>
+          <h1 style="margin:0;font-family:'EB Garamond',serif;font-size:clamp(25px,3.2vw,36px);line-height:1.2;font-weight:400;max-width:1000px;text-wrap:pretty">{{ vm.t.aboutHero }}</h1>
+          <div style="min-width:0;position:relative;aspect-ratio:16/10;min-height:clamp(300px,42vh,420px);background:#E4DCD1;overflow:hidden;animation:reveal 1.4s ease-out both"><img decoding="async" src="https://images.unsplash.com/photo-1441984904996-e0b6ba687e04?auto=format&amp;fit=crop&amp;q=72&amp;w=1600" alt="The shop interior, garments on a rail in morning light" style="width:100%;height:100%;object-fit:cover;display:block;filter:saturate(0.86) sepia(0.1) contrast(1.02)"></div>
+        </section>
+
+        <section style="display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:clamp(28px,5vw,96px);padding:0 clamp(20px,4vw,64px) clamp(56px,9vh,120px)">
+          <div style="display:flex;flex-direction:column;gap:20px">
+            <h2 style="margin:0;font-family:'EB Garamond',serif;font-size:clamp(24px,3vw,34px);line-height:1.28;font-weight:400">{{ vm.t.nothingNew }}</h2>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:20px">
+            <p style="margin:0;font-size:15px;line-height:2;color:#4A4740">{{ vm.t.aboutP1 }}</p>
+            <p style="margin:0;font-size:15px;line-height:2;color:#4A4740;white-space:pre-line">{{ vm.t.aboutP2 }}</p>
+          </div>
+        </section>
+
+        <section style="background:#EFE9E0;padding:clamp(48px,9vh,110px) clamp(20px,4vw,64px);display:flex;flex-direction:column;gap:clamp(28px,5vh,56px)">
+          <div style="display:flex;align-items:flex-end;justify-content:space-between;gap:16px;border-bottom:1px solid #DFD6C9;padding-bottom:18px">
+            <h2 style="margin:0;font-family:'EB Garamond',serif;font-size:clamp(24px,3vw,34px);font-weight:400">{{ vm.t.howSelected }}</h2>
+          </div>
+          <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:clamp(24px,3vw,40px)">
+            <sc-for list="{{ vm.steps }}" as="st" hint-placeholder-count="4">
+              <div style="min-width:0;display:flex;flex-direction:column;gap:14px">
+                <span style="font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:0.2em;color:#6D7761">{{ st.n }}</span>
+                <div style="min-width:0;position:relative;aspect-ratio:4/3;background:#E4DCD1;overflow:hidden"><img loading="lazy" decoding="async" src="{{ st.img }}" alt="{{ st.shot }}" style="width:100%;height:100%;object-fit:cover;display:block;filter:saturate(0.86) sepia(0.1) contrast(1.02)"></div>
+                <span style="font-family:'EB Garamond',serif;font-size:clamp(19px,2vw,23px)">{{ st.title }}</span>
+                <p style="margin:0;font-size:13px;line-height:1.9;color:#4A4740;white-space:pre-line">{{ st.body }}</p>
+              </div>
+            </sc-for>
+          </div>
+        </section>
+
+        <section style="padding:clamp(48px,9vh,120px) clamp(20px,4vw,64px);display:flex;flex-direction:column;gap:clamp(24px,4vh,48px)">
+          <h2 style="margin:0;font-family:'EB Garamond',serif;font-size:clamp(24px,3vw,34px);font-weight:400">{{ vm.t.qualityStandards }}</h2>
+          <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:clamp(24px,3vw,40px)">
+            <sc-for list="{{ vm.standards }}" as="q" hint-placeholder-count="4">
+              <div style="min-width:0;display:flex;flex-direction:column;gap:0;padding:0 0 26px">
+                <span style="font-family:'EB Garamond',serif;font-size:clamp(19px,2vw,23px);padding-bottom:12px;border-bottom:1px solid #E6E0D7">{{ q.title }}</span>
+                <p style="margin:0;padding-top:14px;font-size:13px;line-height:1.9;color:#4A4740;white-space:pre-line">{{ q.body }}</p>
+              </div>
+            </sc-for>
+          </div>
+        </section>
+
+        <section style="background:#EFE9E0;display:grid;grid-template-columns:repeat(auto-fit,minmax(340px,1fr));align-items:stretch">
+          <div style="padding:clamp(48px,9vh,120px) clamp(20px,5vw,80px);display:flex;flex-direction:column;gap:26px;justify-content:center">
+            <h2 style="margin:0;font-family:'EB Garamond',serif;font-size:clamp(24px,3vw,34px);line-height:1.28;font-weight:400">{{ vm.t.slowlyOnce }}</h2>
+            <p style="margin:0;font-size:15px;line-height:2;color:#4A4740;white-space:pre-line">{{ vm.t.slowlyBody }}</p>
+          </div>
+          <div style="min-width:0;width:100%;align-self:start;position:relative;aspect-ratio:4/5;min-height:clamp(320px,58vh,620px);background:#E4DCD1;overflow:hidden"><img loading="lazy" decoding="async" src="https://images.unsplash.com/photo-1490481651871-ab68de25d43d?auto=format&amp;fit=crop&amp;q=72&amp;w=1100" alt="Studio rail of neutral garments in morning light" style="width:100%;height:100%;object-fit:cover;display:block;filter:saturate(0.86) sepia(0.1) contrast(1.02)"></div>
+        </section>
+
+        <section style="padding:clamp(48px,9vh,110px) clamp(20px,4vw,64px);display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:clamp(28px,5vw,80px);align-items:center">
+          <div style="min-width:0;align-self:start;display:flex;flex-direction:column;gap:14px">
+            <div style="display:flex;flex-direction:column;gap:6px">
+              <span style="font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:0.24em;color:#6D7761">{{ vm.t.curatorHead }}</span>
+              <h2 style="margin:0;font-family:'EB Garamond',serif;font-size:clamp(19px,2vw,23px);line-height:1.25;font-weight:400">{{ vm.t.kenjiAramaki }}</h2>
+              <sc-if value="{{ vm.showFounderRoman }}" hint-placeholder-val="{{ false }}">
+                <span style="font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:0.16em;color:#9C978F">{{ vm.founderRoman }}</span>
+              </sc-if>
+            </div>
+            <div style="min-width:0;width:100%;position:relative;aspect-ratio:4/5;background:#E4DCD1;overflow:hidden"><img loading="lazy" decoding="async" src="{{ vm.founderImage }}" alt="R. Seo checking a garment at the rack in the shop, face out of frame" style="width:100%;height:100%;object-fit:cover;display:block;filter:saturate(0.86) sepia(0.1) contrast(1.02)"></div>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:22px">
+            <p style="margin:0;font-size:15px;line-height:2;color:#4A4740;white-space:pre-line;text-wrap:pretty">{{ vm.t.curatorQuote }}</p>
+          </div>
+        </section>
+      </div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;vm&quot;:{&quot;editor&quot;:null,&quot;tsType&quot;:&quot;{ t: Record&lt;string,string&gt;; founderImage: string; steps: any[]; standards: any[] }&quot;}}">
+/* About page view. Presentational only: every value arrives in the `vm` prop
+   built by TSUMUGI.dc.html (labels, the four process steps, the standards list).
+   No state, no store binding, no listeners — the shell owns all of those. */
+class Component extends DCLogic {
+  renderVals() { return {}; }
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,99 @@
+DC differential — interpreted (support.js) vs compiled (generated/)
+Recorded: 2026-08-31, in the editing environment, via shots/dc-diff.html.
+
+WHAT THIS IS
+Both runtimes render the same application at the same route in the same
+viewport, and the resulting DOM is compared node by node: tag order, text,
+attributes, ARIA, inline style declarations, live value/checked/disabled.
+Normalised away (each an intended difference between the runtimes, not a
+defect being hidden): the .sc-interp span the authoring runtime wraps every
+resolved hole in, the display:contents wrapper it puts around each child
+mount, classes beginning "sc", data-dc-tpl / data-sc-name / data-dc-line, and
+the digits in React-generated ids. Everything else is compared exactly.
+
+RESULT: 33 comparisons, 0 differences. 0 console errors and 0 React warnings
+on either side.
+
+— storefront ————————————————————————————————
+PASS  #/                                home (hero, featured, journal strip)   (240 nodes)
+PASS  #/shop                            shop — full catalogue   (877 nodes)
+PASS  #/product/1                       product detail   (215 nodes)
+PASS  #/product/999                     product — not found (error state)   (87 nodes)
+PASS  #/journal                         journal index   (217 nodes)
+PASS  #/journal/august-arrivals-2026    article   (177 nodes)
+PASS  #/about                           about   (180 nodes)
+PASS  #/contact                         contact (form controls)   (160 nodes)
+PASS  #/cart                            cart — empty state   (87 nodes)
+PASS  #/checkout                        checkout — step 1 (inputs, value/checked)   (106 nodes)
+PASS  #/auth                            sign-in (pre-auth)   (87 nodes)
+PASS  #/account                         account (gated)   (117 nodes)
+
+— viewport widths ———————————————————————————
+PASS  #/ @390px                         responsive layout   (247 nodes)
+PASS  #/shop @390px                     responsive layout   (498 nodes)
+PASS  #/product/1 @390px                responsive layout   (208 nodes)
+PASS  #/ @768px                         responsive layout   (255 nodes)
+PASS  #/shop @768px                     responsive layout   (506 nodes)
+
+— interaction (event handlers must produce the same result) ——
+PASS  click first in-app shop link      → #/feature/light-outerwear   (187 nodes)
+PASS  click cart button                 in-place state change   (900 nodes)
+PASS  click search button               in-place state change   (939 nodes)
+PASS  click sort control                in-place state change   (899 nodes)
+PASS  type into contact field           controlled input round-trip   (160 nodes)
+
+— pseudo-state CSS ——————————————————————————
+PASS  pseudo rules: every interpreted rule present in the compiled sheet
+      (interpreted 18 this session, compiled 46 total, 28 not yet exercised)
+      Containment, not equality: the authoring runtime inserts a rule the first
+      time a component needing it renders, so its sheet only holds what the
+      session visited; the compiled sheet is the whole application's.
+
+— console —————————————————————————————————
+PASS  console: interpreted 0, compiled 0
+
+— admin console ——————————————————————————————
+PASS  admin #/admin (pre-auth)          sign-in screen   (436 nodes)
+PASS  admin after guest sign-in         authenticated dashboard   (458 nodes)
+PASS  admin #/admin/orders              console screen   (110 nodes)
+PASS  admin #/admin/products            console screen   (531 nodes)
+PASS  admin #/admin/customers           console screen   (110 nodes)
+PASS  admin #/admin/news                console screen   (435 nodes)
+PASS  admin #/admin/featured            console screen   (345 nodes)
+PASS  admin #/admin/specials            console screen   (177 nodes)
+
+— guest read-only lock (security-relevant) ————————
+PASS  guest lock on #/admin/products (interpreted 24/36, compiled 24/36 buttons disabled)
+
+THREE HARNESS DEFECTS FOUND AND FIXED WHILE GETTING HERE
+Recorded because each produced a red result that was NOT a compiler fault, and
+a reader should know the green above was not obtained by loosening the test:
+
+1. Admin routes. The console namespaces every screen under #/admin/... — the
+   first version navigated to #/orders, which routes nowhere, so four "console
+   screen" comparisons were silently comparing the dashboard with itself
+   (identical 436-node counts gave it away). Fixed: real routes, and the node
+   counts now differ per screen (110 / 531 / 435 / 345 / 177).
+
+2. Guest-lock race. The console's read-only lock is imperative DOM work driven
+   by a debounced MutationObserver, landing 600–1000 ms after render. The two
+   frames were navigated one after the other, so one was sampled before its
+   lock and one after — reporting a difference that reversed polarity depending
+   on which frame won. Measured on both runtimes: identical convergence, 1/36
+   disabled at 300 ms rising to 24/36 by ~1 s on each. Fixed: both frames
+   navigate together, then wait on the lock itself (awaitGuestLock) rather than
+   on a timer.
+
+3. Hero rotation. The home hero advances every 7 s, so frames mounted seconds
+   apart sat on different slides. Fixed: both driven to slide 01 before
+   comparing.
+
+WHAT THIS DOES NOT COVER
+· The compiled side resolves react / react-dom / @supabase/supabase-js through
+  an esm.sh import map, because vendor/ requires npm and npm is not available
+  here. The shipped shells point the same three specifiers at local files. The
+  library CODE is therefore the same; its ORIGIN is not what production uses.
+· Post-authentication admin states beyond the guest role. Guest is the only
+  session obtainable without a live Supabase project.
+· Order placement, contact submission and anything else that requires the Edge
+  Functions, which have never been deployed.

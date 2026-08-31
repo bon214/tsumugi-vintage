@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>TSUMUGI QA harness</title>
+<style>
+  body { margin: 0; font: 12px/1.5 monospace; background: #111; color: #eee; display: flex; }
+  #frameWrap { flex: none; overflow: hidden; border-right: 2px solid #444; }
+  iframe { border: 0; display: block; background: #fff; }
+  #log { flex: 1; padding: 8px 10px; white-space: pre-wrap; overflow: auto; max-height: 100vh; }
+  .bad { color: #ff8b7a; }
+  .ok { color: #9fe0a0; }
+</style>
+</head>
+<body>
+<div id="frameWrap"><iframe id="f" src="../TSUMUGI.dc.html"></iframe></div>
+<pre id="log">ready</pre>
+<script>
+const f = document.getElementById("f");
+const wrap = document.getElementById("frameWrap");
+const logEl = document.getElementById("log");
+let lines = [];
+const errors = [];
+const say = s => { lines.push(s); logEl.textContent = lines.join("\n"); };
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+
+// visual sizing: keep layout at the real width, scale down to fit the pane
+function setWidth(w, h, scale) {
+  f.style.width = w + "px";
+  f.style.height = (h || 900) + "px";
+  const s = scale || Math.min(1, 640 / w);
+  f.style.transform = "scale(" + s + ")";
+  f.style.transformOrigin = "0 0";
+  wrap.style.width = Math.round(w * s) + "px";
+  wrap.style.height = Math.round((h || 900) * s) + "px";
+}
+
+function hookErrors() {
+  const w = f.contentWindow;
+  if (!w || w.__hooked) return;
+  w.__hooked = true;
+  w.addEventListener("error", e => errors.push("ERR " + e.message));
+  const ce = w.console.error;
+  w.console.error = function () { errors.push("console.error: " + [].join.call(arguments, " ").slice(0, 160)); ce.apply(w.console, arguments); };
+}
+
+function measure(label) {
+  const w = f.contentWindow, d = w.document;
+  const iw = w.innerWidth;
+  const de = d.documentElement;
+  const hOver = de.scrollWidth - iw;
+  const header = d.querySelector("header"), footer = d.querySelector("footer"), main = d.querySelector("main");
+  const wide = [];
+  d.querySelectorAll("main *, header *, footer *").forEach(el => {
+    const r = el.getBoundingClientRect();
+    if (r.width > 0 && (r.right > iw + 1.5 || r.left < -1.5)) {
+      const p = el.parentElement;
+      wide.push(el.tagName.toLowerCase() + "(" + Math.round(r.left) + "→" + Math.round(r.right) + ")" + (p ? "<" + p.tagName.toLowerCase() : ""));
+    }
+  });
+  const mainH = main ? Math.round(main.getBoundingClientRect().height) : 0;
+  const bad = hOver > 1 || !header || !footer || mainH < 200 || wide.length;
+  say((bad ? "  ✗ " : "  ✓ ") + label.padEnd(26) +
+      " iw=" + iw + " scrollW=" + de.scrollWidth + " mainH=" + mainH +
+      " hdr=" + (header ? "y" : "n") + " ftr=" + (footer ? "y" : "n") +
+      (wide.length ? "  OVERFLOW[" + wide.length + "]: " + wide.slice(0, 4).join(", ") : ""));
+  return !bad;
+}
+
+const ROUTES = [["#/", "home"], ["#/about", "about"], ["#/shop", "shop"], ["#/product/1", "product"],
+                ["#/journal", "journal"], ["#/contact", "contact"], ["#/cart", "cart"],
+                ["#/checkout/information", "checkout"]];
+
+async function goto(hash) {
+  const w = f.contentWindow;
+  w.location.hash = hash;
+  // 220ms route fade + up to 1.4s hero reveal animation must finish before measuring
+  await sleep(1750);
+  w.scrollTo(0, 0);
+  await sleep(150);
+}
+
+async function runWidth(width) {
+  setWidth(width, 900);
+  hookErrors();
+  await sleep(700);
+  say("── width " + width + " ──");
+  let pass = 0;
+  for (const [hash, name] of ROUTES) {
+    await goto(hash);
+    if (measure(name)) pass++;
+  }
+  say("  " + pass + "/" + ROUTES.length + " clean at " + width + (errors.length ? "  ERRORS: " + errors.join(" | ") : ""));
+}
+
+async function runArticle(width) {
+  setWidth(width, 900);
+  await sleep(300);
+  const w = f.contentWindow;
+  // first published article from the store
+  const slug = w.TSUMUGI_STORE.publicNews()[0];
+  say("── article deep link (" + width + "): " + (slug ? slug.type + "/" + slug.slug : "none") + " ──");
+  if (slug) { await goto("#/" + slug.type + "/" + slug.slug); measure("article"); }
+}
+
+/* ---------- interaction helpers ---------- */
+const D = () => f.contentWindow.document;
+const W = () => f.contentWindow;
+const txt = el => (el ? (el.innerText || el.textContent || "").replace(/\s+/g, " ").trim() : "");
+function setInput(el, value) {
+  const proto = el.tagName === "SELECT" ? HTMLSelectElement.prototype
+    : el.tagName === "TEXTAREA" ? HTMLTextAreaElement.prototype : HTMLInputElement.prototype;
+  const setter = Object.getOwnPropertyDescriptor(proto, "value").set;
+  setter.call(el, value);
+  el.dispatchEvent(new f.contentWindow.Event("input", { bubbles: true }));
+  el.dispatchEvent(new f.contentWindow.Event("change", { bubbles: true }));
+}
+const byText = (sel, s) => [...D().querySelectorAll(sel)].find(e => txt(e).toUpperCase().includes(s.toUpperCase()));
+const shopInput = () => [...D().querySelectorAll('main input[type="search"]')][0];
+const grid = () => D().querySelectorAll("main article").length;
+const showing = () => txt([...D().querySelectorAll("main span")].find(e => /SHOWING|点を表示/.test(txt(e))));
+const chips = () => [...D().querySelectorAll("main aside button")].filter(b => /✕/.test(txt(b)));
+
+async function qaShop() {
+  setWidth(1440, 900); await sleep(400);
+  await goto("#/shop");
+  say("── Shop QA @1440 ──");
+  say("  baseline cards=" + grid() + "  " + showing());
+  const inp = shopInput();
+  setInput(inp, "wool"); await sleep(700);
+  say("  query 'wool'      cards=" + grid() + "  " + showing());
+  setInput(inp, "WOOL"); await sleep(700);
+  say("  query 'WOOL'      cards=" + grid() + "  " + showing() + "   (case-insensitive if equal)");
+  setInput(inp, "zzzzz"); await sleep(700);
+  const empty = byText("main p", "") && D().querySelector("main p");
+  say("  query 'zzzzz'     cards=" + grid() + "  empty-copy=\"" + txt(D().querySelector("main p")) + "\"");
+  setInput(inp, ""); await sleep(700);
+  say("  cleared           cards=" + grid() + "  " + showing());
+  // filter chips: click first option of two different groups
+  const groups = [...D().querySelectorAll("main aside > div")];
+  const g1 = groups.find(g => txt(g).length), opts = g => [...g.querySelectorAll("button")];
+  const first = opts(groups[1] || groups[0])[0];
+  say("  click filter A: " + txt(first));
+  first.click(); await sleep(700);
+  const g2opts = opts(groups[2] || groups[1]);
+  const second = g2opts[0];
+  say("  click filter B: " + txt(second));
+  second.click(); await sleep(700);
+  say("  after 2 filters   cards=" + grid() + "  chips=" + chips().length + " [" + chips().map(txt).join(" | ") + "]  " + showing());
+  const before = chips().map(txt);
+  chips()[0].click(); await sleep(700);
+  say("  removed chip 1    cards=" + grid() + "  chips=" + chips().length + " [" + chips().map(txt).join(" | ") + "]  " + showing());
+  say("  retained other filter: " + (chips().length === 1 && before[1] === chips().map(txt)[0] ? "YES" : "chips now " + chips().map(txt).join(",")));
+  const clear = byText("main aside button", "CLEAR");
+  if (clear) { clear.click(); await sleep(600); say("  clear all         cards=" + grid() + "  chips=" + chips().length); }
+}
+
+async function qaFlow() {
+  setWidth(1280, 900); await sleep(300);
+  say("── Public end-to-end flow @1280 ──");
+  await goto("#/"); say("  home           " + (D().querySelectorAll("main article").length ? "arrivals rendered" : "NO ARRIVALS"));
+  await goto("#/shop");
+  const card = D().querySelector("main article button");
+  card.click(); await sleep(1200);
+  say("  product        hash=" + W().location.hash + " title=" + txt(D().querySelector("main h1")).slice(0, 40));
+  const add = byText("main button", "ADD TO CART") || byText("main button", "カートに入れる");
+  add.click(); await sleep(900);
+  say("  add to cart    header=" + txt(byText("header button", "CART")) + "  drawer=" + (D().querySelector('[role="dialog"], div[style*="z-index:60"]') ? "open" : "?"));
+  const esc = new (W().KeyboardEvent)("keydown", { key: "Escape", bubbles: true });
+  W().dispatchEvent(esc); await sleep(400);
+  await goto("#/cart");
+  say("  cart page      lines=" + D().querySelectorAll("main img").length + " total=" + txt([...D().querySelectorAll("main span")].find(e => /¥/.test(txt(e)))));
+  const co = byText("main button", "CHECKOUT") || byText("main button", "レジ");
+  if (co) { co.click(); await sleep(1000); }
+  say("  checkout       hash=" + W().location.hash + " fields=" + D().querySelectorAll("main input").length);
+  const v = { "co-email": "qa@example.com", "co-firstName": "Yuki", "co-lastName": "Tanaka", "co-postalCode": "151-0074", "co-city": "Shibuya-ku", "co-address": "4-11-6 Kirigaya", "co-phone": "03-5843-0000" };
+  for (const id in v) { const el = D().getElementById(id); if (el) setInput(el, v[id]); await sleep(60); }
+  const pref = D().getElementById("co-prefecture");
+  if (pref) setInput(pref, pref.options[1] ? pref.options[1].value : "");
+  await sleep(500);
+  const cont = byText("main button", "CONTINUE") || byText("main button", "配送");
+  if (cont) { cont.click(); await sleep(1100); }
+  say("  → delivery     hash=" + W().location.hash + " err=" + (txt(D().querySelector('main [style*="A2493C"]')) || "none"));
+  const cont2 = byText("main button", "CONTINUE") || byText("main button", "確認");
+  if (cont2) { cont2.click(); await sleep(1100); }
+  say("  → review       hash=" + W().location.hash + " place-btn=" + txt(byText("main button", "PLACE")) + " blocks=" + D().querySelectorAll("main section").length);
+  say("  (stopped before placing the order — no new order data)");
+}
+
+async function qaLang() {
+  setWidth(1280, 900); await sleep(300);
+  say("── Language QA @1280 ──");
+  for (const [hash, name] of [["#/", "home"], ["#/shop", "shop"], ["#/product/1", "product"], ["#/checkout/information", "checkout"]]) {
+    await goto(hash);
+    const en = txt(D().querySelector("main h1, main span")).slice(0, 34);
+    const btn = byText("header button", "日本語") || byText("header button", "EN");
+    btn.click(); await sleep(900);
+    const ja = txt(D().querySelector("main h1, main span")).slice(0, 34);
+    const back = byText("header button", "EN") || byText("header button", "日本語");
+    back.click(); await sleep(900);
+    const en2 = txt(D().querySelector("main h1, main span")).slice(0, 34);
+    say("  " + name.padEnd(9) + " EN=\"" + en + "\" → JA=\"" + ja + "\" → EN=\"" + en2 + "\"  " + (en === en2 && ja !== en ? "✓" : "✗"));
+  }
+}
+
+async function qaDeep() {
+  say("── Deep-link reload QA ──");
+  const slug = W().TSUMUGI_STORE.publicNews()[0];
+  const list = ["#/", "#/about", "#/shop", "#/product/1", "#/journal", "#/" + slug.type + "/" + slug.slug, "#/contact", "#/cart", "#/checkout/information"];
+  for (const hash of list) {
+    // a query bust is required: changing only the hash would not reload the document
+    const n = Date.now();
+    await new Promise(res => { f.onload = () => res(); f.src = "../TSUMUGI.dc.html?qa=" + n + hash; });
+    await sleep(2200);
+    const d = D();
+    const main = d.querySelector("main");
+    const h = txt(main).slice(0, 46);
+    const is404 = /NOT IN THE ARCHIVE|アーカイブにありません/i.test(txt(main));
+    const lang = d.documentElement.lang || "(unset)";
+    say("  " + hash.padEnd(30) + " mainH=" + Math.round(main.getBoundingClientRect().height) + " 404=" + is404 + " lang=" + lang + "  \"" + h + "\"");
+  }
+  f.onload = null;
+}
+
+async function qaAdmin() {
+  setWidth(1440, 900);
+  say("── Admin regression ──");
+  await new Promise(res => { f.onload = () => res(); f.src = "../TSUMUGI%20Admin.dc.html#/admin"; });
+  await sleep(2600);
+  hookErrors();
+  say("  loaded: " + txt(D().querySelector("main")).slice(0, 80));
+}
+window.qaShop = qaShop; window.qaFlow = qaFlow; window.qaLang = qaLang; window.qaDeep = qaDeep; window.qaAdmin = qaAdmin;
+window.qaWidth = runWidth;
+window.qaArticle = runArticle;
+window.qaClear = () => { lines = []; logEl.textContent = ""; };
+window.qaErrors = () => errors;
+window.qaFrame = f;
+setWidth(1440, 900);
+</script>
+</body>
+</html>

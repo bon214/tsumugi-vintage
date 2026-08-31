@@ -1,0 +1,1511 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<sc-if value="{{ notFound }}" hint-placeholder-val="{{ false }}">
+  <div style="background:#FFFFFF;border:1px solid #E3DFD7;padding:56px 24px;display:flex;flex-direction:column;align-items:center;gap:12px;text-align:center">
+    <h2 style="margin:0;font-size:16px;font-weight:600">{{ t.kProductNotFound }}</h2>
+    <p style="margin:0;max-width:360px;font-size:13.5px;line-height:1.65;color:#77736B">{{ t.kThisPieceMayHaveBeenDeletedOrTheLi }}</p>
+    <button type="button" onClick="{{ backToList }}" style="border:1px solid #DAD5CB;background:#FFFFFF;padding:10px 16px;min-height:44px;font-size:13.5px;white-space:nowrap;cursor:pointer" style-hover="border-color:#6D7761;color:#6D7761">{{ t.kBackToProducts }}</button>
+  </div>
+</sc-if>
+
+<sc-if value="{{ isList }}" hint-placeholder-val="{{ true }}">
+  <div style="display:flex;flex-direction:column;gap:14px">
+
+    <div style="background:#FFFFFF;border:1px solid #E3DFD7;padding:13px 14px;display:flex;flex-direction:column;gap:12px">
+      <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center">
+        <div style="position:relative;flex:1 1 240px;min-width:0">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#9C978F" stroke-width="1.7" stroke-linecap="round" aria-hidden="true" style="position:absolute;left:11px;top:50%;transform:translateY(-50%)"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-3.5-3.5"></path></svg>
+          <label for="pr-search" style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)">{{ t.kSearchProducts }}</label>
+          <input id="pr-search" type="search" placeholder="{{ t.kSearchNameSkuBrandMaterial }}" value="{{ query }}" onChange="{{ onQuery }}" style="width:100%;border:1px solid #DAD5CB;background:#FCFBF9;padding:10px 12px 10px 33px;font-size:13.5px;min-height:42px" style-focus="border-color:#6D7761;background:#FFFFFF">
+        </div>
+        <div style="display:flex;align-items:center;gap:7px">
+          <label for="pr-sort" style="font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:0.16em;color:#8C887F">{{ t.kSort }}</label>
+          <select id="pr-sort" value="{{ sort }}" onChange="{{ onSort }}" style="appearance:none;-webkit-appearance:none;border:1px solid #DAD5CB;background:#FCFBF9 url('data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%2211%22 height=%227%22 viewBox=%220 0 11 7%22 fill=%22none%22 stroke=%22%238C887F%22 stroke-width=%221.6%22 stroke-linecap=%22round%22%3E%3Cpath d=%22M1 1.5 5.5 5.5 10 1.5%22/%3E%3C/svg%3E') no-repeat right 12px center;padding:9px 34px 9px 12px;font-size:13px;min-height:42px" style-focus="border-color:#6D7761">
+            <sc-for list="{{ sortOptions }}" as="o" hint-placeholder-count="6">
+              <option value="{{ o.value }}">{{ o.label }}</option>
+            </sc-for>
+          </select>
+        </div>
+        <button type="button" onClick="{{ toggleFilters }}" aria-expanded="{{ filtersOpen }}" style="display:flex;align-items:center;gap:8px;border:1px solid #DAD5CB;background:{{ filterBtnBg }};padding:9px 13px;min-height:42px;font-size:13px;white-space:nowrap;cursor:pointer" style-hover="border-color:#6D7761">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" aria-hidden="true"><path d="M3 5h18M6 12h12M10 19h4"></path></svg>
+          <span>{{ t.kFilters }}</span>
+          <sc-if value="{{ hasFilters }}" hint-placeholder-val="{{ false }}">
+            <span style="font-family:'IBM Plex Mono',monospace;font-size:11px;background:#6D7761;color:#FFFFFF;border-radius:9px;padding:1px 6px">{{ filterCount }}</span>
+          </sc-if>
+        </button>
+      </div>
+
+      <sc-if value="{{ filtersOpen }}" hint-placeholder-val="{{ false }}">
+        <div style="border-top:1px solid #EDEAE3;padding-top:13px;display:grid;grid-template-columns:repeat(auto-fill,minmax(168px,1fr));gap:11px">
+          <sc-for list="{{ filterSelects }}" as="f" hint-placeholder-count="8">
+            <div style="display:flex;flex-direction:column;gap:5px;min-width:0">
+              <label for="{{ f.id }}" style="font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:0.14em;color:#8C887F">{{ f.label }}</label>
+              <select id="{{ f.id }}" value="{{ f.value }}" onChange="{{ f.onChange }}" style="appearance:none;-webkit-appearance:none;width:100%;border:1px solid #DAD5CB;background:#FCFBF9 url('data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%2211%22 height=%227%22 viewBox=%220 0 11 7%22 fill=%22none%22 stroke=%22%238C887F%22 stroke-width=%221.6%22 stroke-linecap=%22round%22%3E%3Cpath d=%22M1 1.5 5.5 5.5 10 1.5%22/%3E%3C/svg%3E') no-repeat right 12px center;padding:9px 34px 9px 12px;font-size:13px;min-height:42px" style-focus="border-color:#6D7761">
+                <sc-for list="{{ f.options }}" as="o" hint-placeholder-count="4">
+                  <option value="{{ o.v }}">{{ o.t }}</option>
+                </sc-for>
+              </select>
+            </div>
+          </sc-for>
+          <div style="display:flex;flex-direction:column;gap:5px;min-width:0">
+            <label for="pr-created" style="font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:0.14em;color:#8C887F">{{ t.kCreatedAfter }}</label>
+            <input id="pr-created" type="date" value="{{ createdAfter }}" onChange="{{ onCreatedAfter }}" style="width:100%;border:1px solid #DAD5CB;background:#FCFBF9;padding:9px 10px;font-size:13px;min-height:42px" style-focus="border-color:#6D7761">
+          </div>
+          <div style="display:flex;flex-direction:column;gap:5px;min-width:0">
+            <label for="pr-updated" style="font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:0.14em;color:#8C887F">{{ t.kUpdatedAfter }}</label>
+            <input id="pr-updated" type="date" value="{{ updatedAfter }}" onChange="{{ onUpdatedAfter }}" style="width:100%;border:1px solid #DAD5CB;background:#FCFBF9;padding:9px 10px;font-size:13px;min-height:42px" style-focus="border-color:#6D7761">
+          </div>
+          <div style="display:flex;align-items:flex-end">
+            <button type="button" onClick="{{ clearFilters }}" style="border:1px solid #DAD5CB;background:#FFFFFF;padding:9px 13px;min-height:42px;font-size:13px;white-space:nowrap;cursor:pointer;width:100%" style-hover="border-color:#A2493C;color:#A2493C">{{ t.kClearAll }}</button>
+          </div>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{ hasFilters }}" hint-placeholder-val="{{ false }}">
+        <div style="display:flex;gap:7px;flex-wrap:wrap;border-top:1px solid #EDEAE3;padding-top:11px">
+          <sc-for list="{{ chips }}" as="c" hint-placeholder-count="2">
+            <button type="button" onClick="{{ c.onClick }}" style="display:flex;align-items:center;gap:7px;border:1px solid #D6DAcc;background:#EEF0EA;color:#4F5C42;padding:5px 9px;font-size:12px;cursor:pointer;border-radius:2px" style-hover="background:#E4E8DC">
+              <span>{{ c.label }}</span>
+              <span aria-hidden="true" style="font-size:13px;line-height:1">×</span>
+            </button>
+          </sc-for>
+        </div>
+      </sc-if>
+    </div>
+
+    <sc-if value="{{ hasSelection }}" hint-placeholder-val="{{ false }}">
+      <div role="toolbar" aria-label="{{ t.kBulkActions }}" style="position:sticky;top:8px;z-index:20;background:#3F4A35;color:#FFFFFF;padding:10px 14px;display:flex;gap:9px;flex-wrap:wrap;align-items:center;box-shadow:0 6px 20px rgba(40,45,30,0.18)">
+        <span style="font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:0.12em">{{ selectionLabel }}</span>
+        <span aria-hidden="true" style="width:1px;height:20px;background:rgba(255,255,255,0.25)"></span>
+        <button type="button" onClick="{{ bulkPublish }}" disabled="{{ bulkLocked }}" style="border:1px solid rgba(255,255,255,0.35);background:transparent;color:#FFFFFF;padding:7px 12px;min-height:38px;font-size:12.5px;cursor:pointer" style-hover="background:rgba(255,255,255,0.14)">{{ t.kPublish }}</button>
+        <button type="button" onClick="{{ bulkUnpublish }}" disabled="{{ bulkLocked }}" style="border:1px solid rgba(255,255,255,0.35);background:transparent;color:#FFFFFF;padding:7px 12px;min-height:38px;font-size:12.5px;cursor:pointer" style-hover="background:rgba(255,255,255,0.14)">{{ t.kUnpublish }}</button>
+        <select value="{{ bulkCategory }}" onChange="{{ onBulkCategory }}" disabled="{{ bulkLocked }}" aria-label="{{ t.kMoveSelectedToCategory }}" style="border:1px solid rgba(255,255,255,0.35);background:transparent;color:#FFFFFF;padding:7px 10px;min-height:38px;font-size:12.5px">
+          <sc-for list="{{ bulkCategoryOptions }}" as="o" hint-placeholder-count="6">
+            <option value="{{ o.v }}" style="color:#232220">{{ o.t }}</option>
+          </sc-for>
+        </select>
+        <button type="button" onClick="{{ bulkDelete }}" disabled="{{ bulkLocked }}" style="border:1px solid rgba(255,255,255,0.35);background:rgba(162,73,60,0.85);color:#FFFFFF;padding:7px 12px;min-height:38px;font-size:12.5px;cursor:pointer" style-hover="background:#A2493C">{{ t.kDelete }}</button>
+        <button type="button" onClick="{{ clearSelection }}" style="margin-left:auto;border:none;background:transparent;color:rgba(255,255,255,0.75);padding:7px 6px;min-height:38px;font-size:12.5px;cursor:pointer;text-decoration:underline" style-hover="color:#FFFFFF">{{ t.kClearSelection }}</button>
+      </div>
+    </sc-if>
+
+    <sc-if value="{{ isLoading }}" hint-placeholder-val="{{ false }}">
+      <div style="background:#FFFFFF;border:1px solid #E3DFD7;padding:14px;display:flex;flex-direction:column;gap:11px">
+        <sc-for list="{{ skeletons }}" as="k" hint-placeholder-count="6">
+          <div style="display:flex;gap:12px;align-items:center;animation:admPulse 1.2s ease-in-out infinite">
+            <div style="width:40px;height:52px;background:#EFEDE7;flex:0 0 40px"></div>
+            <div style="flex:1;display:flex;flex-direction:column;gap:7px">
+              <div style="height:11px;width:{{ k.w1 }};background:#EFEDE7"></div>
+              <div style="height:9px;width:{{ k.w2 }};background:#F4F2ED"></div>
+            </div>
+          </div>
+        </sc-for>
+      </div>
+    </sc-if>
+
+    <sc-if value="{{ isEmpty }}" hint-placeholder-val="{{ false }}">
+      <div style="background:#FFFFFF;border:1px solid #E3DFD7;padding:56px 24px;display:flex;flex-direction:column;align-items:center;gap:12px;text-align:center">
+        <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="#C6C1B7" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-3.5-3.5"></path></svg>
+        <h2 style="margin:0;font-size:16px;font-weight:600">{{ emptyTitle }}</h2>
+        <p style="margin:0;max-width:380px;font-size:13.5px;line-height:1.65;color:#77736B">{{ emptyBody }}</p>
+        <div style="display:flex;gap:10px;flex-wrap:wrap;justify-content:center;margin-top:4px">
+          <sc-if value="{{ emptyIsSearch }}" hint-placeholder-val="{{ false }}">
+            <button type="button" onClick="{{ clearFilters }}" style="border:1px solid #DAD5CB;background:#FFFFFF;padding:10px 16px;min-height:44px;font-size:13.5px;white-space:nowrap;cursor:pointer" style-hover="border-color:#6D7761;color:#6D7761">{{ t.kClearSearchAndFilters }}</button>
+          </sc-if>
+          <button type="button" onClick="{{ goNew }}" style="border:none;background:#6D7761;color:#FFFFFF;padding:10px 16px;min-height:44px;font-size:13.5px;white-space:nowrap;cursor:pointer" style-hover="background:#59614F">{{ t.kNewProduct }}</button>
+        </div>
+      </div>
+    </sc-if>
+
+    <sc-if value="{{ showTable }}" hint-placeholder-val="{{ true }}">
+      <div style="background:#FFFFFF;border:1px solid #E3DFD7;overflow-x:auto" data-adm-scroll="1">
+        <table style="width:100%;min-width:1080px;border-collapse:collapse;font-size:13px">
+          <caption style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)">{{ t.kProductArchive }}</caption>
+          <thead>
+            <tr style="background:#FBFAF7">
+              <th scope="col" style="width:40px;padding:11px 0 11px 14px;text-align:left;border-bottom:1px solid #E3DFD7">
+                <input type="checkbox" checked="{{ allChecked }}" onChange="{{ toggleAll }}" aria-label="{{ t.kSelectAllProductsOnThisPage }}" style="width:16px;height:16px;accent-color:#6D7761">
+              </th>
+              <th scope="col" style="width:54px;padding:11px 8px;text-align:left;border-bottom:1px solid #E3DFD7;font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:0.13em;color:#8C887F;font-weight:400">{{ t.kImage }}</th>
+              <sc-for list="{{ columns }}" as="c" hint-placeholder-count="10">
+                <th scope="col" style="padding:11px 10px;text-align:{{ c.align }};border-bottom:1px solid #E3DFD7;white-space:nowrap">
+                  <button type="button" onClick="{{ c.onSort }}" style="border:none;background:transparent;padding:0;cursor:{{ c.cursor }};font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:0.13em;color:{{ c.color }};display:inline-flex;align-items:center;gap:5px" style-hover="color:#232220">
+                    <span>{{ c.label }}</span>
+                    <span aria-hidden="true" style="font-size:11px">{{ c.arrow }}</span>
+                  </button>
+                </th>
+              </sc-for>
+              <th scope="col" style="width:56px;padding:11px 14px 11px 10px;text-align:right;border-bottom:1px solid #E3DFD7;font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:0.13em;color:#8C887F;font-weight:400">···</th>
+            </tr>
+          </thead>
+          <tbody>
+            <sc-for list="{{ rows }}" as="r" hint-placeholder-count="10">
+              <tr style="border-bottom:1px solid #F2F0EA;background:{{ r.rowBg }}" style-hover="background:#FAF9F6">
+                <td style="padding:9px 0 9px 14px">
+                  <input type="checkbox" checked="{{ r.checked }}" onChange="{{ r.onCheck }}" aria-label="{{ r.selectLabel }}" style="width:16px;height:16px;accent-color:#6D7761">
+                </td>
+                <td style="padding:9px 8px">
+                  <sc-if value="{{ r.hasThumb }}" hint-placeholder-val="{{ true }}">
+                    <img loading="lazy" decoding="async" src="{{ r.thumb }}" alt="{{ r.alt }}" style="width:38px;height:50px;object-fit:cover;background:#EDE9E2;display:block;filter:saturate(0.9)">
+                  </sc-if>
+                  <sc-if value="{{ r.noThumb }}" hint-placeholder-val="{{ false }}">
+                    <span role="img" aria-label="{{ t.kNoPhotographYet }}" style="width:38px;height:50px;display:grid;place-items:center;background:#EDE9E2;color:#A8A398;font-family:'IBM Plex Mono',monospace;font-size:8px;letter-spacing:0.08em;text-align:center;line-height:1.3">{{ t.kNo }}<br>{{ t.kImg }}</span>
+                  </sc-if>
+                </td>
+                <td style="padding:9px 10px;max-width:250px">
+                  <button type="button" onClick="{{ r.onEdit }}" style="border:none;background:transparent;padding:0;text-align:left;cursor:pointer;font-size:13.5px;color:#232220;line-height:1.4;display:block;width:100%" style-hover="color:#6D7761">{{ r.name }}</button>
+                  <sc-if value="{{ r.featured }}" hint-placeholder-val="{{ false }}">
+                    <span style="display:inline-block;margin-top:4px;font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:0.12em;color:#7E6224;background:#F6EFDF;padding:2px 6px">{{ t.kFeatured }}</span>
+                  </sc-if>
+                </td>
+                <td style="padding:9px 10px;font-family:'IBM Plex Mono',monospace;font-size:11px;color:#77736B;white-space:nowrap">{{ r.sku }}</td>
+                <td style="padding:9px 10px;color:#3F3D38;white-space:nowrap">{{ r.brand }}</td>
+                <td style="padding:9px 10px;color:#3F3D38;white-space:nowrap">{{ r.category }}</td>
+                <td style="padding:9px 10px;font-family:'IBM Plex Mono',monospace;font-size:11px;color:#77736B">{{ r.era }}</td>
+                <td style="padding:9px 10px;font-family:'IBM Plex Mono',monospace;font-size:11px;color:#77736B">{{ r.size }}</td>
+                <td style="padding:9px 10px;text-align:right;font-family:'IBM Plex Mono',monospace;font-size:11.5px;color:#232220;white-space:nowrap">{{ r.price }}</td>
+                <td style="padding:9px 10px;text-align:center;font-family:'IBM Plex Mono',monospace;font-size:11px;color:{{ r.stockTone }};white-space:nowrap">{{ r.stockLabel }}</td>
+                <td style="padding:9px 10px">
+                  <span style="display:inline-block;font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:0.1em;padding:3px 7px;border-radius:2px;white-space:nowrap;background:{{ r.badgeBg }};color:{{ r.badgeFg }}">{{ r.badge }}</span>
+                </td>
+                <td style="padding:9px 10px;font-family:'IBM Plex Mono',monospace;font-size:11px;color:#8C887F;white-space:nowrap">{{ r.updated }}</td>
+                <td style="padding:9px 14px 9px 10px;text-align:right;position:relative">
+                  <button type="button" onClick="{{ r.onMenu }}" aria-label="{{ r.menuLabel }}" aria-expanded="{{ r.menuOpen }}" style="border:1px solid #E3DFD7;background:#FFFFFF;width:30px;height:30px;display:inline-grid;place-items:center;cursor:pointer;border-radius:2px;color:#77736B" style-hover="border-color:#6D7761;color:#6D7761">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><circle cx="5" cy="12" r="1.6"></circle><circle cx="12" cy="12" r="1.6"></circle><circle cx="19" cy="12" r="1.6"></circle></svg>
+                  </button>
+                  <sc-if value="{{ r.menuOpen }}" hint-placeholder-val="{{ false }}">
+                    <div role="menu" style="position:absolute;right:14px;top:38px;z-index:25;width:176px;background:#FFFFFF;border:1px solid #E3DFD7;box-shadow:0 12px 30px rgba(40,36,28,0.14);text-align:left;animation:admRise 140ms ease both">
+                      <sc-for list="{{ r.actions }}" as="a" hint-placeholder-count="6">
+                        <button type="button" role="menuitem" onClick="{{ a.onClick }}" disabled="{{ a.disabled }}" style="display:block;width:100%;text-align:left;border:none;background:transparent;padding:10px 13px;min-height:40px;font-size:13px;white-space:nowrap;cursor:pointer;color:{{ a.color }};border-top:{{ a.divider }}" style-hover="background:#F5F3EE">{{ a.label }}</button>
+                      </sc-for>
+                    </div>
+                  </sc-if>
+                </td>
+              </tr>
+            </sc-for>
+          </tbody>
+        </table>
+      </div>
+    </sc-if>
+
+    <sc-if value="{{ showCards }}" hint-placeholder-val="{{ false }}">
+      <div style="display:flex;flex-direction:column;gap:10px">
+        <sc-for list="{{ rows }}" as="r" hint-placeholder-count="6">
+          <div style="background:#FFFFFF;border:1px solid #E3DFD7;padding:12px;display:flex;gap:12px;align-items:flex-start">
+            <input type="checkbox" checked="{{ r.checked }}" onChange="{{ r.onCheck }}" aria-label="{{ r.selectLabel }}" style="width:18px;height:18px;accent-color:#6D7761;margin-top:2px;flex:0 0 18px">
+            <sc-if value="{{ r.hasThumb }}" hint-placeholder-val="{{ true }}">
+              <img loading="lazy" decoding="async" src="{{ r.thumb }}" alt="{{ r.alt }}" style="width:58px;height:76px;object-fit:cover;background:#EDE9E2;flex:0 0 58px;filter:saturate(0.9)">
+            </sc-if>
+            <sc-if value="{{ r.noThumb }}" hint-placeholder-val="{{ false }}">
+              <span role="img" aria-label="{{ t.kNoPhotographYet }}" style="width:58px;height:76px;flex:0 0 58px;display:grid;place-items:center;background:#EDE9E2;color:#A8A398;font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:0.08em;text-align:center;line-height:1.3">{{ t.kNo }}<br>{{ t.kImage }}</span>
+            </sc-if>
+            <div style="flex:1;min-width:0;display:flex;flex-direction:column;gap:6px">
+              <button type="button" onClick="{{ r.onEdit }}" style="border:none;background:transparent;padding:0;text-align:left;font-size:14.5px;color:#232220;cursor:pointer;line-height:1.35">{{ r.name }}</button>
+              <span style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:#8C887F">{{ r.cardMeta }}</span>
+              <div style="display:flex;gap:7px;align-items:center;flex-wrap:wrap">
+                <span style="font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:0.1em;padding:3px 7px;border-radius:2px;background:{{ r.badgeBg }};color:{{ r.badgeFg }}">{{ r.badge }}</span>
+                <span style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:{{ r.stockTone }}">{{ r.stockLabel }}</span>
+                <span style="font-family:'IBM Plex Mono',monospace;font-size:11.5px;color:#232220;margin-left:auto">{{ r.price }}</span>
+              </div>
+              <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:2px">
+                <button type="button" onClick="{{ r.onEdit }}" style="flex:1;border:1px solid #DAD5CB;background:#FFFFFF;padding:9px 12px;min-height:44px;font-size:13px;cursor:pointer" style-hover="border-color:#6D7761;color:#6D7761">{{ t.kEdit }}</button>
+                <button type="button" onClick="{{ r.onMenu }}" aria-label="{{ r.menuLabel }}" style="border:1px solid #DAD5CB;background:#FFFFFF;width:44px;min-height:44px;display:grid;place-items:center;cursor:pointer;color:#77736B" style-hover="border-color:#6D7761">
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><circle cx="5" cy="12" r="1.6"></circle><circle cx="12" cy="12" r="1.6"></circle><circle cx="19" cy="12" r="1.6"></circle></svg>
+                </button>
+              </div>
+              <sc-if value="{{ r.menuOpen }}" hint-placeholder-val="{{ false }}">
+                <div role="menu" style="border:1px solid #E3DFD7;background:#FBFAF7;margin-top:4px">
+                  <sc-for list="{{ r.actions }}" as="a" hint-placeholder-count="6">
+                    <button type="button" role="menuitem" onClick="{{ a.onClick }}" disabled="{{ a.disabled }}" style="display:block;width:100%;text-align:left;border:none;background:transparent;padding:11px 13px;min-height:44px;font-size:13.5px;white-space:nowrap;cursor:pointer;color:{{ a.color }};border-top:{{ a.divider }}" style-hover="background:#F1EFE9">{{ a.label }}</button>
+                  </sc-for>
+                </div>
+              </sc-if>
+            </div>
+          </div>
+        </sc-for>
+      </div>
+    </sc-if>
+
+    <sc-if value="{{ showPager }}" hint-placeholder-val="{{ true }}">
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;padding:2px 2px 6px">
+        <span style="font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:0.12em;color:#8C887F">{{ rangeLabel }}</span>
+        <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap">
+          <button type="button" onClick="{{ prevPage }}" disabled="{{ atFirst }}" style="border:1px solid #DAD5CB;background:#FFFFFF;padding:8px 13px;min-height:40px;font-size:13px;white-space:nowrap;cursor:pointer;opacity:{{ prevOpacity }}" style-hover="border-color:#6D7761">{{ t.kPrevious }}</button>
+          <sc-for list="{{ pageButtons }}" as="p" hint-placeholder-count="3">
+            <button type="button" onClick="{{ p.onClick }}" aria-current="{{ p.current }}" style="min-width:40px;min-height:40px;border:1px solid {{ p.border }};background:{{ p.bg }};color:{{ p.fg }};font-family:'IBM Plex Mono',monospace;font-size:12px;cursor:pointer" style-hover="border-color:#6D7761">{{ p.label }}</button>
+          </sc-for>
+          <button type="button" onClick="{{ nextPage }}" disabled="{{ atLast }}" style="border:1px solid #DAD5CB;background:#FFFFFF;padding:8px 13px;min-height:40px;font-size:13px;white-space:nowrap;cursor:pointer;opacity:{{ nextOpacity }}" style-hover="border-color:#6D7761">{{ t.kNext }}</button>
+        </div>
+      </div>
+    </sc-if>
+  </div>
+</sc-if>
+
+<sc-if value="{{ isForm }}" hint-placeholder-val="{{ false }}">
+  <div style="display:flex;flex-direction:column;gap:14px;max-width:1180px">
+
+    <sc-if value="{{ hasErrors }}" hint-placeholder-val="{{ false }}">
+      <div role="alert" style="background:#FBF0EE;border:1px solid #E7CFC9;padding:13px 16px;display:flex;flex-direction:column;gap:6px">
+        <span style="font-size:13.5px;font-weight:600;color:#8A3F33">{{ errorHeading }}</span>
+        <ul style="margin:0;padding-left:18px;display:flex;flex-direction:column;gap:3px">
+          <sc-for list="{{ errorList }}" as="e" hint-placeholder-count="2">
+            <li style="font-size:13px;color:#8A3F33;line-height:1.5">{{ e }}</li>
+          </sc-for>
+        </ul>
+      </div>
+    </sc-if>
+
+    <nav aria-label="{{ t.jumpToSection }}" style="position:sticky;top:0;z-index:12;background:#F7F5F1;border-bottom:1px solid #E3DFD7;margin:0 0 14px">
+      <div data-adm-scroll style="display:flex;gap:6px;overflow-x:auto;padding:9px 2px">
+        <sc-for list="{{ formSections }}" as="fs" hint-placeholder-count="8">
+          <button type="button" onClick="{{ fs.onJump }}" aria-current="{{ fs.current }}" style="flex:0 0 auto;border:1px solid {{ fs.border }};background:{{ fs.bg }};color:{{ fs.color }};padding:9px 13px;min-height:44px;font-size:12.5px;white-space:nowrap;cursor:pointer;display:inline-flex;align-items:center;gap:7px" style-hover="border-color:#6D7761">
+            <span aria-hidden="true" style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:{{ fs.markTone }}">{{ fs.mark }}</span>{{ fs.label }}
+          </button>
+        </sc-for>
+      </div>
+    </nav>
+
+    <div style="display:grid;grid-template-columns:{{ formColumns }};gap:14px;align-items:start">
+
+      <div style="display:flex;flex-direction:column;gap:14px;min-width:0">
+
+        <section id="sec-basic" tabindex="-1" aria-labelledby="sec-basic-h" style="background:#FFFFFF;border:1px solid #E3DFD7;scroll-margin-top:96px">
+          <div style="padding:13px 16px;border-bottom:1px solid #EDEAE3"><h2 id="sec-basic-h" style="margin:0;font-size:14px;font-weight:600">{{ t.kBasicInformation }}</h2></div>
+          <div style="padding:16px;display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,200px),1fr));gap:14px">
+            <div style="grid-column:1/-1;display:flex;flex-direction:column;gap:6px">
+              <label for="f-name" style="font-size:12px;font-weight:500;color:#55534C">{{ t.kProductName }}<span style="color:#A2493C">*</span></label>
+              <input id="f-name" value="{{ fName }}" onChange="{{ onName }}" aria-invalid="{{ nameInvalid }}" aria-describedby="f-name-err" placeholder="{{ t.phProductName }}" style="border:1px solid {{ nameBorder }};background:#FCFBF9;padding:11px 12px;font-size:14px;min-height:44px" style-focus="border-color:#6D7761;background:#FFFFFF">
+              <sc-if value="{{ nameError }}" hint-placeholder-val="{{ false }}">
+                <span id="f-name-err" style="font-size:12px;color:#A2493C">{{ nameError }}</span>
+              </sc-if>
+            </div>
+            <div style="display:flex;flex-direction:column;gap:6px">
+              <label for="f-sku" style="font-size:12px;font-weight:500;color:#55534C">{{ t.kProductIdSku }}<span style="color:#A2493C">*</span></label>
+              <input id="f-sku" value="{{ fSku }}" onChange="{{ onSku }}" aria-invalid="{{ skuInvalid }}" aria-describedby="f-sku-err" style="border:1px solid {{ skuBorder }};background:#FCFBF9;padding:11px 12px;font-size:14px;font-family:'IBM Plex Mono',monospace;min-height:44px" style-focus="border-color:#6D7761;background:#FFFFFF">
+              <sc-if value="{{ skuError }}" hint-placeholder-val="{{ false }}">
+                <span id="f-sku-err" style="font-size:12px;color:#A2493C">{{ skuError }}</span>
+              </sc-if>
+            </div>
+            <div style="display:flex;flex-direction:column;gap:6px">
+              <label for="f-brand" style="font-size:12px;font-weight:500;color:#55534C">{{ t.kBrand }}<span style="color:#A2493C">*</span></label>
+              <input id="f-brand" value="{{ fBrand }}" onChange="{{ onBrand }}" list="brand-list" aria-invalid="{{ brandInvalid }}" style="border:1px solid {{ brandBorder }};background:#FCFBF9;padding:11px 12px;font-size:14px;min-height:44px" style-focus="border-color:#6D7761;background:#FFFFFF">
+              <datalist id="brand-list">
+                <sc-for list="{{ brandList }}" as="b" hint-placeholder-count="6">
+                  <option value="{{ b }}"></option>
+                </sc-for>
+              </datalist>
+            </div>
+            <div style="display:flex;flex-direction:column;gap:6px">
+              <label for="f-cat" style="font-size:12px;font-weight:500;color:#55534C">{{ t.kCategory }}</label>
+              <select id="f-cat" value="{{ fCategory }}" onChange="{{ onCategory }}" style="border:1px solid #DAD5CB;background:#FCFBF9;padding:11px 12px;font-size:14px;min-height:44px" style-focus="border-color:#6D7761">
+                <sc-for list="{{ categoryList }}" as="c" hint-placeholder-count="5">
+                  <option value="{{ c }}">{{ c }}</option>
+                </sc-for>
+              </select>
+            </div>
+            <div style="display:flex;flex-direction:column;gap:6px">
+              <label for="f-sub" style="font-size:12px;font-weight:500;color:#55534C">{{ t.kSubcategory }}</label>
+              <input id="f-sub" value="{{ fSubcategory }}" onChange="{{ onSubcategory }}" placeholder="{{ t.phSubcategory }}" style="border:1px solid #DAD5CB;background:#FCFBF9;padding:11px 12px;font-size:14px;min-height:44px" style-focus="border-color:#6D7761;background:#FFFFFF">
+            </div>
+          </div>
+        </section>
+
+        <section id="sec-price" tabindex="-1" aria-labelledby="sec-price-h" style="background:#FFFFFF;border:1px solid #E3DFD7;scroll-margin-top:96px">
+          <div style="padding:13px 16px;border-bottom:1px solid #EDEAE3"><h2 id="sec-price-h" style="margin:0;font-size:14px;font-weight:600">{{ t.secPriceStock }}</h2></div>
+          <div style="padding:16px;display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,200px),1fr));gap:14px">
+            <div style="display:flex;flex-direction:column;gap:6px">
+              <label for="f-price" style="font-size:12px;font-weight:500;color:#55534C">{{ t.kPriceJpy }}<span style="color:#A2493C">*</span></label>
+              <input id="f-price" type="number" min="0" step="500" value="{{ fPrice }}" onChange="{{ onPrice }}" aria-invalid="{{ priceInvalid }}" aria-describedby="f-price-err" style="border:1px solid {{ priceBorder }};background:#FCFBF9;padding:11px 12px;font-size:14px;font-family:'IBM Plex Mono',monospace;min-height:44px" style-focus="border-color:#6D7761;background:#FFFFFF">
+              <sc-if value="{{ priceError }}" hint-placeholder-val="{{ false }}">
+                <span id="f-price-err" style="font-size:12px;color:#A2493C">{{ priceError }}</span>
+              </sc-if>
+            </div>
+            <div style="display:flex;flex-direction:column;gap:6px">
+              <label for="f-tax" style="font-size:12px;font-weight:500;color:#55534C">{{ t.kTaxStatus }}</label>
+              <select id="f-tax" value="{{ fTaxStatus }}" onChange="{{ onTaxStatus }}" style="border:1px solid #DAD5CB;background:#FCFBF9;padding:11px 12px;font-size:14px;min-height:44px" style-focus="border-color:#6D7761">
+                <option value="Tax included">{{ t.kTaxIncluded }}</option>
+                <option value="Tax excluded">{{ t.kTaxExcluded }}</option>
+                <option value="Not taxable">{{ t.kNotTaxable }}</option>
+              </select>
+            </div>
+            <div style="display:flex;flex-direction:column;gap:6px">
+              <label for="f-stock" style="font-size:12px;font-weight:500;color:#55534C">{{ t.kStockQuantity }}</label>
+              <input id="f-stock" type="number" min="0" step="1" value="{{ fStock }}" onChange="{{ onStock }}" style="border:1px solid #DAD5CB;background:#FCFBF9;padding:11px 12px;font-size:14px;font-family:'IBM Plex Mono',monospace;min-height:44px" style-focus="border-color:#6D7761;background:#FFFFFF">
+              <span style="font-size:11.5px;color:#8C887F">{{ stockHint }}</span>
+            </div>
+            <div style="display:flex;flex-direction:column;gap:6px">
+              <label for="f-status" style="font-size:12px;font-weight:500;color:#55534C">{{ t.kPublicationStatus }}</label>
+              <select id="f-status" value="{{ fStatus }}" onChange="{{ onStatus }}" style="border:1px solid #DAD5CB;background:#FCFBF9;padding:11px 12px;font-size:14px;min-height:44px" style-focus="border-color:#6D7761">
+                <option value="draft">{{ t.kDraft }}</option>
+                <option value="published">{{ t.kPublished }}</option>
+                <option value="soldout">{{ t.kSoldOut }}</option>
+                <option value="archived">{{ t.kArchived }}</option>
+              </select>
+            </div>
+          </div>
+        </section>
+
+        <section id="sec-vintage" tabindex="-1" aria-labelledby="sec-vintage-h" style="background:#FFFFFF;border:1px solid #E3DFD7;scroll-margin-top:96px">
+          <div style="padding:13px 16px;border-bottom:1px solid #EDEAE3"><h2 id="sec-vintage-h" style="margin:0;font-size:14px;font-weight:600">{{ t.kVintageInformation }}</h2></div>
+          <div style="padding:16px;display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,200px),1fr));gap:14px">
+            <div style="display:flex;flex-direction:column;gap:6px">
+              <label for="f-year" style="font-size:12px;font-weight:500;color:#55534C">{{ t.kApproximateYear }}</label>
+              <input id="f-year" type="number" min="1900" max="2026" value="{{ fYear }}" onChange="{{ onYear }}" style="border:1px solid #DAD5CB;background:#FCFBF9;padding:11px 12px;font-size:14px;font-family:'IBM Plex Mono',monospace;min-height:44px" style-focus="border-color:#6D7761;background:#FFFFFF">
+              <span style="font-size:11.5px;color:#8C887F">{{ eraHint }}</span>
+            </div>
+            <div style="display:flex;flex-direction:column;gap:6px">
+              <label for="f-country" style="font-size:12px;font-weight:500;color:#55534C">{{ t.kCountryOfManufacture }}</label>
+              <input id="f-country" value="{{ fCountry }}" onChange="{{ onCountry }}" placeholder="{{ t.phCountry }}" style="border:1px solid #DAD5CB;background:#FCFBF9;padding:11px 12px;font-size:14px;min-height:44px" style-focus="border-color:#6D7761;background:#FFFFFF">
+            </div>
+            <div style="display:flex;flex-direction:column;gap:6px">
+              <label for="f-material" style="font-size:12px;font-weight:500;color:#55534C">{{ t.kMaterial }}</label>
+              <input id="f-material" value="{{ fMaterial }}" onChange="{{ onMaterial }}" placeholder="{{ t.phMaterial }}" style="border:1px solid #DAD5CB;background:#FCFBF9;padding:11px 12px;font-size:14px;min-height:44px" style-focus="border-color:#6D7761;background:#FFFFFF">
+            </div>
+            <div style="display:flex;flex-direction:column;gap:6px">
+              <label for="f-colour" style="font-size:12px;font-weight:500;color:#55534C">{{ t.kColour }}</label>
+              <input id="f-colour" value="{{ fColour }}" onChange="{{ onColour }}" placeholder="{{ t.phColour }}" style="border:1px solid #DAD5CB;background:#FCFBF9;padding:11px 12px;font-size:14px;min-height:44px" style-focus="border-color:#6D7761;background:#FFFFFF">
+            </div>
+            <div style="display:flex;flex-direction:column;gap:6px">
+              <label for="f-size" style="font-size:12px;font-weight:500;color:#55534C">{{ t.kSize }}</label>
+              <select id="f-size" value="{{ fSize }}" onChange="{{ onSize }}" style="border:1px solid #DAD5CB;background:#FCFBF9;padding:11px 12px;font-size:14px;min-height:44px" style-focus="border-color:#6D7761">
+                <option value="XS">XS</option><option value="S">S</option><option value="M">M</option><option value="L">L</option><option value="XL">XL</option><option value="XXL">XXL</option>
+              </select>
+            </div>
+            <div style="display:flex;flex-direction:column;gap:6px">
+              <label for="f-sizenote" style="font-size:12px;font-weight:500;color:#55534C">{{ t.kSizeNotationOnLabel }}</label>
+              <input id="f-sizenote" value="{{ fSizeNotation }}" onChange="{{ onSizeNotation }}" placeholder="{{ t.phSizeNotation }}" style="border:1px solid #DAD5CB;background:#FCFBF9;padding:11px 12px;font-size:14px;min-height:44px" style-focus="border-color:#6D7761;background:#FFFFFF">
+            </div>
+            <div style="grid-column:1/-1;display:flex;flex-direction:column;gap:6px">
+              <div style="display:flex;justify-content:space-between;align-items:baseline;gap:10px">
+                <label for="f-curator" style="font-size:12px;font-weight:500;color:#55534C">{{ t.kCuratorSNote }}</label>
+                <span style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:{{ curatorCountTone }}">{{ curatorCount }}</span>
+              </div>
+              <textarea id="f-curator" rows="2" value="{{ fCuratorNote }}" onChange="{{ onCuratorNote }}" placeholder="{{ t.kOneLineDescribingHowThisPieceHasAg }}" style="border:1px solid #DAD5CB;background:#FCFBF9;padding:11px 12px;font-size:14px;line-height:1.6;resize:vertical" style-focus="border-color:#6D7761;background:#FFFFFF"></textarea>
+            </div>
+            <div style="grid-column:1/-1;display:flex;flex-direction:column;gap:6px">
+              <label for="f-story" style="font-size:12px;font-weight:500;color:#55534C">{{ t.kProductStory }}</label>
+              <textarea id="f-story" rows="4" value="{{ fStory }}" onChange="{{ onStory }}" placeholder="{{ t.kWhereItCameFromWhoWoreItWhatWeDidT }}" style="border:1px solid #DAD5CB;background:#FCFBF9;padding:11px 12px;font-size:14px;line-height:1.7;resize:vertical" style-focus="border-color:#6D7761;background:#FFFFFF"></textarea>
+            </div>
+          </div>
+        </section>
+
+        <section id="sec-measure" tabindex="-1" aria-labelledby="sec-measure-h" style="background:#FFFFFF;border:1px solid #E3DFD7;scroll-margin-top:96px">
+          <div style="padding:13px 16px;border-bottom:1px solid #EDEAE3;display:flex;align-items:baseline;justify-content:space-between;gap:12px;flex-wrap:wrap">
+            <h2 id="sec-measure-h" style="margin:0;font-size:14px;font-weight:600">{{ t.kMeasurements }}</h2>
+            <span style="font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:0.12em;color:#8C887F">{{ measurementHint }}</span>
+          </div>
+          <div style="padding:16px;display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:13px">
+            <sc-for list="{{ measurementFields }}" as="m" hint-placeholder-count="4">
+              <div style="display:flex;flex-direction:column;gap:6px">
+                <label for="{{ m.id }}" style="font-size:12px;font-weight:500;color:#55534C">{{ m.label }}</label>
+                <div style="position:relative">
+                  <input id="{{ m.id }}" type="number" min="0" step="0.5" value="{{ m.value }}" onChange="{{ m.onChange }}" style="width:100%;border:1px solid #DAD5CB;background:#FCFBF9;padding:11px 34px 11px 12px;font-size:14px;font-family:'IBM Plex Mono',monospace;min-height:44px" style-focus="border-color:#6D7761;background:#FFFFFF">
+                  <span aria-hidden="true" style="position:absolute;right:11px;top:50%;transform:translateY(-50%);font-family:'IBM Plex Mono',monospace;font-size:11px;color:#A8A49B">cm</span>
+                </div>
+              </div>
+            </sc-for>
+          </div>
+        </section>
+
+        <section id="sec-condition" tabindex="-1" aria-labelledby="sec-condition-h" style="background:#FFFFFF;border:1px solid #E3DFD7;scroll-margin-top:96px">
+          <div style="padding:13px 16px;border-bottom:1px solid #EDEAE3"><h2 id="sec-condition-h" style="margin:0;font-size:14px;font-weight:600">{{ t.secCondition }}</h2></div>
+          <div style="padding:16px;display:flex;flex-direction:column;gap:14px">
+            <fieldset style="border:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px">
+              <legend style="font-size:12px;font-weight:500;color:#55534C;padding:0 0 4px">{{ t.kConditionGrade }}</legend>
+              <div style="display:flex;gap:8px;flex-wrap:wrap">
+                <sc-for list="{{ conditionGrades }}" as="g" hint-placeholder-count="4">
+                  <label style="display:flex;align-items:center;gap:8px;border:1px solid {{ g.border }};background:{{ g.bg }};color:{{ g.fg }};padding:9px 14px;min-height:44px;font-size:13.5px;white-space:nowrap;cursor:pointer" style-hover="border-color:#6D7761">
+                    <input type="radio" name="cond" value="{{ g.value }}" checked="{{ g.checked }}" onChange="{{ g.onChange }}" style="width:15px;height:15px;accent-color:#6D7761">
+                    <span>{{ g.value }}</span>
+                  </label>
+                </sc-for>
+              </div>
+            </fieldset>
+            <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,220px),1fr));gap:13px">
+              <sc-for list="{{ conditionFields }}" as="c" hint-placeholder-count="5">
+                <div style="display:flex;flex-direction:column;gap:6px">
+                  <label for="{{ c.id }}" style="font-size:12px;font-weight:500;color:#55534C">{{ c.label }}</label>
+                  <input id="{{ c.id }}" value="{{ c.value }}" onChange="{{ c.onChange }}" placeholder="{{ c.placeholder }}" style="border:1px solid #DAD5CB;background:#FCFBF9;padding:11px 12px;font-size:14px;min-height:44px" style-focus="border-color:#6D7761;background:#FFFFFF">
+                </div>
+              </sc-for>
+            </div>
+            <div style="display:flex;flex-direction:column;gap:6px">
+              <label for="f-conddesc" style="font-size:12px;font-weight:500;color:#55534C">{{ t.kConditionDescription }}</label>
+              <textarea id="f-conddesc" rows="3" value="{{ fConditionNote }}" onChange="{{ onConditionNote }}" style="border:1px solid #DAD5CB;background:#FCFBF9;padding:11px 12px;font-size:14px;line-height:1.7;resize:vertical" style-focus="border-color:#6D7761;background:#FFFFFF"></textarea>
+            </div>
+          </div>
+        </section>
+
+        <section id="sec-images" tabindex="-1" aria-labelledby="sec-images-h" style="background:#FFFFFF;border:1px solid #E3DFD7;scroll-margin-top:96px">
+          <div style="padding:13px 16px;border-bottom:1px solid #EDEAE3;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap">
+            <h2 id="sec-images-h" style="margin:0;font-size:14px;font-weight:600">{{ t.kImages }}</h2>
+            <div style="display:flex;gap:6px;border:1px solid #E3DFD7;padding:2px">
+              <button type="button" onClick="{{ setCropDesktop }}" style="border:none;background:{{ cropDesktopBg }};color:{{ cropDesktopFg }};padding:6px 11px;min-height:34px;font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:0.1em;cursor:pointer">{{ t.kDesktop34 }}</button>
+              <button type="button" onClick="{{ setCropMobile }}" style="border:none;background:{{ cropMobileBg }};color:{{ cropMobileFg }};padding:6px 11px;min-height:34px;font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:0.1em;cursor:pointer">{{ t.kMobile11 }}</button>
+            </div>
+          </div>
+          <div style="padding:16px;display:flex;flex-direction:column;gap:14px">
+            <sc-if value="{{ noImages }}" hint-placeholder-val="{{ false }}">
+              <div style="border:1px dashed #D8D3C9;background:#FBFAF7;padding:34px 20px;display:flex;flex-direction:column;align-items:center;gap:10px;text-align:center">
+                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#C6C1B7" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><path d="m21 15-5-5L5 21"></path></svg>
+                <p style="margin:0;font-size:13.5px;color:#77736B;max-width:320px;line-height:1.6">{{ t.kNoImagesYetAPublishedProductNeedsA }}</p>
+              </div>
+            </sc-if>
+            <sc-if value="{{ hasImages }}" hint-placeholder-val="{{ true }}">
+              <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(158px,1fr));gap:12px">
+                <sc-for list="{{ images }}" as="im" hint-placeholder-count="4">
+                  <div draggable="true" onDragStart="{{ im.onDragStart }}" onDragOver="{{ im.onDragOver }}" onDrop="{{ im.onDrop }}" onDragEnd="{{ im.onDragEnd }}" style="border:1px solid {{ im.border }};background:#FBFAF7;display:flex;flex-direction:column;opacity:{{ im.opacity }};cursor:grab">
+                    <div style="position:relative;width:100%;aspect-ratio:{{ im.ratio }};background:#EDE9E2;overflow:hidden">
+                      <img loading="lazy" decoding="async" src="{{ im.url }}" alt="{{ im.alt }}" style="width:100%;height:100%;object-fit:cover;display:block;filter:saturate(0.9)">
+                      <sc-if value="{{ im.primary }}" hint-placeholder-val="{{ false }}">
+                        <span style="position:absolute;top:7px;left:7px;font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:0.12em;background:#3F4A35;color:#FFFFFF;padding:3px 7px">{{ t.kPrimary }}</span>
+                      </sc-if>
+                      <span aria-hidden="true" style="position:absolute;top:7px;right:7px;font-family:'IBM Plex Mono',monospace;font-size:11px;background:rgba(255,255,255,0.9);color:#55534C;padding:3px 6px">{{ im.pos }}</span>
+                    </div>
+                    <div style="padding:9px;display:flex;flex-direction:column;gap:7px">
+                      <label for="{{ im.altId }}" style="font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:0.12em;color:#8C887F">{{ t.kAltText }}</label>
+                      <input id="{{ im.altId }}" value="{{ im.alt }}" onChange="{{ im.onAlt }}" style="border:1px solid #E3DFD7;background:#FFFFFF;padding:7px 8px;font-size:12px;min-height:36px" style-focus="border-color:#6D7761">
+                      <div style="display:flex;gap:6px">
+                        <button type="button" onClick="{{ im.onPrimary }}" disabled="{{ im.primary }}" style="flex:1;border:1px solid #DAD5CB;background:#FFFFFF;padding:7px 6px;min-height:36px;font-size:11.5px;cursor:pointer;opacity:{{ im.primaryOpacity }}" style-hover="border-color:#6D7761;color:#6D7761">{{ t.kPrimary2 }}</button>
+                        <button type="button" onClick="{{ im.onDelete }}" aria-label="{{ im.deleteLabel }}" style="border:1px solid #DAD5CB;background:#FFFFFF;width:36px;min-height:36px;display:grid;place-items:center;cursor:pointer;color:#A2493C" style-hover="border-color:#A2493C;background:#FBF0EE">
+                          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" aria-hidden="true"><path d="M3 6h18M8 6V4h8v2M6 6l1 14h10l1-14"></path></svg>
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                </sc-for>
+              </div>
+            </sc-if>
+            <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center">
+              <label style="display:inline-flex;align-items:center;gap:8px;border:1px solid #DAD5CB;background:#FFFFFF;padding:10px 15px;min-height:44px;font-size:13.5px;white-space:nowrap;cursor:pointer" style-hover="border-color:#6D7761;color:#6D7761">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 16V4M7 9l5-5 5 5M4 20h16"></path></svg>
+                <span>{{ t.kUploadImages }}</span>
+                <input type="file" accept="image/*" multiple="true" onChange="{{ onUpload }}" style="position:absolute;width:1px;height:1px;opacity:0;pointer-events:none">
+              </label>
+              <button type="button" onClick="{{ addPlaceholder }}" style="border:1px solid #DAD5CB;background:#FFFFFF;padding:10px 15px;min-height:44px;font-size:13.5px;white-space:nowrap;cursor:pointer" style-hover="border-color:#6D7761;color:#6D7761">{{ t.kAddArchivePlaceholder }}</button>
+              <span style="font-size:12px;color:#8C887F">{{ t.kDragATileToReorderTheFirstImageIsU }}</span>
+            </div>
+          </div>
+        </section>
+
+        <section id="sec-seo" tabindex="-1" aria-labelledby="sec-seo-h" style="background:#FFFFFF;border:1px solid #E3DFD7;scroll-margin-top:96px">
+          <div style="padding:13px 16px;border-bottom:1px solid #EDEAE3"><h2 id="sec-seo-h" style="margin:0;font-size:14px;font-weight:600">{{ t.secSeo }}</h2></div>
+          <div style="padding:16px;display:flex;flex-direction:column;gap:14px">
+            <div style="display:flex;flex-direction:column;gap:6px">
+              <label for="f-slug" style="font-size:12px;font-weight:500;color:#55534C">{{ t.kUrlSlug }}</label>
+              <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+                <span style="font-family:'IBM Plex Mono',monospace;font-size:12px;color:#A8A49B">/shop/</span>
+                <input id="f-slug" value="{{ fSlug }}" onChange="{{ onSlug }}" style="flex:1;min-width:180px;border:1px solid #DAD5CB;background:#FCFBF9;padding:11px 12px;font-size:13.5px;font-family:'IBM Plex Mono',monospace;min-height:44px" style-focus="border-color:#6D7761;background:#FFFFFF">
+                <button type="button" onClick="{{ regenSlug }}" style="border:1px solid #DAD5CB;background:#FFFFFF;padding:10px 13px;min-height:44px;font-size:13px;white-space:nowrap;cursor:pointer" style-hover="border-color:#6D7761;color:#6D7761">{{ t.kRegenerate }}</button>
+              </div>
+            </div>
+            <div style="display:flex;flex-direction:column;gap:6px">
+              <div style="display:flex;justify-content:space-between;align-items:baseline;gap:10px">
+                <label for="f-metatitle" style="font-size:12px;font-weight:500;color:#55534C">{{ t.kMetaTitle }}</label>
+                <span style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:{{ metaTitleTone }}">{{ metaTitleCount }}</span>
+              </div>
+              <input id="f-metatitle" value="{{ fMetaTitle }}" onChange="{{ onMetaTitle }}" style="border:1px solid #DAD5CB;background:#FCFBF9;padding:11px 12px;font-size:14px;min-height:44px" style-focus="border-color:#6D7761;background:#FFFFFF">
+            </div>
+            <div style="display:flex;flex-direction:column;gap:6px">
+              <div style="display:flex;justify-content:space-between;align-items:baseline;gap:10px">
+                <label for="f-metadesc" style="font-size:12px;font-weight:500;color:#55534C">{{ t.kMetaDescription }}</label>
+                <span style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:{{ metaDescTone }}">{{ metaDescCount }}</span>
+              </div>
+              <textarea id="f-metadesc" rows="2" value="{{ fMetaDescription }}" onChange="{{ onMetaDescription }}" style="border:1px solid #DAD5CB;background:#FCFBF9;padding:11px 12px;font-size:14px;line-height:1.6;resize:vertical" style-focus="border-color:#6D7761;background:#FFFFFF"></textarea>
+            </div>
+          </div>
+        </section>
+
+        <section id="sec-publishing" tabindex="-1" aria-labelledby="sec-publishing-h" style="background:#FFFFFF;border:1px solid #E3DFD7;scroll-margin-top:96px">
+          <div style="padding:13px 16px;border-bottom:1px solid #EDEAE3"><h2 id="sec-publishing-h" style="margin:0;font-size:14px;font-weight:600">{{ t.secPublishing }}</h2></div>
+          <div style="padding:16px;display:flex;flex-direction:column;gap:14px">
+            <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,200px),1fr));gap:13px">
+              <div style="display:flex;flex-direction:column;gap:6px">
+                <label for="f-pubdate" style="font-size:12px;font-weight:500;color:#55534C">{{ t.kPublishDate }}</label>
+                <input id="f-pubdate" type="date" value="{{ fPublishDate }}" onChange="{{ onPublishDate }}" style="border:1px solid #DAD5CB;background:#FCFBF9;padding:11px 12px;font-size:14px;min-height:44px" style-focus="border-color:#6D7761;background:#FFFFFF">
+              </div>
+              <div style="display:flex;flex-direction:column;gap:6px">
+                <label for="f-collection" style="font-size:12px;font-weight:500;color:#55534C">{{ t.kFeaturedCollection }}</label>
+                <select id="f-collection" value="{{ fCollection }}" onChange="{{ onCollection }}" style="border:1px solid #DAD5CB;background:#FCFBF9;padding:11px 12px;font-size:14px;min-height:44px" style-focus="border-color:#6D7761">
+                  <option value="">{{ t.kNone }}</option>
+                  <option value="Autumn Archive">{{ t.kAutumnArchive }}</option>
+                  <option value="Workwear Study">{{ t.kWorkwearStudy }}</option>
+                  <option value="Military Issue">{{ t.kMilitaryIssue }}</option>
+                  <option value="Mended &amp; Repaired">{{ t.kMendedAndRepaired }}</option>
+                </select>
+              </div>
+            </div>
+            <label style="display:flex;align-items:flex-start;gap:10px;cursor:pointer;min-height:44px;padding-top:2px">
+              <input type="checkbox" checked="{{ fFeatured }}" onChange="{{ onFeatured }}" style="width:16px;height:16px;accent-color:#6D7761;margin-top:2px">
+              <span style="display:flex;flex-direction:column;gap:2px">
+                <span style="font-size:13.5px">{{ t.kFeaturedProduct }}</span>
+                <span style="font-size:12px;color:#8C887F">{{ t.kAppearsInTheSelectedPiecesRowOnThe }}</span>
+              </span>
+            </label>
+          </div>
+        </section>
+      </div>
+
+      <aside style="display:flex;flex-direction:column;gap:14px;min-width:0;position:{{ asidePosition }};top:150px">
+        <section style="background:#FFFFFF;border:1px solid #E3DFD7">
+          <div style="padding:13px 16px;border-bottom:1px solid #EDEAE3;display:flex;align-items:center;justify-content:space-between;gap:10px">
+            <h2 style="margin:0;font-size:14px;font-weight:600">{{ saveBoxTitle }}</h2>
+            <span style="font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:0.1em;padding:3px 7px;background:{{ statusBadgeBg }};color:{{ statusBadgeFg }}">{{ statusBadgeLabel }}</span>
+          </div>
+          <div style="padding:16px;display:flex;flex-direction:column;gap:11px">
+            <div style="display:flex;flex-direction:column;gap:4px;font-family:'IBM Plex Mono',monospace;font-size:11px;color:#8C887F">
+              <span>{{ saveStateLabel }}</span>
+              <span>{{ saveStateNote }}</span>
+            </div>
+            <div style="display:flex;flex-direction:column;gap:9px;padding:13px;background:#FBFAF7;border:1px solid #EDEAE3">
+              <div style="display:flex;justify-content:space-between;gap:10px;align-items:baseline">
+                <span style="font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:0.14em;color:#6E6A62">{{ t.completeness }}</span>
+                <span style="font-size:13px;color:{{ completionTone }}">{{ completionPct }}</span>
+              </div>
+              <div role="progressbar" aria-valuenow="{{ completionValue }}" aria-valuemin="0" aria-valuemax="100" aria-label="{{ t.completeness }}" style="height:5px;background:#EDEAE3;overflow:hidden">
+                <span style="display:block;height:100%;width:{{ completionBar }};background:{{ completionTone }}"></span>
+              </div>
+              <sc-if value="{{ hasMissing }}" hint-placeholder-val="{{ false }}">
+                <div style="display:flex;flex-direction:column;gap:4px;padding-top:3px">
+                  <span style="font-size:11.5px;color:#6E6A62">{{ t.missingRequired }}</span>
+                  <sc-for list="{{ missingItems }}" as="mi" hint-placeholder-count="2">
+                    <span style="font-size:12px;color:#8A3F33">· {{ mi.label }}</span>
+                  </sc-for>
+                </div>
+              </sc-if>
+            </div>
+            <sc-if value="{{ showPublishBtn }}" hint-placeholder-val="{{ true }}">
+            <button type="button" onClick="{{ onPublishClick }}" style="border:none;background:#6D7761;color:#FFFFFF;padding:12px 16px;min-height:46px;font-size:14px;font-weight:500;white-space:nowrap;cursor:pointer;transition:background 160ms ease" style-hover="background:#59614F" style-active="background:#4C5344">{{ publishLabel }}</button>
+            </sc-if>
+            <sc-if value="{{ showSaveDraft }}" hint-placeholder-val="{{ true }}">
+            <button type="button" onClick="{{ onSaveDraft }}" style="border:1px solid #DAD5CB;background:#FFFFFF;padding:11px 16px;min-height:44px;font-size:13.5px;white-space:nowrap;cursor:pointer" style-hover="border-color:#6D7761;color:#6D7761">{{ t.kSaveAsDraft }}</button>
+            </sc-if>
+            <sc-if value="{{ noEditPerm }}" hint-placeholder-val="{{ false }}">
+              <p role="note" style="margin:0;font-size:12.5px;line-height:1.6;color:#77736B">{{ t.readOnlyRole }}</p>
+            </sc-if>
+            <div style="display:flex;gap:9px">
+              <button type="button" onClick="{{ onPreview }}" style="flex:1;border:1px solid #DAD5CB;background:#FFFFFF;padding:11px 12px;min-height:44px;font-size:13.5px;white-space:nowrap;cursor:pointer" style-hover="border-color:#6D7761;color:#6D7761">{{ t.kPreview }}</button>
+              <button type="button" onClick="{{ onCancel }}" style="flex:1;border:1px solid #DAD5CB;background:#FFFFFF;padding:11px 12px;min-height:44px;font-size:13.5px;white-space:nowrap;cursor:pointer" style-hover="border-color:#8C887F">{{ t.kCancel }}</button>
+            </div>
+            <sc-if value="{{ canMarkSold }}" hint-placeholder-val="{{ false }}">
+              <button type="button" onClick="{{ onMarkSold }}" style="border:1px solid #DAD5CB;background:#FFFFFF;padding:11px 16px;min-height:44px;font-size:13.5px;white-space:nowrap;cursor:pointer" style-hover="border-color:#9A7A32;color:#7E6224">{{ t.kMarkAsSoldOut }}</button>
+            </sc-if>
+            <sc-if value="{{ showDeleteBtn }}" hint-placeholder-val="{{ false }}">
+              <button type="button" onClick="{{ onDelete }}" style="border:1px solid #E7CFC9;background:#FBF0EE;color:#8A3F33;padding:11px 16px;min-height:44px;font-size:13.5px;white-space:nowrap;cursor:pointer" style-hover="background:#F6E3DF">{{ t.kDeleteProduct }}</button>
+            </sc-if>
+          </div>
+        </section>
+
+        <section style="background:#FFFFFF;border:1px solid #E3DFD7">
+          <div style="padding:13px 16px;border-bottom:1px solid #EDEAE3"><h2 style="margin:0;font-size:14px;font-weight:600">{{ t.kShopCardPreview }}</h2></div>
+          <div style="padding:16px;display:flex;flex-direction:column;gap:10px">
+            <div style="width:100%;aspect-ratio:3/4;background:#EDE9E2;overflow:hidden;position:relative">
+              <sc-if value="{{ hasImages }}" hint-placeholder-val="{{ true }}">
+                <img loading="lazy" decoding="async" src="{{ previewImage }}" alt="{{ previewAlt }}" style="width:100%;height:100%;object-fit:cover;display:block;filter:saturate(0.86) sepia(0.1) contrast(1.02)">
+              </sc-if>
+              <sc-if value="{{ previewSoldOut }}" hint-placeholder-val="{{ false }}">
+                <span style="position:absolute;inset:0;display:grid;place-items:center;background:rgba(248,247,244,0.72);font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:0.24em;color:#55534C">{{ t.kSoldOut2 }}</span>
+              </sc-if>
+            </div>
+            <span style="font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:0.16em;color:#9C978F">{{ previewMeta }}</span>
+            <span style="font-family:'EB Garamond',serif;font-size:18px;line-height:1.3;color:#232220">{{ previewName }}</span>
+            <span style="font-family:'IBM Plex Mono',monospace;font-size:12px;color:#3F3D38">{{ previewPrice }}</span>
+            <p style="margin:0;font-size:12.5px;line-height:1.65;color:#77736B">{{ previewNote }}</p>
+          </div>
+        </section>
+      </aside>
+    </div>
+  </div>
+</sc-if>
+
+<sc-if value="{{ unsavedOpen }}" hint-placeholder-val="{{ false }}">
+  <div style="position:fixed;inset:0;z-index:88;display:grid;place-items:center;padding:20px;background:rgba(35,34,32,0.42);animation:admFade 160ms ease both">
+    <div role="alertdialog" aria-modal="true" aria-labelledby="unsaved-t" style="width:100%;max-width:430px;background:#FFFFFF;border:1px solid #E3DFD7;box-shadow:0 20px 60px rgba(40,36,28,0.2);animation:admRise 190ms ease both">
+      <div style="padding:20px 22px 0">
+        <h2 id="unsaved-t" style="margin:0 0 8px;font-size:17px;font-weight:600">{{ t.kYouHaveUnsavedChanges }}</h2>
+        <p style="margin:0;font-size:13.5px;line-height:1.65;color:#55534C">{{ t.kLeavingThisEditorWillDiscardYourEd }}</p>
+      </div>
+      <div style="display:flex;gap:10px;justify-content:flex-end;padding:20px 22px 22px;flex-wrap:wrap">
+        <button type="button" onClick="{{ unsavedStay }}" style="border:1px solid #DAD5CB;background:#FFFFFF;padding:10px 18px;min-height:44px;font-size:13.5px;white-space:nowrap;cursor:pointer" style-hover="border-color:#8C887F">{{ t.kKeepEditing }}</button>
+        <button type="button" onClick="{{ unsavedSave }}" style="border:1px solid #DAD5CB;background:#FFFFFF;padding:10px 18px;min-height:44px;font-size:13.5px;white-space:nowrap;cursor:pointer" style-hover="border-color:#6D7761;color:#6D7761">{{ t.kSaveAndLeave }}</button>
+        <button type="button" onClick="{{ unsavedDiscard }}" style="border:none;background:#A2493C;color:#FFFFFF;padding:10px 18px;min-height:44px;font-size:13.5px;font-weight:500;white-space:nowrap;cursor:pointer" style-hover="background:#8A3F33">{{ t.kDiscard }}</button>
+      </div>
+    </div>
+  </div>
+</sc-if>
+
+<sc-if value="{{ previewOpen }}" hint-placeholder-val="{{ false }}">
+  <div style="position:fixed;inset:0;z-index:86;display:flex;flex-direction:column;background:rgba(35,34,32,0.5);animation:admFade 160ms ease both">
+    <div style="background:#FFFFFF;border-bottom:1px solid #E3DFD7;padding:11px 16px;display:flex;align-items:center;gap:12px;flex-wrap:wrap">
+      <span style="font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:0.18em;color:#8C887F">{{ t.kStorefrontPreview }}</span>
+      <div style="display:flex;gap:5px;border:1px solid #E3DFD7;padding:2px;margin-left:auto">
+        <button type="button" onClick="{{ setPreviewDesktop }}" style="border:none;background:{{ pvDesktopBg }};color:{{ pvDesktopFg }};padding:7px 13px;min-height:38px;font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:0.1em;cursor:pointer">{{ t.kDesktop }}</button>
+        <button type="button" onClick="{{ setPreviewMobile }}" style="border:none;background:{{ pvMobileBg }};color:{{ pvMobileFg }};padding:7px 13px;min-height:38px;font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:0.1em;cursor:pointer">{{ t.kMobile }}</button>
+      </div>
+      <button type="button" onClick="{{ closePreview }}" style="border:1px solid #DAD5CB;background:#FFFFFF;padding:8px 14px;min-height:38px;font-size:13px;white-space:nowrap;cursor:pointer" style-hover="border-color:#6D7761">{{ t.kClose }}</button>
+    </div>
+    <div style="flex:1;overflow-y:auto;display:flex;justify-content:center;padding:22px 16px" data-adm-scroll="1">
+      <div style="width:100%;max-width:{{ pvWidth }};background:#F8F7F4;border:1px solid #E6E0D7;padding:clamp(18px,3vw,36px);display:grid;grid-template-columns:{{ pvColumns }};gap:clamp(18px,3vw,44px);align-content:start">
+        <div style="min-width:0;display:flex;flex-direction:column;gap:10px">
+          <div style="width:100%;aspect-ratio:3/4;background:#E4DCD1;overflow:hidden">
+            <img loading="lazy" decoding="async" src="{{ previewImage }}" alt="{{ previewAlt }}" style="width:100%;height:100%;object-fit:cover;filter:saturate(0.86) sepia(0.1) contrast(1.02)">
+          </div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap">
+            <sc-for list="{{ previewThumbs }}" as="th" hint-placeholder-count="4">
+              <div style="width:56px;aspect-ratio:1/1;background:#E4DCD1;overflow:hidden">
+                <img loading="lazy" decoding="async" src="{{ th.url }}" alt="{{ th.alt }}" style="width:100%;height:100%;object-fit:cover;filter:saturate(0.86) sepia(0.1) contrast(1.02)">
+              </div>
+            </sc-for>
+          </div>
+        </div>
+        <div style="min-width:0;display:flex;flex-direction:column;gap:16px">
+          <span style="font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:0.18em;color:#9C978F">{{ previewMeta }}</span>
+          <h2 style="margin:0;font-family:'EB Garamond',serif;font-size:clamp(24px,3vw,34px);font-weight:400;line-height:1.15;color:#222222">{{ previewName }}</h2>
+          <span style="font-family:'IBM Plex Mono',monospace;font-size:14px;color:#222222">{{ previewPrice }}</span>
+          <p style="margin:0;font-size:14.5px;line-height:1.9;color:#4A4740">{{ previewStory }}</p>
+          <div style="display:flex;flex-direction:column;gap:9px;border-top:1px solid #E6E0D7;padding-top:16px">
+            <sc-for list="{{ previewMeasurements }}" as="m" hint-placeholder-count="4">
+              <div style="display:flex;justify-content:space-between;gap:14px;font-size:13.5px;color:#4A4740">
+                <span>{{ m.k }}</span>
+                <span style="font-family:'IBM Plex Mono',monospace;color:#222222">{{ m.v }}</span>
+              </div>
+            </sc-for>
+          </div>
+          <div style="border:1px solid #E6E0D7;background:#FFFFFF;padding:14px;display:flex;flex-direction:column;gap:5px">
+            <span style="font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:0.16em;color:#9C978F">{{ t.kCuratorSNote2 }}</span>
+            <p style="margin:0;font-size:13.5px;line-height:1.75;color:#4A4740">{{ previewNote }}</p>
+          </div>
+          <button type="button" disabled="true" style="border:none;background:#222222;color:#F8F7F4;padding:15px;font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:0.2em;min-height:48px;opacity:0.85">{{ previewCta }}</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</sc-if>
+
+<sc-if value="{{ preflightOpen }}" hint-placeholder-val="{{ false }}">
+  <div style="position:fixed;inset:0;z-index:95;display:grid;place-items:center;padding:20px;background:rgba(35,34,32,0.42)">
+    <div role="dialog" aria-modal="true" aria-labelledby="pf-title" style="width:min(100%,460px);max-height:86vh;overflow-y:auto;background:#FFFFFF;border:1px solid #E3DFD7;box-shadow:0 18px 48px rgba(40,36,28,0.18);display:flex;flex-direction:column;gap:0">
+      <div style="padding:18px 20px;border-bottom:1px solid #EDEAE3;display:flex;flex-direction:column;gap:5px">
+        <span style="font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:0.18em;color:#8C887F">{{ t.preflightTitle }}</span>
+        <h2 id="pf-title" style="margin:0;font-size:16px;font-weight:600">{{ preflightHeading }}</h2>
+        <p style="margin:0;font-size:12.5px;line-height:1.6;color:#77736B">{{ t.preflightBody }}</p>
+      </div>
+      <ul style="margin:0;padding:14px 20px;list-style:none;display:flex;flex-direction:column;gap:7px">
+        <sc-for list="{{ preflight }}" as="pf" hint-placeholder-count="8">
+          <li style="display:flex;align-items:center;gap:10px;padding:7px 9px;background:{{ pf.bg }}">
+            <span aria-hidden="true" style="font-family:'IBM Plex Mono',monospace;font-size:12px;color:{{ pf.tone }};flex:0 0 auto">{{ pf.mark }}</span>
+            <span style="font-size:13px;color:#3F3D38;overflow-wrap:anywhere">{{ pf.label }}</span>
+          </li>
+        </sc-for>
+      </ul>
+      <div style="padding:14px 20px;border-top:1px solid #EDEAE3;display:flex;gap:9px;justify-content:flex-end;flex-wrap:wrap">
+        <button type="button" onClick="{{ closePreflight }}" style="border:1px solid #DAD5CB;background:#FFFFFF;padding:11px 16px;min-height:44px;font-size:13.5px;white-space:nowrap;cursor:pointer" style-hover="border-color:#6D7761">{{ t.keepAsDraft }}</button>
+        <button type="button" onClick="{{ confirmPublish }}" disabled="{{ preflightBlocked }}" style="border:none;background:{{ preflightBg }};color:{{ preflightColor }};padding:11px 18px;min-height:44px;font-size:13.5px;font-weight:500;white-space:nowrap;cursor:{{ preflightCursor }}">{{ t.publishAnyway }}</button>
+      </div>
+    </div>
+  </div>
+</sc-if>
+
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:1180,&quot;height&quot;:900},&quot;view&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;list&quot;,&quot;new&quot;,&quot;detail&quot;],&quot;default&quot;:&quot;list&quot;,&quot;tsType&quot;:&quot;string&quot;},&quot;entityId&quot;:{&quot;editor&quot;:&quot;text&quot;,&quot;default&quot;:&quot;&quot;,&quot;tsType&quot;:&quot;string&quot;},&quot;nav&quot;:{&quot;editor&quot;:null,&quot;tsType&quot;:&quot;(path: string) =&gt; void&quot;},&quot;compact&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:false,&quot;tsType&quot;:&quot;boolean&quot;},&quot;tick&quot;:{&quot;editor&quot;:null,&quot;tsType&quot;:&quot;number&quot;}}">
+const T3 = new Proxy({}, {
+  get: (_, key) => {
+    const I = window.TSUMUGI_I18N, S = window.TSUMUGI_STORE;
+    const d = I ? I.t(S && S.lang ? S.lang() : "en") : {};
+    return d[key];
+  }
+});
+
+const BADGE = {
+  published: ["#EEF0EA", "#4F5C42", "PUBLISHED"],
+  draft: ["#F1EFE9", "#6E6A62", "DRAFT"],
+  soldout: ["#FBF0EE", "#8A3F33", "SOLD OUT"],
+  archived: ["#EDEDF0", "#5D5B66", "ARCHIVED"]
+};
+const CATEGORIES = ["Outerwear", "Trousers", "Knitwear", "Shirting", "Sweatshirts"];
+const TROUSER_MEASURES = () => [["waist", T3.kWaist], ["rise", T3.kRise], ["inseam", T3.kInseam], ["hem", T3.kHemWidth]];
+const TOP_MEASURES = () => [["shoulder", T3.kShoulderWidth], ["chest", T3.kChestWidth], ["length", T3.kBodyLength], ["sleeve", T3.kSleeveLength]];
+const SORTS = ["Recently updated", "Recently created", "Name A–Z", "Price: high to low", "Price: low to high", "Stock: low first"];
+
+class Component extends DCLogic {
+  state = {
+    query: "", sort: "Recently updated", filtersOpen: false, page: 1, loading: false,
+    f: { status: "", stock: "", category: "", brand: "", era: "", size: "", condition: "", price: "" },
+    createdAfter: "", updatedAfter: "",
+    selected: [], menuFor: null, bulkCategory: "",
+    vw: typeof window !== "undefined" ? window.innerWidth : 1440,
+    preflightOpen: false, activeSection: "sec-basic",
+    saveState: "idle", savedAt: "", autosaveOn: false,
+    form: null, baseline: "", errors: {}, submitted: false,
+    crop: "desktop", previewOpen: false, previewMode: "desktop",
+    unsaved: null, tick: 0
+  };
+
+  componentDidMount() {
+    this.S = window.TSUMUGI_STORE;
+    if (!this.S) { this._t = setTimeout(() => { this.S = window.TSUMUGI_STORE; this.forceUpdate(); this._syncForm(); }, 60); }
+    this._unsub = this.S && this.S.subscribe(() => this.setState(s => ({ tick: s.tick + 1 })));
+    this._onResize = () => this.setState({ vw: window.innerWidth });
+    window.addEventListener("resize", this._onResize);
+    this._onDocClick = () => { if (this.state.menuFor !== null) this.setState({ menuFor: null }); };
+    document.addEventListener("click", this._onDocClick);
+    this._beforeUnload = e => { if (this._dirty()) { e.preventDefault(); e.returnValue = ""; } };
+    window.addEventListener("beforeunload", this._beforeUnload);
+    this._syncForm();
+  }
+  componentWillUnmount() {
+    if (this._autoT) clearTimeout(this._autoT);
+    if (this._saveT) clearTimeout(this._saveT);
+    window.removeEventListener("resize", this._onResize);
+    window.removeEventListener("beforeunload", this._beforeUnload);
+    document.removeEventListener("click", this._onDocClick);
+    if (this._unsub) this._unsub();
+  }
+  componentDidUpdate(prev) {
+    if (prev.view !== this.props.view || prev.entityId !== this.props.entityId) this._syncForm();
+  }
+
+  _syncForm() {
+    const S = window.TSUMUGI_STORE; if (!S) return;
+    this.S = S;
+    const { view, entityId } = this.props;
+    if (view === "new") {
+      const blank = S.blankProduct();
+      this.setState({
+        form: blank, baseline: JSON.stringify(blank), errors: {}, submitted: false, previewOpen: false,
+        autosaveOn: false, saveState: "idle", savedAt: "", activeSection: "sec-basic"
+      });
+    } else if (view === "detail") {
+      const p = S.getProduct(entityId);
+      const form = p ? JSON.parse(JSON.stringify(p)) : null;
+      this.setState({
+        form, baseline: form ? JSON.stringify(form) : "", errors: {}, submitted: false, previewOpen: false,
+        // The record already exists, so debounced autosave is available immediately.
+        autosaveOn: !!form, saveState: "idle", savedAt: "", activeSection: "sec-basic"
+      });
+    } else {
+      this.setState({ form: null, baseline: "", selected: [], menuFor: null });
+    }
+  }
+
+  /* Debounced local autosave. Only for records that already exist, and it never
+     changes publication status. New products require an explicit Save draft. */
+  _queueAutosave() {
+    const S = this.S || window.TSUMUGI_STORE;
+    if (!this.state.autosaveOn) return;
+    if (!S.can("products.edit")) return;
+    if (this._autoT) clearTimeout(this._autoT);
+    this.setState({ saveState: "dirty" });
+    this._autoT = setTimeout(() => {
+      this._autoT = null;
+      if (!this._dirty()) return;
+      this.setState({ saveState: "saving" });
+      // Small delay so the "Saving…" state is perceivable rather than a flash.
+      this._saveT = setTimeout(async () => {
+        try {
+          const f = { ...this.state.form };
+          const marker = JSON.stringify(f);
+          const id = await S.saveProduct({ ...f, status: S.getProduct(f.id) ? S.getProduct(f.id).status : f.status });
+          if (!id) return this.setState({ saveState: "failed" });
+          const saved = S.getProduct(id);
+          /* Do not overwrite keystrokes entered while the request was in
+             flight. If the form changed, keep it dirty and let the next
+             debounce persist that newer version. */
+          if (JSON.stringify(this.state.form) !== marker) {
+            this.setState({ saveState: "dirty" }, () => this._queueAutosave());
+            return;
+          }
+          const copy = JSON.parse(JSON.stringify(saved));
+          this.setState({
+            form: copy, baseline: JSON.stringify(copy), saveState: "saved",
+            savedAt: new Date().toLocaleTimeString(this._lang() === "ja" ? "ja-JP" : "en-GB",
+              { hour: "2-digit", minute: "2-digit" })
+          });
+        } catch (e) { this.setState({ saveState: "failed" }); }
+      }, 260);
+    }, 900);
+  }
+
+  _jumpTo(id) {
+    const el = document.getElementById(id);
+    if (!el) return;
+    this.setState({ activeSection: id });
+    const top = el.getBoundingClientRect().top + window.scrollY - 88;
+    window.scrollTo({ top: top < 0 ? 0 : top, behavior: "smooth" });
+    // Section carries tabindex="-1" so focus can land on the region itself.
+    el.focus({ preventScroll: true });
+  }
+
+  _guardPerm(perm) {
+    const S = this.S || window.TSUMUGI_STORE;
+    if (S.can(perm)) return true;
+    S.toast(this._dict().permissionDenied, "error");
+    return false;
+  }
+
+  _dirty() { return !!this.state.form && JSON.stringify(this.state.form) !== this.state.baseline; }
+  _set = (k, v) => this.setState(s => ({ form: { ...s.form, [k]: v } }), () => {
+    if (this.state.submitted) this._validate();
+    this._queueAutosave();
+  });
+  _setMeasure = (k, v) => this.setState(s => ({ form: { ...s.form, measurements: { ...s.form.measurements, [k]: v } } }), () => this._queueAutosave());
+
+  /* Mandatory-only completeness. Optional fields never reduce the score. */
+  _completeness() {
+    const f = this.state.form || {};
+    const T = this._dict();
+    const m = f.measurements || {};
+    const measured = Object.keys(m).filter(k => Number(m[k]) > 0).length;
+    const imgs = f.images || [];
+    const primary = imgs.some(im => im.primary && (im.url || im.thumb));
+    const missingAlt = imgs.filter(im => !String(im.alt || "").trim()).length;
+    const checks = [
+      { key: "name", ok: !!String(f.name || "").trim(), label: T.kProductName },
+      { key: "sku", ok: !!String(f.sku || "").trim(), label: T.kProductIdSku },
+      { key: "price", ok: Number(f.price) > 0, label: T.kPriceJpy },
+      { key: "stock", ok: f.stock !== "" && f.stock != null && Number(f.stock) >= 0, label: T.kStockQuantity },
+      { key: "category", ok: !!f.category, label: T.kCategory },
+      { key: "size", ok: !!String(f.size || "").trim(), label: T.kSize },
+      { key: "measurements", ok: measured >= 2, label: T.secMeasurements,
+        note: measured < 2 ? (2 - measured) : 0 },
+      { key: "condition", ok: !!f.condition, label: T.kConditionGrade },
+      { key: "conditionNote", ok: !!String(f.conditionNote || "").trim(), label: T.kConditionDescription },
+      { key: "primaryImage", ok: primary, label: T.kPrimary },
+      { key: "imageAlts", ok: imgs.length > 0 && missingAlt === 0, label: T.kAltText,
+        note: missingAlt },
+      { key: "slug", ok: !!String(f.slug || "").trim(), label: T.kUrlSlug }
+    ];
+    const passed = checks.filter(c => c.ok).length;
+    return {
+      checks,
+      pct: Math.round((passed / checks.length) * 100),
+      missing: checks.filter(c => !c.ok),
+      allPass: passed === checks.length
+    };
+  }
+
+  _validate() {
+    const f = this.state.form || {};
+    const errors = {};
+    if (!String(f.name || "").trim()) errors.name = T3.productNameRequired;
+    if (!String(f.sku || "").trim()) errors.sku = T3.skuRequired;
+    else {
+      const clash = this.S.products().find(p => p.sku === f.sku && String(p.id) !== String(f.id));
+      if (clash) errors.sku = T3.skuInUsePre + clash.name + T3.skuInUsePost;
+    }
+    if (!String(f.brand || "").trim()) errors.brand = T3.brandRequired;
+    if (!(Number(f.price) > 0)) errors.price = T3.kEnterAPriceAboveZero;
+    this.setState({ errors });
+    return errors;
+  }
+
+  async _save(status, { silent } = {}) {
+    const errors = this._validate();
+    this.setState({ submitted: true });
+    if (Object.keys(errors).length) {
+      if (!silent) this.S.toast(this._dict().fixNFields.split("{n}").join(Object.keys(errors).length), "error");
+      return null;
+    }
+    const f = { ...this.state.form };
+    if (status) f.status = status;
+    f.era = Number(f.year) < 1980 ? "1970s" : Number(f.year) < 1990 ? "1980s" : Number(f.year) < 2000 ? "1990s" : "2000s";
+    f.price = Number(f.price) || 0;
+    f.stock = Number(f.stock) || 0;
+    if (f.status === "soldout") f.stock = 0;
+    if (!f.slug) f.slug = this.S.slugify(f.brand + " " + f.name);
+    if (!f.metaTitle) f.metaTitle = f.name + " — " + f.brand + " | TSUMUGI";
+    (f.images || []).forEach((im, i) => { im.primary = i === 0; if (!im.thumb) im.thumb = im.url; });
+    this.setState({ saveState: "saving" });
+    const id = await this.S.saveProduct(f);
+    if (!id) { this.setState({ saveState: "failed" }); return null; }
+    const saved = this.S.getProduct(id);
+    const copy = JSON.parse(JSON.stringify(saved));
+    this.setState({
+      form: copy, baseline: JSON.stringify(copy), errors: {},
+      autosaveOn: true, saveState: "saved",
+      savedAt: new Date().toLocaleTimeString(this._lang() === "ja" ? "ja-JP" : "en-GB", { hour: "2-digit", minute: "2-digit" })
+    });
+    return id;
+  }
+
+  _guardNav(go) {
+    if (!this._dirty()) return go();
+    this.setState({ unsaved: go });
+  }
+
+  /* Validation lives in tsumugi-images.js: extension, declared MIME type and
+     the file's actual magic bytes must agree, each file is size-capped, and the
+     batch is refused if it would not fit in this browser's storage.
+
+     Nothing is reported until the reads have finished. The previous version
+     toasted "images added" synchronously, before FileReader had run, so a
+     rejected or oversized file still looked like a success. */
+  onUpload = (e) => {
+    const files = Array.from(e.target.files || []);
+    e.target.value = "";
+    if (!files.length) return;
+    const IM = window.TSUMUGI_IMAGES;
+    const lang = this.S && this.S.lang ? this.S.lang() : "en";
+    const ja = lang === "ja";
+    if (!IM) { this.S.toast(ja ? "画像モジュールを読み込めませんでした" : "The image module failed to load.", "error"); return; }
+
+    this.setState({ uploadBusy: true });
+    IM.intake(files, { prefix: "products", ownerId: String((this.state.form && this.state.form.id) || "new") })
+      .then(({ accepted, rejected }) => {
+        if (accepted.length) {
+          this.setState(s => {
+            const imgs = (s.form.images || []).concat(accepted.map((a, n) => ({
+              id: "up-" + Date.now() + "-" + n + Math.random().toString(36).slice(2, 6),
+              url: a.src, thumb: a.thumb, path: a.path || null, alt: a.alt,
+              primary: (s.form.images || []).length === 0 && n === 0
+            })));
+            return { form: { ...s.form, images: imgs }, uploadBusy: false };
+          }, () => {
+            this.S.toast(ja ? accepted.length + "点の画像を追加しました" : accepted.length + " image(s) added.", "success");
+          });
+        } else {
+          this.setState({ uploadBusy: false });
+        }
+        /* Every refusal is named. A file that silently disappears is a bug
+           report the operator cannot write. */
+        rejected.forEach(r => {
+          this.S.toast((r.name ? r.name + ": " : "") + IM.reason(r.code, lang), "error");
+        });
+      })
+      .catch(() => {
+        this.setState({ uploadBusy: false });
+        this.S.toast(ja ? "画像を追加できませんでした" : "The images could not be added.", "error");
+      });
+  };
+
+  addPlaceholder = () => {
+    const S = this.S;
+    const pool = S.GARMENTS.concat(S.DETAILS);
+    const n = (this.state.form.images || []).length;
+    const pick = pool[(Number(this.state.form.id || 0) * 3 + n * 5) % pool.length];
+    this.setState(s => ({
+      form: {
+        ...s.form, images: (s.form.images || []).concat({
+          id: "ph-" + Date.now(), url: S.U(pick, 900), thumb: S.U(pick, 220),
+          alt: (s.form.name || "Archive piece") + " — daylight photograph " + (n + 1), primary: n === 0
+        })
+      }
+    }));
+  };
+
+  _reorder(from, to) {
+    this.setState(s => {
+      const imgs = (s.form.images || []).slice();
+      if (from === to || from < 0 || to < 0 || from >= imgs.length || to >= imgs.length) return null;
+      const [m] = imgs.splice(from, 1);
+      imgs.splice(to, 0, m);
+      imgs.forEach((im, i) => { im.primary = i === 0; });
+      return { form: { ...s.form, images: imgs } };
+    });
+  }
+
+  _filtered() {
+    const S = this.S;
+    const { query, f, createdAfter, updatedAfter, sort } = this.state;
+    const q = query.trim().toLowerCase();
+    let list = S.products().filter(p => {
+      if (f.status && p.status !== f.status) return false;
+      if (f.stock === "in" && !(p.stock > 0)) return false;
+      if (f.stock === "out" && p.stock > 0) return false;
+      if (f.category && p.category !== f.category) return false;
+      if (f.brand && p.brand !== f.brand) return false;
+      if (f.era && p.era !== f.era) return false;
+      if (f.size && p.size !== f.size) return false;
+      if (f.condition && p.condition !== f.condition) return false;
+      if (f.price === "lt20" && !(p.price < 20000)) return false;
+      if (f.price === "20to35" && !(p.price >= 20000 && p.price <= 35000)) return false;
+      if (f.price === "gt35" && !(p.price > 35000)) return false;
+      if (createdAfter && (p.createdAt || "").slice(0, 10) < createdAfter) return false;
+      if (updatedAfter && (p.updatedAt || "").slice(0, 10) < updatedAfter) return false;
+      if (q && !(p.name + " " + p.sku + " " + p.brand + " " + p.material + " " + p.category + " " + p.colour).toLowerCase().includes(q)) return false;
+      return true;
+    });
+    const by = {
+      "Recently updated": (a, b) => (b.updatedAt || "").localeCompare(a.updatedAt || ""),
+      "Recently created": (a, b) => (b.createdAt || "").localeCompare(a.createdAt || ""),
+      "Name A–Z": (a, b) => a.name.localeCompare(b.name),
+      "Price: high to low": (a, b) => b.price - a.price,
+      "Price: low to high": (a, b) => a.price - b.price,
+      "Stock: low first": (a, b) => a.stock - b.stock
+    };
+    return list.sort(by[sort]);
+  }
+
+  _rowActions(p) {
+    const nav = this.props.nav;
+    const act = [];
+    /* safe: reading actions stay live for a read-only role; everything else in
+       this menu is a mutation and is disabled when the role cannot edit. */
+    act.push({ safe: true, label: T3.kViewOnStore, color: "#232220", divider: "none", onClick: () => window.open("./#/product/" + p.id, "_blank") });
+    act.push({ safe: true, label: T3.kEdit, color: "#232220", divider: "none", onClick: () => nav("/admin/products/" + p.id) });
+    act.push({ label: T3.kDuplicate, color: "#232220", divider: "none", onClick: async () => { const id = await this.S.duplicateProduct(p.id); if (!id) return; this.S.toast(T3.kDuplicatedAsANewDraft, "success"); nav("/admin/products/" + id); } });
+    if (p.status !== "published") act.push({ label: T3.kPublish, color: "#4F5C42", divider: "1px solid #F2F0EA", onClick: async () => { const ok = await this.S.setProductStatus([p.id], "published"); if (ok) this.S.toast("“" + p.name + "” is live.", "success"); } });
+    if (p.status === "published") act.push({ label: T3.kUnpublish, color: "#232220", divider: "1px solid #F2F0EA", onClick: async () => { const ok = await this.S.setProductStatus([p.id], "draft"); if (ok) this.S.toast("“" + p.name + "” moved to drafts.", "warning"); } });
+    if (p.status !== "soldout") act.push({ label: T3.kMarkAsSold, color: "#7E6224", divider: "none", onClick: async () => { const ok = await this.S.setProductStatus([p.id], "soldout"); if (ok) this.S.toast("“" + p.name + "” marked sold out.", "warning"); } });
+    if (p.status !== "archived") act.push({ label: T3.kArchive, color: "#5D5B66", divider: "none", onClick: async () => { const ok = await this.S.setProductStatus([p.id], "archived"); if (ok) this.S.toast("“" + p.name + "” archived.", "info"); } });
+    act.push({
+      label: T3.kDelete, color: "#A2493C", divider: "1px solid #F2F0EA", onClick: async () => {
+        const ok = await this.S.confirm({ title: T3.delTitleQ.split("{x}").join(p.name), body: T3.delProductBody, accept: T3.deleteProduct, cancel: T3.kCancel, tone: "#A2493C" });
+        if (ok) { const deleted = await this.S.deleteProducts([p.id]); if (deleted) this.S.toast(T3.kProductDeleted, "error"); }
+      }
+    });
+    const canEdit = this.S.can("products.edit");
+    return act.map(a => {
+      const off = !a.safe && !canEdit;
+      return { ...a, disabled: off, opacity: off ? 0.45 : 1, color: off ? "#A8A398" : a.color };
+    });
+  }
+
+  _lang() { const S = this.S || this.store || window.TSUMUGI_STORE; return (S && S.lang) ? S.lang() : "en"; }
+  _dict() { const I = window.TSUMUGI_I18N; return I ? I.t(this._lang()) : {}; }
+  _dialogKeys(open, close) {
+    if (open && !this._keyBound) {
+      this._keyBound = e => {
+        if (e.key === "Escape") { e.stopPropagation(); close(); }
+        if (e.key !== "Tab") return;
+        const dlg = document.querySelector('[role="dialog"][aria-modal="true"]');
+        if (!dlg) return;
+        const f = [...dlg.querySelectorAll('button,input,select,textarea,a[href]')].filter(x => !x.disabled);
+        if (!f.length) return;
+        const first = f[0], last = f[f.length - 1];
+        if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
+        else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
+      };
+      document.addEventListener("keydown", this._keyBound, true);
+      this._prevFocus = document.activeElement;
+      window.setTimeout(() => {
+        const dlg = document.querySelector('[role="dialog"][aria-modal="true"]');
+        const el = dlg && dlg.querySelector('input,button');
+        if (el) el.focus();
+      }, 20);
+    } else if (!open && this._keyBound) {
+      document.removeEventListener("keydown", this._keyBound, true);
+      this._keyBound = null;
+      const back = this._prevFocus;
+      this._prevFocus = null;
+      if (back && document.contains(back) && back.focus) window.setTimeout(() => back.focus(), 0);
+    }
+  }
+
+  renderVals() {
+    const l = this._lang();
+    const pick = (S) => S || this.S || this.store || window.TSUMUGI_STORE;
+    return Object.assign({
+      t: this._dict(), lang: l, isJa: l === "ja",
+      setLangEn: () => { const S = pick(); if (S && S.setLang) S.setLang("en"); },
+      setLangJa: () => { const S = pick(); if (S && S.setLang) S.setLang("ja"); },
+      toggleLang: () => { const S = pick(); if (S && S.toggleLang) S.toggleLang(); },
+      langLabel: l === "ja" ? "ENGLISH" : "日本語",
+      langEnMark: l === "ja" ? "" : "✓", langJaMark: l === "ja" ? "✓" : ""
+    }, this._renderVals());
+  }
+
+  _renderVals() {
+    this._dialogKeys(!!this.state.preflightOpen, () => this.setState({ preflightOpen: false }));
+    if (!this.S) return { isList: false, isForm: false };
+    const S = this.S, s = this.state, nav = this.props.nav || (() => { });
+    const isCards = s.vw < 780;
+    const perPage = Number(S.settings().itemsPerPage || 10);
+    const all = S.products();
+    const base = {
+      unsavedOpen: !!s.unsaved,
+      unsavedStay: () => this.setState({ unsaved: null }),
+      unsavedDiscard: () => { const go = s.unsaved; this.setState({ unsaved: null, baseline: JSON.stringify(this.state.form) }, () => go && go()); },
+      unsavedSave: async () => { const go = s.unsaved; const id = await this._save(null); this.setState({ unsaved: null }, () => { if (id) { S.toast(T3.kChangesSaved, "success"); go && go(); } }); }
+    };
+
+    if (this.props.view === "list") {
+      const filtered = this._filtered();
+      const pages = Math.max(1, Math.ceil(filtered.length / perPage));
+      const page = Math.min(s.page, pages);
+      const rows = filtered.slice((page - 1) * perPage, page * perPage);
+      const pageIds = rows.map(r => r.id);
+      const uniq = k => [...new Set(all.map(p => p[k]))].sort();
+      const sel = s.selected;
+      const chipDefs = [];
+      const labels = { status: "Status", stock: "Stock", category: "Category", brand: "Brand", era: "Era", size: "Size", condition: "Condition", price: "Price" };
+      const priceText = { lt20: "Under ¥20,000", "20to35": "¥20,000–35,000", gt35: "Over ¥35,000" };
+      const stockText = { in: T3.kInStock, out: T3.kOutOfStock };
+      Object.keys(s.f).forEach(k => {
+        if (!s.f[k]) return;
+        const v = k === "price" ? priceText[s.f[k]] : k === "stock" ? stockText[s.f[k]] : s.f[k];
+        chipDefs.push({ label: labels[k] + ": " + v, onClick: () => this.setState(st => ({ f: { ...st.f, [k]: "" }, page: 1 })) });
+      });
+      if (s.createdAfter) chipDefs.push({ label: "Created ≥ " + s.createdAfter, onClick: () => this.setState({ createdAfter: "", page: 1 }) });
+      if (s.updatedAfter) chipDefs.push({ label: "Updated ≥ " + s.updatedAfter, onClick: () => this.setState({ updatedAfter: "", page: 1 }) });
+
+      const opts = (arr, allLabel) => [{ v: "", t: allLabel }].concat(arr.map(a => (typeof a === "string" ? { v: a, t: a } : a)));
+      const mkFilter = (key, label, options) => ({
+        id: "pr-f-" + key, label, value: s.f[key], options,
+        onChange: e => this.setState(st => ({ f: { ...st.f, [key]: e.target.value }, page: 1 }))
+      });
+
+      const colDefs = [
+        [T3.kProduct, "left", T3.kNameAZ], ["SKU", "left", null], [T3.kBrand2, "left", null], [T3.kCategory2, "left", null],
+        [T3.kEra, "left", null], [T3.kSize2, "left", null], [T3.kPrice, "right", T3.kPriceHighToLow],
+        [T3.kStock, "center", T3.kStockLowFirst], [T3.kStatus, "left", null], [T3.kUpdated, "left", T3.kRecentlyUpdated]
+      ];
+
+      return {
+        ...base, isList: true, isForm: false,
+        query: s.query,
+        onQuery: e => this.setState({ query: e.target.value, page: 1 }),
+        sort: s.sort, sortOptions: SORTS.map(v => ({ value: v, label: (window.TSUMUGI_I18N ? window.TSUMUGI_I18N.label(v, this._lang()) : v) })),
+        onSort: e => this.setState({ sort: e.target.value, page: 1 }),
+        filtersOpen: s.filtersOpen,
+        filterBtnBg: s.filtersOpen ? "#EEF0EA" : "#FFFFFF",
+        toggleFilters: () => this.setState(st => ({ filtersOpen: !st.filtersOpen })),
+        hasFilters: chipDefs.length > 0, filterCount: chipDefs.length, chips: chipDefs,
+        clearFilters: () => this.setState({ f: { status: "", stock: "", category: "", brand: "", era: "", size: "", condition: "", price: "" }, createdAfter: "", updatedAfter: "", query: "", page: 1 }),
+        filterSelects: [
+          mkFilter("status", T3.kPublication2, opts([{ v: "published", t: T3.kPublished }, { v: "draft", t: T3.kDraft }, { v: "soldout", t: T3.kSoldOut }, { v: "archived", t: T3.kArchived }], T3.kAllStatuses)),
+          mkFilter("stock", T3.kStock, opts([{ v: "in", t: T3.kInStock }, { v: "out", t: T3.kOutOfStock }], T3.kAnyStock)),
+          mkFilter("category", T3.kCategory2, opts(uniq("category"), T3.kAllCategories)),
+          mkFilter("brand", T3.kBrand2, opts(uniq("brand"), T3.kAllBrands)),
+          mkFilter("era", T3.kEra, opts(uniq("era"), T3.kAllEras)),
+          mkFilter("size", T3.kSize2, opts(uniq("size"), T3.kAllSizes)),
+          mkFilter("condition", T3.kCondition2, opts(["Excellent", "Very Good", "Good", "Fair"], T3.kAnyCondition)),
+          mkFilter("price", T3.kPrice, opts([{ v: "lt20", t: T3.kUnder20000 }, { v: "20to35", t: "¥20,000–35,000" }, { v: "gt35", t: T3.kOver35000 }], T3.kAnyPrice))
+        ],
+        createdAfter: s.createdAfter, updatedAfter: s.updatedAfter,
+        onCreatedAfter: e => this.setState({ createdAfter: e.target.value, page: 1 }),
+        onUpdatedAfter: e => this.setState({ updatedAfter: e.target.value, page: 1 }),
+
+        isLoading: s.loading,
+        skeletons: [{ w1: "62%", w2: "38%" }, { w1: "48%", w2: "30%" }, { w1: "70%", w2: "44%" }, { w1: "55%", w2: "34%" }, { w1: "66%", w2: "28%" }, { w1: "44%", w2: "40%" }],
+        isEmpty: !s.loading && filtered.length === 0,
+        emptyIsSearch: !!(s.query || chipDefs.length),
+        emptyTitle: (s.query || chipDefs.length) ? T3.kNoProductsMatchThisSearch : T3.kTheArchiveIsEmpty,
+        emptyBody: (s.query || chipDefs.length) ? "Try a shorter keyword, or clear the active filters to see the whole archive again." : "Add the first piece to start building the TSUMUGI archive.",
+        goNew: () => nav("/admin/products/new"),
+        showTable: !s.loading && filtered.length > 0 && !isCards,
+        showCards: !s.loading && filtered.length > 0 && isCards,
+        showPager: !s.loading && filtered.length > 0,
+
+        columns: colDefs.map(([label, align, sortKey]) => ({
+          label, align, cursor: sortKey ? "pointer" : "default",
+          color: sortKey && s.sort === sortKey ? "#3F4A35" : "#8C887F",
+          arrow: sortKey ? (s.sort === sortKey ? "▾" : "") : "",
+          onSort: () => sortKey && this.setState({ sort: sortKey, page: 1 })
+        })),
+        allChecked: pageIds.length > 0 && pageIds.every(id => sel.includes(id)),
+        toggleAll: e => this.setState({ selected: e.target.checked ? [...new Set([...sel, ...pageIds])] : sel.filter(id => !pageIds.includes(id)) }),
+        rows: rows.map(p => {
+          const b = BADGE[p.status] || BADGE.draft;
+          return {
+            id: p.id, name: p.name, sku: p.sku, brand: p.brand, category: (window.TSUMUGI_I18N ? window.TSUMUGI_I18N.tx(p.category, this._lang()) : p.category), era: p.era, size: p.size,
+            price: S.yen(p.price), featured: p.featured,
+            thumb: (p.images[0] || {}).thumb || "", alt: (p.images[0] || {}).alt || p.name,
+            hasThumb: !!(p.images[0] || {}).thumb, noThumb: !(p.images[0] || {}).thumb,
+            cardMeta: p.sku + " · " + p.brand + " · " + p.era + " · " + p.size,
+            stockLabel: p.status === "soldout" ? "0" : String(p.stock),
+            stockTone: p.stock === 0 ? "#A2493C" : p.stock <= 1 ? "#9A7A32" : "#4F5C42",
+            badge: b[2], badgeBg: b[0], badgeFg: b[1],
+            updated: (p.updatedAt || "").slice(0, 10),
+            rowBg: sel.includes(p.id) ? "#F7F8F4" : "#FFFFFF",
+            checked: sel.includes(p.id),
+            selectLabel: "Select " + p.name,
+            menuLabel: "Actions for " + p.name,
+            onCheck: e => this.setState({ selected: e.target.checked ? [...sel, p.id] : sel.filter(x => x !== p.id) }),
+            onEdit: () => nav("/admin/products/" + p.id),
+            onMenu: e => { e.stopPropagation(); this.setState(st => ({ menuFor: st.menuFor === p.id ? null : p.id })); },
+            menuOpen: s.menuFor === p.id,
+            actions: this._rowActions(p),
+            primaryDisabled: !S.can("products.publish"),
+            primaryOpacity: S.can("products.publish") ? 1 : 0.45
+          };
+        }),
+
+        hasSelection: sel.length > 0,
+        selectionLabel: sel.length + T3.kSelected,
+        clearSelection: () => this.setState({ selected: [] }),
+        bulkLocked: !S.can("products.edit"),
+        bulkOpacity: S.can("products.edit") ? 1 : 0.45,
+        bulkPublish: async () => { const ok = await S.setProductStatus(sel, "published"); if (ok) { S.toast(T3.productsPublishedN.split("{n}").join(sel.length), "success"); this.setState({ selected: [] }); } },
+        bulkUnpublish: async () => { const ok = await S.setProductStatus(sel, "draft"); if (ok) { S.toast(T3.productsDraftedN.split("{n}").join(sel.length), "warning"); this.setState({ selected: [] }); } },
+        bulkCategory: "", bulkCategoryOptions: [{ v: "", t: T3.moveToCategoryPh }].concat(CATEGORIES.map(c => ({ v: c, t: c }))),
+        onBulkCategory: async e => {
+          const v = e.target.value; if (!v) return;
+          const ok = await S.setProductCategory(sel, v); if (ok) { S.toast(T3.productsMovedN.split("{n}").join(sel.length).split("{x}").join(v), "success"); this.setState({ selected: [] }); }
+        },
+        bulkDelete: async () => {
+          const ok = await S.confirm({ title: T3.delProductsQ.split("{n}").join(sel.length), body: T3.delProductsBody, accept: T3.deleteN.split("{n}").join(sel.length), cancel: T3.kCancel, tone: "#A2493C" });
+          if (!ok) return;
+          const deleted = await S.deleteProducts(sel); if (deleted) { S.toast(T3.productsDeletedN.split("{n}").join(sel.length), "error"); this.setState({ selected: [] }); }
+        },
+
+        rangeLabel: filtered.length === 0 ? T3.kNoResults : T3.kShowing + ((page - 1) * perPage + 1) + "–" + Math.min(page * perPage, filtered.length) + " OF " + filtered.length,
+        atFirst: page <= 1, atLast: page >= pages,
+        prevOpacity: page <= 1 ? 0.45 : 1, nextOpacity: page >= pages ? 0.45 : 1,
+        prevPage: () => this.setState(st => ({ page: Math.max(1, st.page - 1), selected: [] })),
+        nextPage: () => this.setState(st => ({ page: Math.min(pages, st.page + 1), selected: [] })),
+        pageButtons: Array.from({ length: pages }, (_, i) => i + 1).filter(n => pages <= 7 || Math.abs(n - page) <= 2 || n === 1 || n === pages).map(n => ({
+          label: String(n), current: n === page ? "page" : "false",
+          bg: n === page ? "#3F4A35" : "#FFFFFF", fg: n === page ? "#FFFFFF" : "#55534C",
+          border: n === page ? "#3F4A35" : "#DAD5CB",
+          onClick: () => this.setState({ page: n, selected: [] })
+        }))
+      };
+    }
+
+    /* ---------- form ---------- */
+    const f = s.form;
+    if (!f) return {
+      ...base, isList: false, isForm: false,
+      notFound: !!this.props.entityId && !S.getProduct(this.props.entityId),
+      backToList: () => nav("/admin/products")
+    };
+    const isTrouser = f.category === "Trousers";
+    const measures = isTrouser ? TROUSER_MEASURES() : TOP_MEASURES();
+    const e = s.errors;
+    const errKeys = Object.keys(e);
+    const dirty = this._dirty();
+    const imgs = f.images || [];
+    const primary = imgs[0] || {};
+    const isExisting = !!f.id;
+    const cnt = (v, max) => (String(v || "").length) + " / " + max;
+    const tone = (v, max) => String(v || "").length > max ? "#A2493C" : String(v || "").length > max * 0.85 ? "#9A7A32" : "#A8A49B";
+    const b = BADGE[f.status] || BADGE.draft;
+
+    const comp = this._completeness();
+    const SECTIONS = [
+      ["sec-basic", T3.kBasicInformation], ["sec-price", T3.secPriceStock],
+      ["sec-vintage", T3.kVintageInformation], ["sec-measure", T3.kMeasurements],
+      ["sec-condition", T3.secCondition], ["sec-images", T3.kImages],
+      ["sec-publishing", T3.secPublishing], ["sec-seo", T3.secSeo]
+    ];
+    const SEC_CHECKS = {
+      "sec-basic": ["name", "sku", "category"], "sec-price": ["price", "stock"],
+      "sec-vintage": ["size"], "sec-measure": ["measurements"],
+      "sec-condition": ["condition", "conditionNote"],
+      "sec-images": ["primaryImage", "imageAlts"], "sec-publishing": [], "sec-seo": ["slug"]
+    };
+    const failing = new Set(comp.missing.map(c => c.key));
+    const savedState = s.saveState;
+    const canEditP = S.can("products.edit");
+    const canPublishP = S.can("products.publish");
+    const stateLabel = {
+      idle: this._dirty() ? T3.unsavedChanges : T3.noChangesYet,
+      dirty: T3.unsavedChanges, saving: T3.saving,
+      saved: T3.savedAt + " " + s.savedAt, failed: T3.saveFailed
+    }[savedState] || T3.noChangesYet;
+
+    return {
+      ...base, isList: false, isForm: true,
+
+      formSections: SECTIONS.map(([id, label]) => {
+        const incomplete = (SEC_CHECKS[id] || []).some(k => failing.has(k));
+        const active = s.activeSection === id;
+        return {
+          label, current: active ? "true" : "false",
+          onJump: () => this._jumpTo(id),
+          border: active ? "#6D7761" : "#DAD5CB",
+          bg: active ? "#EEF0EA" : "#FFFFFF",
+          color: active ? "#3F3D38" : "#55534C",
+          // Shape, not colour alone, marks an incomplete section.
+          mark: incomplete ? "!" : "✓",
+          markTone: incomplete ? "#8A3F33" : "#4F5C42"
+        };
+      }),
+
+      saveStateLabel: stateLabel,
+      saveStateTone: savedState === "failed" ? "#8A3F33" : savedState === "saved" ? "#4F5C42" : "#3F3D38",
+      saveStateNote: s.autosaveOn ? "" : T3.autosavePaused,
+      noEditPerm: !canEditP, editCursor: canEditP ? "pointer" : "not-allowed",
+      editColor: canEditP ? "#3F3D38" : "#A8A398",
+      noPublishPerm: !canPublishP,
+      publishCursor: canPublishP ? "pointer" : "not-allowed",
+      publishBg: canPublishP ? "#6D7761" : "#EDEAE3",
+      publishFg: canPublishP ? "#FFFFFF" : "#A8A398",
+      publishBarLabel: f.id && S.getProduct(f.id) && S.getProduct(f.id).status === "published"
+        ? T3.kUpdatePublishedProduct : T3.kPublishNow,
+      formColumns: s.vw >= 1180 ? "minmax(0,1fr) 320px" : "minmax(0,1fr)",
+      asidePosition: s.vw >= 1180 ? "sticky" : "static",
+      hasErrors: s.submitted && errKeys.length > 0,
+      errorHeading: errKeys.length + " field" + (errKeys.length === 1 ? "" : "s") + " need attention before this product can be saved",
+      errorList: errKeys.map(k => e[k]),
+
+      fName: f.name, nameError: s.submitted ? e.name : "", nameInvalid: s.submitted && e.name ? "true" : "false",
+      nameBorder: s.submitted && e.name ? "#D8A79C" : "#DAD5CB",
+      onName: ev => { const v = ev.target.value; this.setState(st => ({ form: { ...st.form, name: v, slug: st.form.slug && st.form.id ? st.form.slug : S.slugify((st.form.brand || "") + " " + v) } }), () => this.state.submitted && this._validate()); },
+      fSku: f.sku, skuError: s.submitted ? e.sku : "", skuInvalid: s.submitted && e.sku ? "true" : "false",
+      skuBorder: s.submitted && e.sku ? "#D8A79C" : "#DAD5CB",
+      onSku: ev => this._set("sku", ev.target.value.toUpperCase()),
+      fBrand: f.brand, brandInvalid: s.submitted && e.brand ? "true" : "false",
+      brandBorder: s.submitted && e.brand ? "#D8A79C" : "#DAD5CB",
+      onBrand: ev => this._set("brand", ev.target.value),
+      brandList: [...new Set(all.map(p => p.brand))].sort(),
+      fCategory: f.category, categoryList: CATEGORIES,
+      onCategory: ev => {
+        const v = ev.target.value;
+        const trouser = v === "Trousers";
+        this.setState(st => ({
+          form: {
+            ...st.form, category: v,
+            measurements: trouser
+              ? { waist: st.form.measurements.waist || 0, rise: st.form.measurements.rise || 0, inseam: st.form.measurements.inseam || 0, hem: st.form.measurements.hem || 0 }
+              : { shoulder: st.form.measurements.shoulder || 0, chest: st.form.measurements.chest || 0, length: st.form.measurements.length || 0, sleeve: st.form.measurements.sleeve || 0 }
+          }
+        }));
+      },
+      fSubcategory: f.subcategory, onSubcategory: ev => this._set("subcategory", ev.target.value),
+      fPrice: f.price, priceError: s.submitted ? e.price : "", priceInvalid: s.submitted && e.price ? "true" : "false",
+      priceBorder: s.submitted && e.price ? "#D8A79C" : "#DAD5CB",
+      onPrice: ev => this._set("price", ev.target.value),
+      fTaxStatus: f.taxStatus, onTaxStatus: ev => this._set("taxStatus", ev.target.value),
+      fStock: f.stock, onStock: ev => this._set("stock", ev.target.value),
+      stockHint: Number(f.stock) === 0 ? T3.kZeroStockTheStorefrontWillShowASol : T3.kVintagePiecesAreUsuallyOneOfOne,
+      fStatus: f.status, onStatus: ev => this._set("status", ev.target.value),
+
+      fYear: f.year, onYear: ev => this._set("year", ev.target.value),
+      eraHint: "Era: " + (Number(f.year) < 1980 ? "1970s" : Number(f.year) < 1990 ? "1980s" : Number(f.year) < 2000 ? "1990s" : "2000s"),
+      fCountry: f.country, onCountry: ev => this._set("country", ev.target.value),
+      fMaterial: f.material, onMaterial: ev => this._set("material", ev.target.value),
+      fColour: f.colour, onColour: ev => this._set("colour", ev.target.value),
+      fSize: f.size, onSize: ev => this._set("size", ev.target.value),
+      fSizeNotation: f.sizeNotation, onSizeNotation: ev => this._set("sizeNotation", ev.target.value),
+      fCuratorNote: f.curatorNote, onCuratorNote: ev => this._set("curatorNote", ev.target.value),
+      curatorCount: cnt(f.curatorNote, 200), curatorCountTone: tone(f.curatorNote, 200),
+      fStory: f.story, onStory: ev => this._set("story", ev.target.value),
+
+      measurementHint: isTrouser ? T3.kTrouserFields : T3.kTopOuterwearFields,
+      measurementFields: measures.map(([k, label]) => ({
+        id: "f-m-" + k, label, value: (f.measurements || {})[k] || 0,
+        onChange: ev => this._setMeasure(k, ev.target.value)
+      })),
+
+      conditionGrades: ["Excellent", "Very Good", "Good", "Fair"].map(g => ({
+        value: g, checked: f.condition === g,
+        bg: f.condition === g ? "#EEF0EA" : "#FFFFFF",
+        border: f.condition === g ? "#B9C0AC" : "#DAD5CB",
+        fg: f.condition === g ? "#3F4A35" : "#55534C",
+        onChange: () => this._set("condition", g)
+      })),
+      conditionFields: [
+        ["stains", T3.kStains, T3.kNoneFound], ["damage", T3.kDamage, T3.kNone2], ["repairs", T3.kRepairs, T3.kNone2],
+        ["fading", T3.kFading, T3.kMinimal], ["missingParts", T3.kMissingParts, T3.kNone2]
+      ].map(([k, label, ph]) => ({ id: "f-c-" + k, label, placeholder: ph, value: f[k] || "", onChange: ev => this._set(k, ev.target.value) })),
+      fConditionNote: f.conditionNote, onConditionNote: ev => this._set("conditionNote", ev.target.value),
+
+      crop: s.crop,
+      setCropDesktop: () => this.setState({ crop: "desktop" }), setCropMobile: () => this.setState({ crop: "mobile" }),
+      cropDesktopBg: s.crop === "desktop" ? "#3F4A35" : "transparent", cropDesktopFg: s.crop === "desktop" ? "#FFFFFF" : "#77736B",
+      cropMobileBg: s.crop === "mobile" ? "#3F4A35" : "transparent", cropMobileFg: s.crop === "mobile" ? "#FFFFFF" : "#77736B",
+      noImages: imgs.length === 0, hasImages: imgs.length > 0,
+      images: imgs.map((im, i) => ({
+        url: im.url, alt: im.alt, primary: i === 0, pos: i + 1 + "/" + imgs.length,
+        altId: "f-alt-" + i, ratio: s.crop === "mobile" ? "1/1" : "3/4",
+        border: i === 0 ? "#B9C0AC" : "#E3DFD7",
+        opacity: this._drag === i ? 0.45 : 1,
+        primaryOpacity: i === 0 ? 0.5 : 1,
+        deleteLabel: "Delete image " + (i + 1),
+        onAlt: ev => { const v = ev.target.value; this.setState(st => { const arr = st.form.images.slice(); arr[i] = { ...arr[i], alt: v }; return { form: { ...st.form, images: arr } }; }); },
+        onPrimary: () => this._reorder(i, 0),
+        onDelete: () => this.setState(st => { const arr = st.form.images.filter((_, n) => n !== i); arr.forEach((x, n) => { x.primary = n === 0; }); return { form: { ...st.form, images: arr } }; }),
+        onDragStart: ev => { this._drag = i; ev.dataTransfer.effectAllowed = "move"; try { ev.dataTransfer.setData("text/plain", String(i)); } catch (err) { } },
+        onDragOver: ev => ev.preventDefault(),
+        onDrop: ev => { ev.preventDefault(); if (this._drag != null) this._reorder(this._drag, i); this._drag = null; },
+        onDragEnd: () => { this._drag = null; this.forceUpdate(); }
+      })),
+      onUpload: this.onUpload, addPlaceholder: this.addPlaceholder,
+
+      fSlug: f.slug, onSlug: ev => this._set("slug", S.slugify(ev.target.value)),
+      regenSlug: () => this._set("slug", S.slugify(f.brand + " " + f.name)),
+      fMetaTitle: f.metaTitle, onMetaTitle: ev => this._set("metaTitle", ev.target.value),
+      metaTitleCount: cnt(f.metaTitle, 60), metaTitleTone: tone(f.metaTitle, 60),
+      fMetaDescription: f.metaDescription, onMetaDescription: ev => this._set("metaDescription", ev.target.value),
+      metaDescCount: cnt(f.metaDescription, 160), metaDescTone: tone(f.metaDescription, 160),
+      fPublishDate: f.publishDate, onPublishDate: ev => this._set("publishDate", ev.target.value),
+      fCollection: f.collection, onCollection: ev => this._set("collection", ev.target.value),
+      fFeatured: !!f.featured, onFeatured: ev => this._set("featured", ev.target.checked),
+
+      saveBoxTitle: isExisting ? T3.kUpdateProduct : T3.kPublishProduct,
+      statusBadgeLabel: b[2], statusBadgeBg: b[0], statusBadgeFg: b[1],
+      isExisting, canMarkSold: isExisting && f.status !== "soldout" && canEditP,
+      showPublishBtn: canPublishP, showSaveDraft: canEditP,
+      showDeleteBtn: isExisting && S.can("products.delete"),
+      dirtyLabel: dirty ? T3.kUnsavedChanges : T3.kAllChangesSaved,
+      updatedLabel: f.updatedAt ? T3.kUpdated2 + f.updatedAt.slice(0, 10) : T3.kNotYetSaved,
+      publishLabel: f.status === "published" ? (isExisting ? T3.kUpdatePublishedProduct : T3.kPublishNow) : T3.kPublishNow,
+      onPublishClick: () => {
+        if (!this._guardPerm("products.publish")) return;
+        this.setState({ preflightOpen: true });
+      },
+      preflightOpen: !!s.preflightOpen,
+      preflight: comp.checks.map(c => ({
+        label: c.label + (c.note ? " (" + c.note + ")" : ""),
+        mark: c.ok ? "✓" : "✕",
+        tone: c.ok ? "#4F5C42" : "#8A3F33",
+        bg: c.ok ? "#EEF0EA" : "#F6EAE7"
+      })),
+      preflightPassed: comp.allPass,
+      preflightBlocked: !comp.allPass,
+      preflightHeading: comp.allPass ? T3.preflightPass : T3.preflightFail,
+      preflightCursor: comp.allPass ? "pointer" : "not-allowed",
+      preflightColor: comp.allPass ? "#FFFFFF" : "#A8A398",
+      preflightBg: comp.allPass ? "#6D7761" : "#EDEAE3",
+      closePreflight: () => this.setState({ preflightOpen: false }),
+      confirmPublish: async () => {
+        if (!comp.allPass) { S.toast(T3.preflightFail, "error"); return; }
+        this.setState({ preflightOpen: false });
+        const id = await this._save("published");
+        if (id) S.toast("“" + this.state.form.name + "” is live on the store.", "success");
+      },
+      completionPct: comp.pct + T3.percentComplete,
+      completionValue: comp.pct,
+      completionBar: comp.pct + "%",
+      completionTone: comp.pct === 100 ? "#6D7761" : comp.pct >= 70 ? "#9A7A32" : "#8A3F33",
+      missingItems: comp.missing.map(c => ({
+        label: c.label + (c.note ? " — " + c.note : "")
+      })),
+      hasMissing: comp.missing.length > 0,
+      onSaveDraft: async () => { const id = await this._save(f.status === "published" ? "published" : "draft"); if (id) S.toast(T3.kDraftSaved, "success"); },
+      onMarkSold: async () => { const id = await this._save("soldout"); if (id) S.toast(T3.kMarkedAsSoldOut, "warning"); },
+      onDelete: async () => {
+        const ok = await S.confirm({ title: T3.delTitleQ.split("{x}").join(f.name), body: T3.kThisRemovesTheRecordPermanentlyFro, accept: T3.kDeleteProduct, cancel: T3.kCancel, tone: "#A2493C" });
+        if (!ok) return;
+        const deleted = await S.deleteProducts([f.id]);
+        if (!deleted) return;
+        S.toast(T3.kProductDeleted, "error");
+        this.setState({ baseline: JSON.stringify(this.state.form) }, () => nav("/admin/products"));
+      },
+      onCancel: () => this._guardNav(() => nav("/admin/products")),
+      onPreview: () => this.setState({ previewOpen: true }),
+      previewOpen: s.previewOpen,
+      closePreview: () => this.setState({ previewOpen: false }),
+      previewMode: s.previewMode,
+      setPreviewDesktop: () => this.setState({ previewMode: "desktop" }),
+      setPreviewMobile: () => this.setState({ previewMode: "mobile" }),
+      pvDesktopBg: s.previewMode === "desktop" ? "#3F4A35" : "transparent", pvDesktopFg: s.previewMode === "desktop" ? "#FFFFFF" : "#77736B",
+      pvMobileBg: s.previewMode === "mobile" ? "#3F4A35" : "transparent", pvMobileFg: s.previewMode === "mobile" ? "#FFFFFF" : "#77736B",
+      pvWidth: s.previewMode === "mobile" ? "390px" : "960px",
+      pvColumns: s.previewMode === "mobile" ? "1fr" : "minmax(0,1fr) minmax(0,1fr)",
+      previewImage: primary.url || S.U(S.GARMENTS[0], 900),
+      previewAlt: primary.alt || (f.name || "Archive piece"),
+      previewThumbs: imgs.slice(0, 5).map(im => ({ url: im.thumb || im.url, alt: im.alt })),
+      previewName: f.name || T3.kUntitledPiece,
+      previewMeta: "C. " + (f.year || "—") + " · " + (f.brand || "UNBRANDED").toUpperCase() + " · " + (f.size || "—"),
+      previewPrice: S.yen(f.price),
+      previewNote: f.curatorNote || T3.kNoCuratorSNoteYet,
+      previewStory: f.story || T3.kNoProductStoryWrittenYet,
+      previewSoldOut: f.status === "soldout" || Number(f.stock) === 0,
+      previewCta: f.status === "soldout" || Number(f.stock) === 0 ? "SOLD OUT" : "ADD TO CART",
+      previewMeasurements: measures.map(([k, label]) => ({ k: label, v: ((f.measurements || {})[k] || 0) + " cm" }))
+    };
+  }
+}
+</script>
+</body>
+</html>
