@@ -467,11 +467,44 @@
     });
   }
 
+  /* Authentication must own the first use of the shared Supabase client.
+
+     A PKCE recovery callback is consumed while the client initializes.  This
+     repository is loaded before tsumugi-auth.js and historically called
+     ready() immediately, so its catalogue query created the shared client
+     before Auth had subscribed to onAuthStateChange.  Supabase successfully
+     exchanged the one-time code, but PASSWORD_RECOVERY had no listener and
+     the storefront stayed on Home.  Waiting for Auth.boot() here preserves
+     that one-shot event and also makes an existing staff session available
+     before the repository chooses its public/staff query scope. */
+  function waitForAuthBoot() {
+    return new Promise(function (resolve, reject) {
+      var attempts = 0;
+      (function wait() {
+        var auth = window.TSUMUGI_AUTH;
+        if (auth && typeof auth.boot === "function") {
+          Promise.resolve(auth.boot()).then(resolve, reject);
+          return;
+        }
+        attempts++;
+        if (attempts >= 200) {
+          reject(new Error("TSUMUGI Auth did not load before the CMS timeout"));
+          return;
+        }
+        setTimeout(wait, 25);
+      })();
+    });
+  }
+
   function ready() {
     if (!configured) return Promise.resolve({ mode: "local" });
     installWrites();
     attachAuth();
-    if (!readyPromise) readyPromise = refresh().then(function () { return { mode: "supabase" }; });
+    if (!readyPromise) {
+      readyPromise = waitForAuthBoot()
+        .then(function () { return refresh(); })
+        .then(function () { return { mode: "supabase" }; });
+    }
     return readyPromise;
   }
 

@@ -210,3 +210,46 @@ test("PASSWORD_RECOVERY survives a back-to-back initial session event", async ()
   assert.equal(window.TSUMUGI_AUTH.status(), "signed_out",
     "a recovery-only owner session must not paint the admin console");
 });
+
+test("CMS cannot initialize the shared Supabase client before Auth is listening", async () => {
+  const source = await read("tsumugi-repository.js");
+  let authBooted = false;
+  let clientCalls = 0;
+  let snapshotApplied = false;
+  const query = {
+    select() {
+      return { order() { return Promise.resolve({ data: [], error: null }); } };
+    },
+  };
+  const window = {
+    TSUMUGI_AUTH_CONFIG: {
+      url: "https://project-ref.supabase.co",
+      anonKey: "sb_publishable_test",
+    },
+    TSUMUGI_STORE: {
+      isStaffSession() { return false; },
+      _setRemoteStatus() {},
+      _applyRemoteCMS() { snapshotApplied = true; },
+    },
+    TSUMUGI_SUPABASE_CLIENT() {
+      clientCalls++;
+      assert.equal(authBooted, true,
+        "the shared client was created before Auth registered its recovery listener");
+      return Promise.resolve({ from() { return query; } });
+    },
+  };
+  const context = { window, console, Promise, setTimeout, clearTimeout };
+
+  /* Production loads repository before auth. Its eager ready() must wait. */
+  vm.runInNewContext(source, context, { filename: "tsumugi-repository.js" });
+  assert.equal(clientCalls, 0, "repository touched Supabase while Auth was absent");
+
+  window.TSUMUGI_AUTH = {
+    boot() { authBooted = true; return Promise.resolve(); },
+    subscribe() { return function () {}; },
+  };
+  await window.TSUMUGI_CMS.ready();
+
+  assert.equal(clientCalls, 1);
+  assert.equal(snapshotApplied, true);
+});
