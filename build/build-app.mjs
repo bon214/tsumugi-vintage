@@ -26,6 +26,7 @@
 import { readdir, readFile, writeFile, mkdir, rm, cp, stat } from "node:fs/promises";
 import { existsSync } from "node:fs";
 import { spawnSync } from "node:child_process";
+import { createHash } from "node:crypto";
 import path from "node:path";
 import { parseFragment as parseHtmlFragment } from "parse5";
 
@@ -58,6 +59,12 @@ const SHARED_SCRIPTS = [
   "tsumugi-i18n-content.js",
   "tsumugi-i18n.js",
 ];
+
+/* Filled after the connected config and production auth copy have been
+   written. GitHub Pages gives JavaScript a public cache lifetime; without a
+   content-derived query a newly deployed auth fix can leave an existing
+   browser executing the previous bundle for several minutes. */
+let ASSET_VERSION = "";
 
 const FONT_LINKS = `<link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -130,12 +137,33 @@ const importMap = (root) => `<script type="importmap">
 }
 </script>`;
 
+const versioned = (url) => `${url}?v=${ASSET_VERSION}`;
 const appTags = (root, entry) => `${importMap(root)}
-<script src="${root}vendor/react.production.min.js"></script>
-<script src="${root}vendor/react-dom.production.min.js"></script>
-<script src="${root}vendor/supabase.umd.js"></script>
-${SHARED_SCRIPTS.map((s) => `<script src="${root}${s}"></script>`).join("\n")}
-<script type="module" src="${root}runtime/${entry}"></script>`;
+<script src="${versioned(root + "vendor/react.production.min.js")}"></script>
+<script src="${versioned(root + "vendor/react-dom.production.min.js")}"></script>
+<script src="${versioned(root + "vendor/supabase.umd.js")}"></script>
+${SHARED_SCRIPTS.map((s) => `<script src="${versioned(root + s)}"></script>`).join("\n")}
+<script type="module" src="${versioned(root + "runtime/" + entry)}"></script>`;
+
+async function contentVersion() {
+  const files = [...SHARED_SCRIPTS];
+  for (const dir of ["generated", "runtime", "vendor"]) {
+    await (async function walk(abs, rel) {
+      for (const name of await readdir(abs)) {
+        const file = path.join(abs, name);
+        const next = `${rel}/${name}`;
+        if ((await stat(file)).isDirectory()) await walk(file, next);
+        else files.push(next);
+      }
+    })(path.join(DIST, dir), dir);
+  }
+  files.sort();
+  const hash = createHash("sha256");
+  for (const file of files) {
+    hash.update(file).update("\0").update(await readFile(path.join(DIST, file))).update("\0");
+  }
+  return hash.digest("hex").slice(0, 12);
+}
 
 /* The static article stays in the DOM until React has painted, then goes. It
    is hidden rather than removed so that a JavaScript failure after this point
@@ -258,6 +286,8 @@ async function main() {
   if (cfgOut === cfgSrc) die("auth-config.js: could not blank the sdk URL — check the field name.");
   await writeFile(cfgPath, cfgOut, "utf8");
 
+  ASSET_VERSION = await contentVersion();
+
   /* ---- 4. turn every prerendered page into an app entry ------------- */
   const pages = [];
   await (async function walk(dir, rel = "") {
@@ -306,7 +336,7 @@ async function main() {
 
     html = html.replace("</head>",
       `<meta http-equiv="Content-Security-Policy" content="${CSP}">\n`
-      + `<link rel="stylesheet" href="${root}generated/pseudo.css">\n`
+      + `<link rel="stylesheet" href="${versioned(root + "generated/pseudo.css")}">\n`
       + `${FONT_LINKS}\n${publicGlobalStyle}\n${LIVE_CSS}\n</head>`);
     html = html.replace("</body>",
       `<div id="dc-root"></div>\n${appTags(root, "main-public.js")}\n</body>`);
@@ -329,7 +359,7 @@ async function main() {
 <meta name="referrer" content="no-referrer">
 <meta http-equiv="Content-Security-Policy" content="${CSP}">
 <link rel="icon" href="./favicon.svg" type="image/svg+xml">
-<link rel="stylesheet" href="./generated/pseudo.css">
+<link rel="stylesheet" href="${versioned("./generated/pseudo.css")}">
 ${FONT_LINKS}
 ${adminGlobalStyle}
 <style>

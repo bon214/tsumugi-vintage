@@ -45,6 +45,15 @@ test("production build carries root component global styles", async () => {
   assert.match(source, /adminGlobalStyle/);
 });
 
+test("production assets are content-versioned to bypass stale Pages caches", async () => {
+  const app = await read("build/build-app.mjs");
+  const bundle = await read("build/bundle.mjs");
+  assert.match(app, /createHash\("sha256"\)/);
+  assert.match(app, /const versioned = \(url\) => `\$\{url\}\?v=\$\{ASSET_VERSION\}`/);
+  assert.match(app, /versioned\(root \+ s\)/);
+  assert.match(bundle, /bundle\.js\$2/);
+});
+
 test("CMS migration provides tables, public filtering, staff RLS and browser RPC", async () => {
   const sql = await read("supabase/migrations/0011_cms_runtime.sql");
   for (const fragment of [

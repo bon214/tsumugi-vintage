@@ -81,7 +81,8 @@ for (const rel of pages) {
   let html = await readFile(file, "utf8");
   const before = html;
   html = html.replace(/<script type="importmap">[\s\S]*?<\/script>\n?/, "");
-  html = html.replace(/(runtime\/main-(?:public|admin))\.js"/g, '$1.bundle.js"');
+  html = html.replace(/(runtime\/main-(?:public|admin))\.js(\?v=[^"]+)?"/g,
+    '$1.bundle.js$2"');
   if (html !== before) { await writeFile(file, html, "utf8"); patched++; }
 }
 
