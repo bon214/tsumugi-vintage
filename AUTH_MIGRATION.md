@@ -222,14 +222,37 @@ before returning `notStaff` / `notCustomer`. Regression coverage:
 
 ### Password recovery
 
-`resetPassword()` redirects to `location.origin + location.pathname` without a
-fragment. Supabase completes the PKCE exchange first; the resulting
-`PASSWORD_RECOVERY` event then moves the shell to `#/account/recover`. The event
-is recorded synchronously so a following `INITIAL_SESSION` / `SIGNED_IN` event
-cannot supersede it. Recovery deliberately applies **no** ordinary session:
-`isRecovering()` is true, the shell renders the recovery form, and only
-`updatePassword()` may use that session. Expired/reused-link `#error=…` fragments
-are mapped to the recovery screen, never to the catalogue 404.
+The public and administration recovery **interfaces are separate**, although
+both identities still live in the one Supabase Auth project:
+
+- a request from the customer sign-in screen returns to the storefront root;
+- a request from the admin sign-in screen returns to `admin.html`;
+- after PKCE completes, the recovered user's server-owned
+  `user.app_metadata.role` is authoritative. A staff role opens
+  `admin.html#/admin/recover`; every other role opens `#/account/recover`;
+- therefore requesting a staff address from the customer screen cannot expose
+  the customer recovery form, and requesting a customer address from the admin
+  screen cannot expose the administration recovery form;
+- successful administrator recovery signs the session out and requires a fresh
+  admin password sign-in. Customer recovery returns to the customer account.
+
+Supabase may first complete the one-time PKCE exchange on the callback document
+before the role is known. `PASSWORD_RECOVERY` therefore stores a short-lived
+(15 minute), same-origin `sessionStorage` marker containing only the user UUID
+and recovery scope. It survives the immediate public/admin document handoff and
+is accepted only when the current Supabase session has the same UUID. It is
+cleared after password update, sign-out, expiry, missing session, or UUID
+mismatch. It is not an authorization grant: database privileges continue to be
+decided by RLS and `staff_roles`.
+
+The recovery event is recorded synchronously so a following `INITIAL_SESSION` /
+`SIGNED_IN` event cannot supersede it. Recovery deliberately applies **no**
+ordinary application session: `isRecovering()` is true, the appropriate shell
+renders the form, and only `updatePassword()` may use that session.
+Expired/reused-link `#error=…` fragments are mapped to the relevant recovery
+screen, never to the catalogue 404. Both request screens surface provider
+failures and 429 rate limits, and impose a local 60-second repeat-click cooldown;
+they do not claim that an email was sent after a failed provider response.
 
 ---
 

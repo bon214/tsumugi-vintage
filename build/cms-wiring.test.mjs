@@ -134,6 +134,7 @@ test("new-record image namespaces and Storage policies agree", async () => {
 test("password recovery keeps Supabase callbacks separate from hash routing", async () => {
   const auth = await read("tsumugi-auth.js");
   const shell = await read("TSUMUGI.dc.html");
+  const adminShell = await read("TSUMUGI Admin.dc.html");
 
   /* The callback must return to the configured Site URL. A route fragment in
      redirectTo collides with Supabase's own implicit/error fragments. */
@@ -142,7 +143,7 @@ test("password recovery keeps Supabase callbacks separate from hash routing", as
 
   /* PASSWORD_RECOVERY is recorded before the monotonic version gate. A later
      INITIAL_SESSION event must not erase a valid recovery event. */
-  const recoveryFlag = auth.indexOf('if (evt === "PASSWORD_RECOVERY") recoveryPending = true;');
+  const recoveryFlag = auth.indexOf('if (evt === "PASSWORD_RECOVERY") writeRecoveryMarker(sb);');
   const versionGate = auth.indexOf("var version = ++sessionVersion;", recoveryFlag);
   assert.ok(recoveryFlag >= 0 && versionGate > recoveryFlag,
     "PASSWORD_RECOVERY must be recorded synchronously before versioning");
@@ -153,6 +154,25 @@ test("password recovery keeps Supabase callbacks separate from hash routing", as
   assert.match(shell, /authHash \? "account\/recover"/);
   assert.match(shell, /_openRecoveryRoute\(A\)/);
   assert.match(shell, /#\/account\/recover/);
+
+  /* The recovered user's server-owned role, not the screen that requested the
+     email, chooses the form. Admin completion signs out so the new password is
+     proven by a fresh console sign-in. */
+  assert.match(auth, /recoveryScopeOf\(user\)/);
+  assert.match(auth, /user\s*&&\s*user\.app_metadata\s*&&\s*user\.app_metadata\.role/);
+  assert.match(shell, /recoveryScope\(\) === "admin"/);
+  assert.match(shell, /#\/admin\/recover/);
+  assert.match(adminShell, /scope === "customer"/);
+  assert.match(adminShell, /#\/account\/recover/);
+  assert.match(adminShell, /onAdminRecoverSubmit/);
+  assert.match(adminShell, /A\.updatePassword\(password\)/);
+  assert.match(adminShell, /A\.signOut\(\)/);
+  assert.match(adminShell, /const recoveryHash = location\.hash === "#\/admin\/recover" \|\| this\._isAuthCallbackHash\(\)/);
+  assert.match(adminShell, /const wantsRecover = s\.section === "recover" \|\| recoveryHash/);
+
+  /* Neither surface may turn a provider failure into a success notice. */
+  assert.match(shell, /res && res\.code === "rate_limited"/);
+  assert.match(adminShell, /res && res\.code === "rate_limited"/);
 });
 
 test("PASSWORD_RECOVERY survives a back-to-back initial session event", async () => {
@@ -188,9 +208,15 @@ test("PASSWORD_RECOVERY survives a back-to-back initial session event", async ()
       setSession() {}, clearSession() {}, mergeAnonWishlist() {},
     },
   };
+  const recoveryStore = new Map();
   const context = {
     window, console, Date, Promise, setTimeout, clearTimeout,
     localStorage: { getItem() { return null; } },
+    sessionStorage: {
+      getItem(key) { return recoveryStore.get(key) ?? null; },
+      setItem(key, value) { recoveryStore.set(key, String(value)); },
+      removeItem(key) { recoveryStore.delete(key); },
+    },
   };
   vm.runInNewContext(source, context, { filename: "tsumugi-auth.js" });
 
@@ -209,6 +235,117 @@ test("PASSWORD_RECOVERY survives a back-to-back initial session event", async ()
     "a recovery-only session must not become an ordinary customer session");
   assert.equal(window.TSUMUGI_AUTH.status(), "signed_out",
     "a recovery-only owner session must not paint the admin console");
+  assert.equal(window.TSUMUGI_CUSTOMER_AUTH.recoveryScope(), "admin");
+  assert.equal(window.TSUMUGI_AUTH.recoveryScope(), "admin");
+  assert.deepEqual(JSON.parse(recoveryStore.get("tsumugi.auth.recovery.v1")), {
+    uid: recoveredSession.user.id,
+    scope: "admin",
+    at: JSON.parse(recoveryStore.get("tsumugi.auth.recovery.v1")).at,
+  });
+});
+
+test("recovery scope survives the same-origin public-to-admin handoff", async () => {
+  const source = await read("tsumugi-auth.js");
+  const recoveredSession = {
+    user: {
+      id: "00000000-0000-4000-8000-000000000002",
+      email: "owner@example.test",
+      app_metadata: { role: "owner" },
+      user_metadata: {},
+    },
+  };
+  const values = new Map([
+    ["tsumugi.auth.recovery.v1", JSON.stringify({
+      uid: recoveredSession.user.id, scope: "admin", at: Date.now(),
+    })],
+  ]);
+  const sessionStorage = {
+    getItem(key) { return values.get(key) ?? null; },
+    setItem(key, value) { values.set(key, String(value)); },
+    removeItem(key) { values.delete(key); },
+  };
+  const client = {
+    auth: {
+      onAuthStateChange() {
+        return { data: { subscription: { unsubscribe() {} } } };
+      },
+      getSession() { return Promise.resolve({ data: { session: recoveredSession } }); },
+    },
+  };
+  const window = {
+    TSUMUGI_AUTH_CONFIG: { url: "https://project-ref.supabase.co", anonKey: "sb_publishable_test" },
+    TSUMUGI_SUPABASE_CREATE: () => client,
+    TSUMUGI_STORE: { setSession() {}, clearSession() {}, mergeAnonWishlist() {} },
+  };
+  vm.runInNewContext(source, {
+    window, console, Date, Promise, setTimeout, clearTimeout, sessionStorage,
+    localStorage: { getItem() { return null; } },
+  }, { filename: "tsumugi-auth.js" });
+
+  await window.TSUMUGI_AUTH.boot();
+  assert.equal(window.TSUMUGI_AUTH.isRecovering(), true);
+  assert.equal(window.TSUMUGI_AUTH.recoveryScope(), "admin");
+  assert.equal(window.TSUMUGI_AUTH.status(), "signed_out");
+});
+
+test("customer recovery stays customer-scoped and reset errors stay visible", async () => {
+  const source = await read("tsumugi-auth.js");
+  const redirectCalls = [];
+  let resetCount = 0;
+  let authCallback;
+  const client = {
+    auth: {
+      onAuthStateChange(callback) {
+        authCallback = callback;
+        return { data: { subscription: { unsubscribe() {} } } };
+      },
+      resetPasswordForEmail(email, options) {
+        redirectCalls.push({ email, redirectTo: options.redirectTo });
+        resetCount++;
+        return Promise.resolve(resetCount === 1
+          ? { error: null }
+          : { error: { status: 429, code: "over_email_send_rate_limit", message: "too many" } });
+      },
+    },
+  };
+  const recoveryStore = new Map();
+  const window = {
+    TSUMUGI_AUTH_CONFIG: { url: "https://project-ref.supabase.co", anonKey: "sb_publishable_test" },
+    TSUMUGI_SUPABASE_CREATE: () => client,
+    TSUMUGI_STORE: { setSession() {}, clearSession() {}, mergeAnonWishlist() {} },
+  };
+  vm.runInNewContext(source, {
+    window, console, Date, Promise, setTimeout, clearTimeout,
+    document: { currentScript: { src: "https://bon214.github.io/tsumugi-vintage/tsumugi-auth.js" } },
+    location: { origin: "https://bon214.github.io", pathname: "/tsumugi-vintage/" },
+    localStorage: { getItem() { return null; } },
+    sessionStorage: {
+      getItem(key) { return recoveryStore.get(key) ?? null; },
+      setItem(key, value) { recoveryStore.set(key, String(value)); },
+      removeItem(key) { recoveryStore.delete(key); },
+    },
+  }, { filename: "tsumugi-auth.js" });
+
+  const adminSend = await window.TSUMUGI_AUTH.resetPassword(" Staff@Example.test ");
+  const customerSend = await window.TSUMUGI_CUSTOMER_AUTH.resetPassword(" Buyer@Example.test ");
+  assert.equal(adminSend.ok, true);
+  assert.equal(adminSend.status, "email_sent");
+  assert.equal(customerSend.ok, false);
+  assert.equal(customerSend.code, "rate_limited");
+  assert.equal(redirectCalls[0].email, "staff@example.test");
+  assert.equal(redirectCalls[0].redirectTo, "https://bon214.github.io/tsumugi-vintage/admin.html");
+  assert.equal(redirectCalls[1].redirectTo, "https://bon214.github.io/tsumugi-vintage/");
+
+  authCallback("PASSWORD_RECOVERY", {
+    user: {
+      id: "00000000-0000-4000-8000-000000000003",
+      email: "buyer@example.test",
+      app_metadata: { role: "customer" },
+      user_metadata: {},
+    },
+  });
+  assert.equal(window.TSUMUGI_CUSTOMER_AUTH.recoveryScope(), "customer");
+  assert.equal(window.TSUMUGI_AUTH.recoveryScope(), "customer");
 });
 
 test("CMS cannot initialize the shared Supabase client before Auth is listening", async () => {

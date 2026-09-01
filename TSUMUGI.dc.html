@@ -755,6 +755,15 @@ class Component extends DCLogic {
 
   _openRecoveryRoute(A) {
     if (!A || !A.isRecovering || !A.isRecovering()) return;
+    /* The email may have been requested from the wrong surface. The recovered
+       user's server-owned role decides where the form lives; the requesting
+       screen never does. A same-origin session marker in tsumugi-auth.js keeps
+       the one-time recovery state through this full-page handoff. */
+    if (A.recoveryScope && A.recoveryScope() === "admin") {
+      const base = A.recoveryUrl ? A.recoveryUrl("admin") : "admin.html";
+      location.replace(base + "#/admin/recover");
+      return;
+    }
     if (location.hash === "#/account/recover") return;
     history.replaceState(history.state, "", location.pathname + location.search + "#/account/recover");
     this._syncHash();
@@ -818,11 +827,20 @@ class Component extends DCLogic {
     const email = String(this.state.accEmail || "").trim();
     if (!A || !A.capabilities().passwordReset) return;
     if (!email) return this.setState({ accError: T.accNeedEmail });
+    if (this._resetWaitUntil && Date.now() < this._resetWaitUntil) {
+      return this.setState({ accError: T.accResetRateLimited, accNotice: "" });
+    }
+    this._resetWaitUntil = Date.now() + 60 * 1000;
     this.setState({ accBusy: true, accError: "" });
-    A.resetPassword(email).then(() => {
+    A.resetPassword(email).then(res => {
+      if (!res || !res.ok) {
+        const msg = res && res.code === "rate_limited" ? T.accResetRateLimited : T.accResetFailed;
+        this.setState({ accBusy: false, accNotice: "", accError: msg });
+        return;
+      }
       // Same answer whether or not the address is registered.
-      this.setState({ accBusy: false, accNotice: "reset" });
-    });
+      this.setState({ accBusy: false, accError: "", accNotice: "reset" });
+    }).catch(() => this.setState({ accBusy: false, accNotice: "", accError: T.accResetFailed }));
   }
 
   _toastOnce(msg) {
@@ -1646,13 +1664,17 @@ class Component extends DCLogic {
     if (this.state.accBusy) return;
     if (!A || !A.updatePassword) { this.setState({ accError: T.accRecoverUnsupported }); return; }
     if (!A.isRecovering || !A.isRecovering()) { this.setState({ accError: T.accRecoverExpired }); return; }
+    if (A.recoveryScope && A.recoveryScope() !== "customer") {
+      this._openRecoveryRoute(A);
+      return;
+    }
     const pw = String(s.accPassword || "");
     if (pw.length < 8) { this.setState({ accError: T.accPasswordHint }); return; }
     if (pw !== String(s.accConfirm || "")) { this.setState({ accError: T.accMismatch }); return; }
 
     this.setState({ accBusy: true, accError: "" });
     A.updatePassword(pw).then(r => {
-      if (r && r.ok) {
+      if (r && r.ok && (!r.scope || r.scope === "customer")) {
         this.setState({ accBusy: false, accPassword: "", accConfirm: "", accNotice: "recovered" }, () => {
           this.goAccount("");
         });
@@ -1680,7 +1702,8 @@ class Component extends DCLogic {
        session, and inviting one back would let a visitor aim the change
        elsewhere. */
     const recover = s.accSub === "recover";
-    const recoveryLive = !!(A && A.isRecovering && A.isRecovering());
+    const recoveryLive = !!(A && A.isRecovering && A.isRecovering()
+      && (!A.recoveryScope || A.recoveryScope() === "customer"));
     if (recover) {
       return {
         t: T, isCreate: false, isSignIn: false, isRecover: true,

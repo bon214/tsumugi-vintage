@@ -58,6 +58,27 @@
   var configured = !!(CFG.url && CFG.anonKey);
   var SESSION_KEY = "tsumugi.session.v1";   /* owned by the store; read here only to tell localStorage from sessionStorage */
   var STAFF = ["owner", "manager", "editor", "support", "viewer"];
+  var RECOVERY_KEY = "tsumugi.auth.recovery.v1";
+  /* The classic auth script is copied to the deployment root even when a
+     prerendered page lives several directories deep. Its own URL is therefore
+     the only subpath-safe source of the application root on GitHub Pages. */
+  var APP_BASE = (function () {
+    try {
+      var src = typeof document !== "undefined" && document.currentScript
+        ? String(document.currentScript.src || "") : "";
+      return src ? src.replace(/[^/]*(?:[?#].*)?$/, "") : "";
+    } catch (e) { return ""; }
+  })();
+
+  function recoveryUrl(scope) {
+    var base = APP_BASE;
+    if (!base) {
+      try {
+        base = location.origin + String(location.pathname || "/").replace(/[^/]*$/, "");
+      } catch (e) { base = ""; }
+    }
+    return base + (scope === "admin" ? "admin.html" : "");
+  }
 
   var session = null;        /* the one identity record, or null */
   var booted = false;
@@ -209,6 +230,13 @@
       return Promise.resolve({ ok: false, code: "unsupported" });
     },
 
+    updatePassword: function () {
+      return Promise.resolve({ ok: false, code: "unsupported" });
+    },
+
+    isRecovering: function () { return false; },
+    recoveryScope: function () { return ""; },
+
     signOut: function () {
       var wasAdmin = session && scopeOf(session) === "admin";
       if (wasAdmin) { try { store().logout(); } catch (e) { } }
@@ -226,8 +254,58 @@
      replaced (or signed out) lands last and wins. */
   var sessionVersion = 0;
   /* PASSWORD_RECOVERY arrives as an ordinary session; the UI must know the
-     session exists only to set a new password. */
+     session exists only to set a new password. The scope belongs to the
+     recovered user, not to whichever screen happened to request the email. */
   var recoveryPending = false;
+  var recoveryScope = "";
+  var recoveryUserId = "";
+
+  function recoveryScopeOf(user) {
+    var role = String(user && user.app_metadata && user.app_metadata.role || "");
+    return STAFF.indexOf(role) >= 0 ? "admin" : "customer";
+  }
+
+  function readRecoveryMarker() {
+    try {
+      var value = JSON.parse(sessionStorage.getItem(RECOVERY_KEY) || "null");
+      if (!value || !value.uid || (value.scope !== "admin" && value.scope !== "customer")) return null;
+      if (!value.at || Date.now() - Number(value.at) > 15 * 60 * 1000) {
+        sessionStorage.removeItem(RECOVERY_KEY);
+        return null;
+      }
+      return value;
+    } catch (e) { return null; }
+  }
+
+  function writeRecoveryMarker(sb) {
+    var user = sb && sb.user;
+    recoveryPending = true;
+    recoveryScope = recoveryScopeOf(user);
+    recoveryUserId = String(user && user.id || "");
+    try {
+      sessionStorage.setItem(RECOVERY_KEY, JSON.stringify({
+        uid: recoveryUserId, scope: recoveryScope, at: Date.now()
+      }));
+    } catch (e) { }
+  }
+
+  function clearRecovery() {
+    recoveryPending = false;
+    recoveryScope = "";
+    recoveryUserId = "";
+    try { sessionStorage.removeItem(RECOVERY_KEY); } catch (e) { }
+  }
+
+  /* A staff recovery first lands on the public callback only when the request
+     was made from the customer screen. The marker survives the immediate
+     same-origin handoff to admin.html; it is accepted only for the same user
+     and only for fifteen minutes. */
+  var restoredRecovery = readRecoveryMarker();
+  if (restoredRecovery) {
+    recoveryPending = true;
+    recoveryScope = restoredRecovery.scope;
+    recoveryUserId = restoredRecovery.uid;
+  }
 
   function sbClient() {
     if (client) return Promise.resolve(client);
@@ -284,8 +362,8 @@
        version guard discarded PASSWORD_RECOVERY before it ever set this flag,
        so a valid one-time link opened the ordinary sign-in screen. This writes
        local state only — no Supabase API is called inside the auth callback. */
-    if (evt === "PASSWORD_RECOVERY") recoveryPending = true;
-    if (evt === "SIGNED_OUT") recoveryPending = false;
+    if (evt === "PASSWORD_RECOVERY") writeRecoveryMarker(sb);
+    if (evt === "SIGNED_OUT") clearRecovery();
     var version = ++sessionVersion;
     var run = function () {
       switch (evt) {
@@ -408,7 +486,12 @@
     boot: function () {
       return sbClient().then(function (c) { return c.auth.getSession(); }).then(function (res) {
         var sb = res && res.data ? res.data.session : null;
-        if (!sb) { booted = true; emit(); return null; }
+        if (!sb) { clearRecovery(); booted = true; emit(); return null; }
+        /* A marker may have crossed from the public callback to admin.html.
+           Never apply it to a different signed-in user. */
+        if (recoveryPending && recoveryUserId && String(sb.user && sb.user.id || "") !== recoveryUserId) {
+          clearRecovery();
+        }
         if (recoveryPending) { booted = true; session = null; emit(); return null; }
         return resolveUser(sb.user).then(function (s) {
           /* PASSWORD_RECOVERY can arrive while role resolution is in flight.
@@ -491,25 +574,35 @@
       }).catch(function () { return { ok: false, code: "invalid" }; });
     },
 
-    resetPassword: function (email) {
+    resetPassword: function (email, requestedScope) {
       /* Do not put the app route in redirectTo's fragment. Supabase owns the
          callback URL while it returns a PKCE code (and returns failures in a
          #error fragment); sharing that fragment with the storefront router
          made successful recovery and expired-link handling race each other.
-         PASSWORD_RECOVERY below moves the app to #/account/recover after the
-         code exchange succeeds. This root URL is the configured Site URL. */
-      var base = location.origin + location.pathname;
+         The requesting surface chooses only the callback document. Once the
+         link is opened, PASSWORD_RECOVERY derives the authoritative scope from
+         server-owned app_metadata and the shells correct a cross-scope request. */
+      var base = recoveryUrl(requestedScope === "admin" ? "admin" : "customer");
       return sbClient().then(function (c) {
         return c.auth.resetPasswordForEmail(email, { redirectTo: base });
       }).then(function (res) {
-        return res && res.error ? { ok: false, code: "failed" } : { ok: true, status: "email_sent" };
-      }).catch(function () { return { ok: false, code: "failed" }; });
+        if (!res || !res.error) return { ok: true, status: "email_sent" };
+        var code = String(res.error.code || "").toLowerCase();
+        var message = String(res.error.message || "").toLowerCase();
+        var limited = Number(res.error.status) === 429 || /rate[_ -]?limit|too many/.test(code + " " + message);
+        return { ok: false, code: limited ? "rate_limited" : "failed" };
+      }).catch(function (error) {
+        var text = String(error && (error.code || error.message) || "").toLowerCase();
+        return { ok: false, code: /rate[_ -]?limit|too many/.test(text) ? "rate_limited" : "failed" };
+      });
     },
 
     /* Completes recovery. Only valid while a PASSWORD_RECOVERY session exists;
        Supabase rejects the call outright once the link has expired, which is
        reported as expired rather than as a generic failure. */
     updatePassword: function (password) {
+      if (!recoveryPending) return Promise.resolve({ ok: false, code: "expired" });
+      var completedScope = recoveryScope;
       return sbClient().then(function (c) {
         return c.auth.updateUser({ password: password });
       }).then(function (res) {
@@ -518,19 +611,20 @@
           var expired = /expired|invalid|not found|session/.test(m);
           return { ok: false, code: expired ? "expired" : "failed", message: res.error.message };
         }
-        recoveryPending = false;
+        clearRecovery();
         /* USER_UPDATED follows; the queue resolves and applies the now-ordinary
            session, so the visitor lands signed in. */
-        return { ok: true, status: "password_updated" };
+        return { ok: true, status: "password_updated", scope: completedScope };
       }).catch(function () { return { ok: false, code: "failed" }; });
     },
 
     isRecovering: function () { return recoveryPending; },
+    recoveryScope: function () { return recoveryScope; },
 
     signOut: function () {
       var wasAdmin = session && scopeOf(session) === "admin";
       sessionVersion++;                    /* drop anything still resolving */
-      recoveryPending = false;
+      clearRecovery();
       return sbClient().then(function (c) { return c.auth.signOut(); })
         .catch(function () { })
         .then(function () {
@@ -552,6 +646,7 @@
      recovery mail to send, so these answer honestly rather than pretending. */
   local.updatePassword = function () { return Promise.resolve({ ok: false, code: "unsupported" }); };
   local.isRecovering = function () { return false; };
+  local.recoveryScope = function () { return ""; };
   local.dispose = function () { };
 
   var P = configured ? supabase : local;
@@ -581,6 +676,19 @@
     isGuest: function () { return statusFor("admin") === "guest"; },
     subscribe: function (fn) { return subscribe("admin", fn); },
     boot: boot,
+    resetPassword: function (email) {
+      if (!P.capabilities.passwordReset) return Promise.resolve({ ok: false, code: "unsupported" });
+      return Promise.resolve(P.resetPassword(String(email || "").trim().toLowerCase(), "admin"));
+    },
+    isRecovering: function () { return !!P.isRecovering && P.isRecovering(); },
+    recoveryScope: function () { return P.recoveryScope ? P.recoveryScope() : ""; },
+    recoveryUrl: recoveryUrl,
+    updatePassword: function (password) {
+      if (!P.updatePassword) return Promise.resolve({ ok: false, code: "unsupported" });
+      var pw = String(password || "");
+      if (pw.length < 8) return Promise.resolve({ ok: false, code: "weak" });
+      return Promise.resolve(P.updatePassword(pw));
+    },
     signIn: function (email, password, remember) {
       return Promise.resolve(P.adminSignIn(String(email || "").trim().toLowerCase(), String(password || ""), remember !== false));
     },
@@ -604,13 +712,15 @@
     },
     resetPassword: function (email) {
       if (!P.capabilities.passwordReset) return Promise.resolve({ ok: false, code: "unsupported" });
-      return Promise.resolve(P.resetPassword(String(email || "").trim().toLowerCase()));
+      return Promise.resolve(P.resetPassword(String(email || "").trim().toLowerCase(), "customer"));
     },
     /* Recovery: Supabase first completes its PKCE exchange at the Site URL;
        the PASSWORD_RECOVERY event then opens #/account/recover. isRecovering()
        tells the shell whether that recovery session is actually present — an
        expired or already-used link leaves none. */
     isRecovering: function () { return !!P.isRecovering && P.isRecovering(); },
+    recoveryScope: function () { return P.recoveryScope ? P.recoveryScope() : ""; },
+    recoveryUrl: recoveryUrl,
     updatePassword: function (password) {
       if (!P.updatePassword) return Promise.resolve({ ok: false, code: "unsupported" });
       var pw = String(password || "");

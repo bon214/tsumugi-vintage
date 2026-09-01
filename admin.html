@@ -23,7 +23,7 @@
 <script>
   /* Single forward (the duplicate meta refresh is gone). The console mounts its
      screens as siblings of "TSUMUGI Admin.dc.html", so that filename is fixed. */
-  location.replace("./TSUMUGI%20Admin.dc.html" + (location.hash || ""));
+  location.replace("./TSUMUGI%20Admin.dc.html" + (location.search || "") + (location.hash || ""));
 </script>
 </head>
 <body>

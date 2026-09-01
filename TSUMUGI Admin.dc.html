@@ -67,7 +67,7 @@
 </sc-if>
 
 <sc-if value="{{ showLogin }}" hint-placeholder-val="{{ false }}">
-  <dc-import name="AdminLogin" email="{{ loginEmail }}" password="{{ loginPassword }}" remember="{{ loginRemember }}" error="{{ loginError }}" busy="{{ loginBusy }}" guest-busy="{{ guestBusy }}" show-demo="{{ showDemoCreds }}" demo-email="{{ demoEmail }}" on-email="{{ onLoginEmail }}" on-password="{{ onLoginPassword }}" on-remember="{{ onLoginRemember }}" on-submit="{{ onLoginSubmit }}" on-guest="{{ onGuestEnter }}" on-fill-demo="{{ fillDemo }}" hint-size="100%,100vh"></dc-import>
+  <dc-import name="AdminLogin" mode="{{ loginMode }}" recovery-live="{{ recoveryLive }}" email="{{ loginEmail }}" password="{{ loginPassword }}" confirm="{{ loginConfirm }}" remember="{{ loginRemember }}" error="{{ loginError }}" notice="{{ loginNotice }}" busy="{{ loginBusy }}" guest-busy="{{ guestBusy }}" show-demo="{{ showDemoCreds }}" demo-email="{{ demoEmail }}" on-email="{{ onLoginEmail }}" on-password="{{ onLoginPassword }}" on-confirm="{{ onLoginConfirm }}" on-remember="{{ onLoginRemember }}" on-submit="{{ onLoginSubmit }}" on-forgot="{{ onLoginForgot }}" on-back="{{ onLoginBack }}" on-guest="{{ onGuestEnter }}" on-fill-demo="{{ fillDemo }}" hint-size="100%,100vh"></dc-import>
 </sc-if>
 
 <sc-if value="{{ showApp }}" hint-placeholder-val="{{ true }}">
@@ -610,7 +610,8 @@ class Component extends DCLogic {
     authStatus: "booting", guestBusy: false, tick: 0,
     section: "dashboard", view: "list", entityId: null,
     session: null,
-    loginEmail: "", loginPassword: "", loginRemember: true, loginError: "", loginBusy: false,
+    loginEmail: "", loginPassword: "", loginConfirm: "", loginRemember: true,
+    loginError: "", loginNotice: "", loginBusy: false,
     drawerOpen: false, notifsOpen: false, accountOpen: false,
     vw: typeof window !== "undefined" ? window.innerWidth : 1440,
     toasts: [], confirm: null,
@@ -684,13 +685,13 @@ class Component extends DCLogic {
     if (!A) { this.setState({ authStatus: "signed_out" }, () => this._route()); return; }
     this._unsubAuth = A.subscribe(st => {
       this.setState({ authStatus: st.status, session: st.session }, () => {
-        this._route();
+        if (!this._openRecoveryRoute(A)) this._route();
         if (st.status === "guest") this._watchForGuest();
       });
     });
     A.boot().then(() => {
       this.setState({ authStatus: A.status(), session: A.session() }, () => {
-        this._route();
+        if (!this._openRecoveryRoute(A)) this._route();
         if (A.status() === "guest") this._watchForGuest();
       });
     });
@@ -709,8 +710,27 @@ class Component extends DCLogic {
     } catch (e) { return ""; }
   }
 
+  _isAuthCallbackHash() {
+    const h = String(location.hash || "");
+    return /^#(?:access_token|refresh_token|error|error_code|error_description)=/.test(h);
+  }
+
+  _openRecoveryRoute(A) {
+    if (!A || !A.isRecovering || !A.isRecovering()) return false;
+    const scope = A.recoveryScope ? A.recoveryScope() : "admin";
+    if (scope === "customer") {
+      const base = A.recoveryUrl ? A.recoveryUrl("customer") : "./";
+      location.replace(base + "#/account/recover");
+      return true;
+    }
+    if (location.hash !== "#/admin/recover") this.nav("/admin/recover");
+    return true;
+  }
+
   _route() {
-    const raw = (location.hash || "").replace(/^#\/?/, "");
+    const callback = this._isAuthCallbackHash();
+    const raw = callback ? "admin/recover" : (location.hash || "").replace(/^#\/?/, "");
+    if (callback) history.replaceState(history.state, "", location.pathname + location.search + "#/admin/recover");
     const parts = raw.split("/").filter(Boolean);
     if (parts[0] !== "admin") { location.hash = "#/admin"; return; }
     const section = parts[1] || "dashboard";
@@ -759,7 +779,7 @@ class Component extends DCLogic {
     const T = this._dict();
     if (!loginEmail.trim()) return this.setState({ loginError: T.authEmailNeeded });
     if (!loginPassword) return this.setState({ loginError: T.authPassNeeded });
-    this.setState({ loginBusy: true, loginError: "" });
+    this.setState({ loginBusy: true, loginError: "", loginNotice: "" });
     window.TSUMUGI_AUTH.signIn(loginEmail, loginPassword, loginRemember).then(async res => {
       if (!res || !res.ok) {
         this.setState({ loginBusy: false, loginPassword: "", loginError: T.authFailed });
@@ -777,16 +797,75 @@ class Component extends DCLogic {
       }
       // Restoration is owned by the render path (authed && wantsLogin), so the
       // requested deep link is not overwritten by a second navigation here.
-      this.setState({ loginBusy: false, loginPassword: "", loginError: "" }, () => {
+      this.setState({ loginBusy: false, loginPassword: "", loginError: "", loginNotice: "" }, () => {
         this.S.toast(T.kSignedInAs + res.session.name, "success");
       });
     });
   };
 
+  onLoginForgot = () => {
+    const A = window.TSUMUGI_AUTH;
+    const T = this._dict();
+    const email = String(this.state.loginEmail || "").trim();
+    if (!A || !A.capabilities().passwordReset) return this.setState({ loginError: T.authRecoverUnsupported, loginNotice: "" });
+    if (!email) return this.setState({ loginError: T.authEmailNeeded, loginNotice: "" });
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return this.setState({ loginError: T.authEmailInvalid, loginNotice: "" });
+    if (this._resetWaitUntil && Date.now() < this._resetWaitUntil) {
+      return this.setState({ loginError: T.authResetRateLimited, loginNotice: "" });
+    }
+    this._resetWaitUntil = Date.now() + 60 * 1000;
+    this.setState({ loginBusy: true, loginError: "", loginNotice: "" });
+    A.resetPassword(email).then(res => {
+      if (!res || !res.ok) {
+        const msg = res && res.code === "rate_limited" ? T.authResetRateLimited : T.authResetFailed;
+        this.setState({ loginBusy: false, loginError: msg, loginNotice: "" });
+        return;
+      }
+      /* Generic on purpose: the console must not disclose whether an address
+         belongs to a staff user. The recovered role is checked only after the
+         email owner opens the one-time link. */
+      this.setState({ loginBusy: false, loginError: "", loginNotice: T.authResetSent });
+    }).catch(() => this.setState({ loginBusy: false, loginError: T.authResetFailed, loginNotice: "" }));
+  };
+
+  onAdminRecoverSubmit = (e) => {
+    if (e && e.preventDefault) e.preventDefault();
+    const A = window.TSUMUGI_AUTH;
+    const T = this._dict();
+    const password = String(this.state.loginPassword || "");
+    if (this.state.loginBusy) return;
+    if (!A || !A.isRecovering || !A.isRecovering() || (A.recoveryScope && A.recoveryScope() !== "admin")) {
+      if (A) this._openRecoveryRoute(A);
+      this.setState({ loginError: T.authRecoverExpired, loginNotice: "" });
+      return;
+    }
+    if (password.length < 8) return this.setState({ loginError: T.authPasswordHint, loginNotice: "" });
+    if (password !== String(this.state.loginConfirm || "")) return this.setState({ loginError: T.authPasswordMismatch, loginNotice: "" });
+    this.setState({ loginBusy: true, loginError: "", loginNotice: "" });
+    A.updatePassword(password).then(async res => {
+      if (!res || !res.ok || (res.scope && res.scope !== "admin")) {
+        const msg = res && res.code === "expired" ? T.authRecoverExpired : T.authRecoverFailed;
+        this.setState({ loginBusy: false, loginPassword: "", loginConfirm: "", loginError: msg });
+        return;
+      }
+      /* A recovery link proves mailbox control; a fresh password sign-in is
+         still required before the administration console is painted. */
+      await A.signOut();
+      this.setState({
+        authStatus: "signed_out", session: null, loginBusy: false,
+        loginPassword: "", loginConfirm: "", loginError: "",
+        loginNotice: T.authRecoverDone
+      }, () => this.nav("/admin/login"));
+    }).catch(() => this.setState({
+      loginBusy: false, loginPassword: "", loginConfirm: "",
+      loginError: T.authRecoverFailed, loginNotice: ""
+    }));
+  };
+
   onGuestEnter = () => {
     if (this.state.guestBusy) return;
     const T = this._dict();
-    this.setState({ guestBusy: true, loginError: "" });
+    this.setState({ guestBusy: true, loginError: "", loginNotice: "" });
     window.TSUMUGI_AUTH.signInAsGuest().then(res => {
       if (!res || !res.ok) {
         this.setState({ guestBusy: false, loginError: T.authGuestFailed });
@@ -803,7 +882,7 @@ class Component extends DCLogic {
     const ok = await this.S.confirm({ title: T2.kSignOutOfTheAdminConsole, body: T2.kUnsavedWorkInAnOpenEditorWillBeLos, accept: T2.kSignOut, tone: "#A2493C" });
     if (!ok) return;
     await window.TSUMUGI_AUTH.signOut();
-    this.setState({ session: null, authStatus: "signed_out", loginEmail: "", loginPassword: "", loginError: "" });
+    this.setState({ session: null, authStatus: "signed_out", loginEmail: "", loginPassword: "", loginConfirm: "", loginError: "", loginNotice: "" });
     this.nav("/admin/login");
   };
 
@@ -938,12 +1017,20 @@ class Component extends DCLogic {
 
     const authed = (s.authStatus === "authenticated" || s.authStatus === "guest") && !!s.session;
     const wantsLogin = s.section === "login";
-    if (!authed && !wantsLogin) {
+    /* Auth status can resolve one render before _route() parses the initial
+       hash. Treat the URL itself as recovery immediately, or the signed-out
+       deep-link guard below schedules /admin/login and races the callback. */
+    const recoveryHash = location.hash === "#/admin/recover" || this._isAuthCallbackHash();
+    const wantsRecover = s.section === "recover" || recoveryHash;
+    const A = window.TSUMUGI_AUTH;
+    const recoveryLive = !!(A && A.isRecovering && A.isRecovering()
+      && (!A.recoveryScope || A.recoveryScope() === "admin"));
+    if (!authed && !wantsLogin && !wantsRecover) {
       // Remember the deep link so signing in returns here instead of the dashboard.
       this._rememberWanted("/admin/" + s.section + (s.entityId ? "/" + s.entityId : s.view === "new" ? "/new" : ""));
       setTimeout(() => this.nav("/admin/login"), 0);
     }
-    const showLogin = !authed || wantsLogin;
+    const showLogin = !authed || wantsLogin || wantsRecover;
     /* Several renders can pass through this state (store ticks, toasts); the
        redirect is scheduled once, or the second pass would consume an empty
        route and navigate over the restored one. */
@@ -955,17 +1042,26 @@ class Component extends DCLogic {
 
     const login = {
       showLogin, showApp: !showLogin,
-      loginEmail: s.loginEmail, loginPassword: s.loginPassword, loginRemember: s.loginRemember,
-      loginError: s.loginError, loginBusy: s.loginBusy,
-      onLoginEmail: e => this.setState({ loginEmail: e.target.value, loginError: "" }),
+      loginMode: wantsRecover ? "recover" : "sign-in",
+      recoveryLive,
+      loginEmail: s.loginEmail, loginPassword: s.loginPassword, loginConfirm: s.loginConfirm,
+      loginRemember: s.loginRemember, loginError: s.loginError,
+      loginNotice: s.loginNotice, loginBusy: s.loginBusy,
+      onLoginEmail: e => this.setState({ loginEmail: e.target.value, loginError: "", loginNotice: "" }),
       onLoginPassword: e => this.setState({ loginPassword: e.target.value, loginError: "" }),
+      onLoginConfirm: e => this.setState({ loginConfirm: e.target.value, loginError: "" }),
       onLoginRemember: e => this.setState({ loginRemember: e.target.checked }),
-      onLoginSubmit: this.onLoginSubmit,
+      onLoginSubmit: wantsRecover ? this.onAdminRecoverSubmit : this.onLoginSubmit,
+      onLoginForgot: A && A.capabilities && A.capabilities().passwordReset ? this.onLoginForgot : null,
+      onLoginBack: () => {
+        this.setState({ loginPassword: "", loginConfirm: "", loginError: "" });
+        this.nav("/admin/login");
+      },
       onGuestEnter: this.onGuestEnter,
       guestBusy: s.guestBusy,
       /* Only the offline demo provider has a shared credential to show; the
          block disappears as soon as Supabase is configured. */
-      showDemoCreds: !!(window.TSUMUGI_AUTH && !window.TSUMUGI_AUTH.isConfigured()),
+      showDemoCreds: !wantsRecover && !!(window.TSUMUGI_AUTH && !window.TSUMUGI_AUTH.isConfigured()),
       demoEmail: (this.S && this.S.DEMO) ? this.S.DEMO.email : "",
       fillDemo: () => this.setState({ loginEmail: (this.S.DEMO || {}).email || "", loginPassword: (this.S.DEMO || {}).password || "", loginError: "" })
     };

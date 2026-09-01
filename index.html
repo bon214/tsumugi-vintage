@@ -70,7 +70,7 @@
      in this snapshot. */
   (function () {
     var hash = location.hash || "";
-    location.replace("./TSUMUGI.dc.html" + hash);
+    location.replace("./TSUMUGI.dc.html" + (location.search || "") + hash);
   })();
 </script>
 </head>
