@@ -222,13 +222,14 @@ before returning `notStaff` / `notCustomer`. Regression coverage:
 
 ### Password recovery
 
-`resetPassword()` sends the visitor to `location.origin + location.pathname +
-"#/account/recover"` — built from the current document, so it works from a
-GitHub Pages repository subpath. `PASSWORD_RECOVERY` deliberately applies **no**
-session: `isRecovering()` is true, the shell renders the recovery form, and only
-`updatePassword()` may use that session. An expired or reused link is reported
-as expired. `detectSessionInUrl` consumes Supabase's fragment before the hash
-router reads it, so the two do not fight over `location.hash`.
+`resetPassword()` redirects to `location.origin + location.pathname` without a
+fragment. Supabase completes the PKCE exchange first; the resulting
+`PASSWORD_RECOVERY` event then moves the shell to `#/account/recover`. The event
+is recorded synchronously so a following `INITIAL_SESSION` / `SIGNED_IN` event
+cannot supersede it. Recovery deliberately applies **no** ordinary session:
+`isRecovering()` is true, the shell renders the recovery form, and only
+`updatePassword()` may use that session. Expired/reused-link `#error=…` fragments
+are mapped to the recovery screen, never to the catalogue 404.
 
 ---
 
@@ -290,7 +291,7 @@ operator is told that the change was not saved.
 4. Authentication → Providers → Email → **Confirm email: on**.
 5. Authentication → URL Configuration:
    - **Site URL**: the deployed origin, e.g. `https://<user>.github.io/<repo>/`
-   - **Redirect URLs**: that URL **and** `…/index.html#/account/recover`
+   - **Redirect URLs**: that same deployed URL (no hash route)
 6. Grant yourself a staff role (§2).
 7. Deploy the functions and set their secrets:
    ```

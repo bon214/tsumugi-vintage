@@ -16,8 +16,7 @@
 
      Authentication → Providers → Anonymous sign-ins   enabled (guest console)
      Authentication → URL Configuration → Site URL      the Pages URL
-     Authentication → URL Configuration → Redirect URLs the Pages URL plus
-                                                        <pages-url>#/account/recover
+     Authentication → URL Configuration → Redirect URLs the Pages URL
      Authentication → Providers → Email → Confirm email  on, for real signups
 
    Staff roles are NOT configured here. A console role is read from the JWT's

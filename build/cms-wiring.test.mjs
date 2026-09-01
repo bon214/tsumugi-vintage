@@ -121,3 +121,83 @@ test("new-record image namespaces and Storage policies agree", async () => {
   assert.match(sql, /bucket_id = 'product-images' and name ~ '\^products\//);
   assert.match(sql, /bucket_id = 'content-images' and name ~ '\^content\//);
 });
+
+test("password recovery keeps Supabase callbacks separate from hash routing", async () => {
+  const auth = await read("tsumugi-auth.js");
+  const shell = await read("TSUMUGI.dc.html");
+
+  /* The callback must return to the configured Site URL. A route fragment in
+     redirectTo collides with Supabase's own implicit/error fragments. */
+  assert.match(auth, /resetPasswordForEmail\(email, \{ redirectTo: base \}\)/);
+  assert.doesNotMatch(auth, /redirectTo:\s*base\s*\+\s*["']#\/account\/recover/);
+
+  /* PASSWORD_RECOVERY is recorded before the monotonic version gate. A later
+     INITIAL_SESSION event must not erase a valid recovery event. */
+  const recoveryFlag = auth.indexOf('if (evt === "PASSWORD_RECOVERY") recoveryPending = true;');
+  const versionGate = auth.indexOf("var version = ++sessionVersion;", recoveryFlag);
+  assert.ok(recoveryFlag >= 0 && versionGate > recoveryFlag,
+    "PASSWORD_RECOVERY must be recorded synchronously before versioning");
+  assert.match(auth, /if \(recoveryPending\) \{ booted = true; session = null; emit\(\); return null; \}/);
+
+  /* Auth callback fragments are recovery state, never catalogue routes. */
+  assert.match(shell, /_isAuthCallbackHash\(\)/);
+  assert.match(shell, /authHash \? "account\/recover"/);
+  assert.match(shell, /_openRecoveryRoute\(A\)/);
+  assert.match(shell, /#\/account\/recover/);
+});
+
+test("PASSWORD_RECOVERY survives a back-to-back initial session event", async () => {
+  const source = await read("tsumugi-auth.js");
+  let authCallback;
+  let finishSessionRead;
+  const recoveredSession = {
+    user: {
+      id: "00000000-0000-4000-8000-000000000001",
+      email: "owner@example.test",
+      app_metadata: { role: "owner" },
+      user_metadata: {},
+    },
+  };
+  const client = {
+    auth: {
+      onAuthStateChange(callback) {
+        authCallback = callback;
+        return { data: { subscription: { unsubscribe() {} } } };
+      },
+      getSession() {
+        return new Promise((resolve) => { finishSessionRead = resolve; });
+      },
+    },
+  };
+  const window = {
+    TSUMUGI_AUTH_CONFIG: {
+      url: "https://project-ref.supabase.co",
+      anonKey: "sb_publishable_test",
+    },
+    TSUMUGI_SUPABASE_CREATE: () => client,
+    TSUMUGI_STORE: {
+      setSession() {}, clearSession() {}, mergeAnonWishlist() {},
+    },
+  };
+  const context = {
+    window, console, Date, Promise, setTimeout, clearTimeout,
+    localStorage: { getItem() { return null; } },
+  };
+  vm.runInNewContext(source, context, { filename: "tsumugi-auth.js" });
+
+  const boot = window.TSUMUGI_CUSTOMER_AUTH.boot();
+  for (let i = 0; i < 12 && (!authCallback || !finishSessionRead); i++) await Promise.resolve();
+  assert.equal(typeof authCallback, "function", "Supabase auth callback was not registered");
+  assert.equal(typeof finishSessionRead, "function", "initial Supabase session read did not start");
+  authCallback("PASSWORD_RECOVERY", recoveredSession);
+  authCallback("INITIAL_SESSION", recoveredSession);
+  finishSessionRead({ data: { session: recoveredSession } });
+  await boot;
+  await new Promise((resolve) => setTimeout(resolve, 10));
+
+  assert.equal(window.TSUMUGI_CUSTOMER_AUTH.isRecovering(), true);
+  assert.equal(window.TSUMUGI_CUSTOMER_AUTH.status(), "signed_out",
+    "a recovery-only session must not become an ordinary customer session");
+  assert.equal(window.TSUMUGI_AUTH.status(), "signed_out",
+    "a recovery-only owner session must not paint the admin console");
+});

@@ -446,7 +446,13 @@ class Component extends DCLogic {
     if ("scrollRestoration" in history) history.scrollRestoration = "manual";
     this._scrollMem = this._scrollMem || {};
     this._syncHash = () => {
-      const raw = (location.hash || "").replace(/^#\/?/, "");
+      const authHash = this._isAuthCallbackHash();
+      /* Supabase returns expired/reused-link failures in #error=... and an
+         implicit callback in #access_token=.... Neither is a storefront page.
+         Treat both as recovery so an auth failure can never become the product
+         catalogue's 404 screen. The SDK gets the untouched hash first; it is
+         cleaned after A.boot() below. */
+      const raw = authHash ? "account/recover" : (location.hash || "").replace(/^#\/?/, "");
       const [seg, id, third] = raw.split("/");
       // "#/" and "" both mean home; without this the previous page's state persisted.
       const p = seg || "home";
@@ -722,14 +728,36 @@ class Component extends DCLogic {
     if (!A) { this.setState({ custStatus: "signed_out" }); return; }
     this._unsubAuth = A.subscribe(st => {
       const lost = this.state.custStatus === "authenticated" && st.status !== "authenticated";
-      this.setState({ custStatus: st.status, custSession: st.session, accForm: null });
+      this.setState({ custStatus: st.status, custSession: st.session, accForm: null }, () => {
+        this._openRecoveryRoute(A);
+      });
       if (lost) this._clearPrefill();
       if (st.status === "authenticated") this._prefillCheckout();
     });
     A.boot().then(() => {
       this.setState({ custStatus: A.status(), custSession: A.session() });
+      this._cleanAuthCallbackHash();
+      this._openRecoveryRoute(A);
       if (A.status() === "authenticated") this._prefillCheckout();
     });
+  }
+
+  _isAuthCallbackHash() {
+    const h = String(location.hash || "");
+    return /^#(?:access_token|refresh_token|error|error_code|error_description)=/.test(h);
+  }
+
+  _cleanAuthCallbackHash() {
+    if (!this._isAuthCallbackHash()) return;
+    history.replaceState(history.state, "", location.pathname + location.search + "#/account/recover");
+    this._syncHash();
+  }
+
+  _openRecoveryRoute(A) {
+    if (!A || !A.isRecovering || !A.isRecovering()) return;
+    if (location.hash === "#/account/recover") return;
+    history.replaceState(history.state, "", location.pathname + location.search + "#/account/recover");
+    this._syncHash();
   }
 
   goAccount = (sub, extra) => {

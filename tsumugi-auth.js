@@ -253,10 +253,10 @@
       client = mod.createClient(CFG.url, CFG.anonKey, {
         auth: {
           persistSession: true, autoRefreshToken: true,
-          /* Supabase writes its tokens into the URL fragment, which is also
-             where this app's router lives. detectSessionInUrl consumes and
-             clears them before the router reads the hash — see _authFragment
-             handling in the shells. */
+          /* PKCE returns a short-lived code in the query string. Keeping the
+             callback out of the fragment leaves location.hash exclusively to
+             the storefront router. Error fragments are mapped to the recovery
+             screen by the shell instead of being mistaken for catalogue URLs. */
           detectSessionInUrl: true,
           flowType: "pkce"
         }
@@ -278,18 +278,24 @@
   /* Explicit handling per event, so an unrecognised future event cannot be
      mistaken for a sign-in. */
   function queueSessionEvent(evt, sb) {
+    /* Record recovery synchronously, before the queued resolver can be
+       superseded by INITIAL_SESSION or SIGNED_IN. Supabase may emit those
+       events back-to-back while completing a PKCE exchange; previously the
+       version guard discarded PASSWORD_RECOVERY before it ever set this flag,
+       so a valid one-time link opened the ordinary sign-in screen. This writes
+       local state only — no Supabase API is called inside the auth callback. */
+    if (evt === "PASSWORD_RECOVERY") recoveryPending = true;
+    if (evt === "SIGNED_OUT") recoveryPending = false;
     var version = ++sessionVersion;
     var run = function () {
       switch (evt) {
         case "SIGNED_OUT":
-          recoveryPending = false;
           if (version !== sessionVersion) return;
           apply(null);
           return;
         case "PASSWORD_RECOVERY":
           /* A recovery session must not be treated as a sign-in: it is applied
              as no session at all, and only updatePassword() may use it. */
-          recoveryPending = true;
           if (version !== sessionVersion) return;
           booted = true; session = null; emit();
           return;
@@ -403,7 +409,13 @@
       return sbClient().then(function (c) { return c.auth.getSession(); }).then(function (res) {
         var sb = res && res.data ? res.data.session : null;
         if (!sb) { booted = true; emit(); return null; }
-        return resolveUser(sb.user).then(function (s) { return apply(s, true); });
+        if (recoveryPending) { booted = true; session = null; emit(); return null; }
+        return resolveUser(sb.user).then(function (s) {
+          /* PASSWORD_RECOVERY can arrive while role resolution is in flight.
+             Do not let that older ordinary-session read overwrite recovery. */
+          if (recoveryPending) { booted = true; session = null; emit(); return null; }
+          return apply(s, true);
+        });
       }).catch(function () { booted = true; emit(); return null; });
     },
 
@@ -480,13 +492,15 @@
     },
 
     resetPassword: function (email) {
-      /* GitHub Pages serves this app from a repository subpath, so the redirect
-         is built from the current document rather than hard-coded, and it points
-         at the recovery route the shell knows how to render. The same URL must be
-         listed under Authentication → URL Configuration → Redirect URLs. */
+      /* Do not put the app route in redirectTo's fragment. Supabase owns the
+         callback URL while it returns a PKCE code (and returns failures in a
+         #error fragment); sharing that fragment with the storefront router
+         made successful recovery and expired-link handling race each other.
+         PASSWORD_RECOVERY below moves the app to #/account/recover after the
+         code exchange succeeds. This root URL is the configured Site URL. */
       var base = location.origin + location.pathname;
       return sbClient().then(function (c) {
-        return c.auth.resetPasswordForEmail(email, { redirectTo: base + "#/account/recover" });
+        return c.auth.resetPasswordForEmail(email, { redirectTo: base });
       }).then(function (res) {
         return res && res.error ? { ok: false, code: "failed" } : { ok: true, status: "email_sent" };
       }).catch(function () { return { ok: false, code: "failed" }; });
@@ -592,11 +606,10 @@
       if (!P.capabilities.passwordReset) return Promise.resolve({ ok: false, code: "unsupported" });
       return Promise.resolve(P.resetPassword(String(email || "").trim().toLowerCase()));
     },
-    /* Recovery: the link opens #/account/recover, the shell renders the
-       set-a-new-password form, and this completes it. isRecovering() tells the
-       shell whether a recovery session is actually present — an expired or
-       already-used link leaves none, and the form says so instead of failing
-       silently. */
+    /* Recovery: Supabase first completes its PKCE exchange at the Site URL;
+       the PASSWORD_RECOVERY event then opens #/account/recover. isRecovering()
+       tells the shell whether that recovery session is actually present — an
+       expired or already-used link leaves none. */
     isRecovering: function () { return !!P.isRecovering && P.isRecovering(); },
     updatePassword: function (password) {
       if (!P.updatePassword) return Promise.resolve({ ok: false, code: "unsupported" });
