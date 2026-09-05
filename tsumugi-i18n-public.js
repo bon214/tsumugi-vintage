@@ -40,7 +40,7 @@
                       "入荷した服は、一点ずつ状態を確かめ、洗い、必要なものには手を入れてから店頭に並べます。\n擦れや色褪せ、補修の跡も隠さず、商品詳細に記載しています。\nどんな状態の服なのか、どんな時間を過ごしてきたのか、それら全てを知ったうえで、「着たい」と思ってもらえること。\nそんな人と服との出会いをつくることが私たちの仕事だと考えています。"],
     readPhilosophy:  ["SEE DETAILS", "詳細を見る"],
     featured:        ["Special Feature", "Special Feature"],
-    outdoorYears:    ["OUTDOOR / 1988—1999", "アウトドア / 1988—1999"],
+    outdoorYears:    ["CURATED ARCHIVE / c. 1970s—1990s", "キュレーション / 1970—1990年代頃"],
     newestArrivals:  ["New Arrivals", "New Arrivals"],
     slowlyOnce:      ["A meeting that happens only once.", "たった一度の出会いを"],
     slowlyBody:      ["Chances to meet the same garment twice rarely come. The way the colour has faded, the places it has worn thin, the traces of a repair — all of it differs from one piece to the next. So we take the time to sit with each garment, one at a time.\nWe hope the one you pick up becomes a garment that gathers time with someone all over again.",

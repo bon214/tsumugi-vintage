@@ -21,6 +21,7 @@
     "build:connected": "node scripts/build-connected.mjs",
     "cms:export-demo": "node scripts/export-demo-data.mjs",
     "cms:import-demo": "node scripts/import-demo-to-supabase.mjs",
+    "cms:import-production": "node scripts/import-production-content.mjs",
     "cms:backup": "node scripts/export-cms-backup.mjs",
     "test": "node --test build/*.test.mjs",
     "build": "npm run build:dc && npm run test && npm run build:vendor && npm run app && npm run build:bundle && npm run verify",
