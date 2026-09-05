@@ -31,6 +31,16 @@ test("production build carries source-controlled local imagery", async () => {
   assert.match(shell, /TSUMUGI_IMAGES\.asset\("uploads\/RSeo\.png"\)/);
 });
 
+test("public production views do not depend on remote stock photography", async () => {
+  const files = [
+    "TSUMUGI.dc.html", "PublicAbout.dc.html", "PublicContact.dc.html",
+    "PublicProduct.dc.html", "tsumugi-data.js",
+  ];
+  for (const file of files) {
+    assert.doesNotMatch(await read(file), /images\.unsplash\.com/i, file);
+  }
+});
+
 test("production public app suppresses browser-default link underlines", async () => {
   const source = await read("build/build-app.mjs");
   assert.match(source, /#dc-root a \{ text-decoration: none \}/);

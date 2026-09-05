@@ -10,10 +10,40 @@
   var LEGACY_KEYS = ["tsumugi.db.v5", "tsumugi.db.v4", "tsumugi.db.v3"];
   var SESSION = "tsumugi.session.v1";
 
-  var U = function (id, w) { return "https://images.unsplash.com/photo-" + id + "?auto=format&fit=crop&q=72&w=" + w; };
-  // Prototype imagery. Free-licence photographs grouped by garment type, so a
-  // record is never illustrated by something from another category. Each pool is
-  // ordered front / back / fabric detail / fit.
+  /* The local demo also uses the release image library. Capturing this script's
+     directory keeps the URLs correct from both the root app and prerendered
+     deep links such as /p/1/. */
+  var IMAGE_BASE = (function () {
+    try {
+      var src = document.currentScript && document.currentScript.src;
+      return src ? new URL("./", src).href : new URL("./", location.href).href;
+    } catch (e) { return "./"; }
+  })();
+  var LOCAL_BY_LEGACY_ID = {
+    "1620799140408-edc6dcb6d633": "product-grey-sweat.jpg",
+    "1556905055-8f358a7a47b2": "product-black-wool-trousers.jpg",
+    "1434389677669-e08b4cac3105": "product-ecru-knit.jpg",
+    "1523381210434-271e8be1f52b": "journal-choosing-vintage.jpg",
+    "1591047139829-d91aecb6caea": "product-charcoal-coverall.jpg",
+    "1512436991641-6745cdb1723f": "product-washed-black-denim.jpg",
+    "1544022613-e87ca75a784a": "product-quilted-liner.jpg",
+    "1490481651871-ab68de25d43d": "product-chambray-shirt.jpg",
+    "1495105787522-5334e3ffa0ef": "product-washed-black-denim.jpg",
+    "1520006403909-838d6b92c22e": "product-olive-fatigue-trousers.jpg",
+    "1596755094514-f87e34085b2c": "product-chambray-shirt.jpg",
+    "1517445312882-bc9910d016b7": "product-black-wool-trousers.jpg",
+    "1445205170230-053b83016050": "journal-repair.jpg",
+    "1441984904996-e0b6ba687e04": "hero-archive-rail.jpg",
+    "1567401893414-76b7b1e5a7a5": "journal-september-notes.jpg",
+    "1519710164239-da123dc03ef4": "hero-textile-table.jpg"
+  };
+  var U = function (id) {
+    var file = LOCAL_BY_LEGACY_ID[String(id)] || "product-indigo-chore.jpg";
+    try { return new URL("uploads/production/" + file, IMAGE_BASE).href; }
+    catch (e) { return "uploads/production/" + file; }
+  };
+  // Portfolio imagery grouped by garment type. Each pool is ordered front /
+  // back / fabric detail / fit and remains available when Supabase is offline.
   var IMG = {
     sweat:   ["1620799140408-edc6dcb6d633","1556905055-8f358a7a47b2"],
     knit:    ["1434389677669-e08b4cac3105","1523381210434-271e8be1f52b"],

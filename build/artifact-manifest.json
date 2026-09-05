@@ -10,13 +10,13 @@
     "work"
   ],
   "totals": {
-    "files": 262,
-    "bytes": 19071465,
+    "files": 342,
+    "bytes": 36364203,
     "groups": {
-      "source": 169,
-      "generated": 24,
-      "vendor": 10,
-      "dist": 59
+      "source": 200,
+      "generated": 39,
+      "vendor": 14,
+      "dist": 89
     }
   },
   "emptyFiles": [
@@ -30,10 +30,16 @@
       "sha256": "f609d6f6c9079fdfad7f533836a8b71af314a9ba413d55c1bc76d35b7b3e50fc"
     },
     {
+      "file": ".env.local",
+      "group": "source",
+      "bytes": 237,
+      "sha256": "de6ff8a611f99f28a53198d6dafa5f910cf96fb74de3b9d6426c9fe8a9df6f16"
+    },
+    {
       "file": ".github/workflows/deploy-pages.yml",
       "group": "source",
       "bytes": 1310,
-      "sha256": "0d997a85f243ed806a879abfafa539fba5c1a8f1f157e4694bfb3ff31e09a64e"
+      "sha256": "eab1f3f0ec2eec31d047311164bf0c94afad41da35df087173b8ae42a6f34e57"
     },
     {
       "file": ".gitignore",
@@ -56,8 +62,8 @@
     {
       "file": "AUTH_MIGRATION.md",
       "group": "source",
-      "bytes": 15548,
-      "sha256": "e937202a9979f6ed1590b9cff6e6a6d2c95ebc32f26ca3fcb768a5773d1fc843"
+      "bytes": 17042,
+      "sha256": "b665a375350c97cb7c004ec0b933dfbdeaa2e26b6c1a4c2ec79b41d86d15e7cb"
     },
     {
       "file": "AdminCustomers.dc.html",
@@ -68,14 +74,14 @@
     {
       "file": "AdminFeatured.dc.html",
       "group": "source",
-      "bytes": 17158,
-      "sha256": "36837b9596012192ac660bc073b1bf62d5e3ed155675f5db187875c9e3fea7cf"
+      "bytes": 16975,
+      "sha256": "3e2c942ac349885da54399a6b8d5516f7278e6b752811d529a431bb7d6f9289c"
     },
     {
       "file": "AdminLogin.dc.html",
       "group": "source",
-      "bytes": 8054,
-      "sha256": "82eec9a36104e1acade91caae6462f139f57cae1f9feb9bcfed9305a2f1f054e"
+      "bytes": 12301,
+      "sha256": "11f13359c426a06e39acdafc1553c48b8bbf7816911b2884c21831357be43e81"
     },
     {
       "file": "AdminNews.dc.html",
@@ -116,8 +122,8 @@
     {
       "file": "PublicAbout.dc.html",
       "group": "source",
-      "bytes": 7659,
-      "sha256": "4779fc9836832d984eb45447868464dc98c2b42d94bc2dd2eaebd267e811148b"
+      "bytes": 7499,
+      "sha256": "b2f53c8752fe336f62c81bf43cc5d412503b0f170ef35a9941c5931cb7c0e877"
     },
     {
       "file": "PublicAccount.dc.html",
@@ -134,8 +140,8 @@
     {
       "file": "PublicAuth.dc.html",
       "group": "source",
-      "bytes": 9886,
-      "sha256": "53c1af15ae39af8d25184a52cb9cb980e8aee158c56cc49ad7308a5f474e0634"
+      "bytes": 9983,
+      "sha256": "7609f8f000ecb09f85109f45c49056545ad3de59a5519cd337148265644f0f3a"
     },
     {
       "file": "PublicCart.dc.html",
@@ -152,8 +158,8 @@
     {
       "file": "PublicContact.dc.html",
       "group": "source",
-      "bytes": 9819,
-      "sha256": "65602c673b57e4dcb872695045d602b8806ee387d572d8c459ea0a8a14caa8c1"
+      "bytes": 9512,
+      "sha256": "8c44a6322259c4a25c7ab99e99a2393e0719f7a0dbc1a4e2b0d1a574c853be55"
     },
     {
       "file": "PublicFeature.dc.html",
@@ -176,8 +182,8 @@
     {
       "file": "PublicProduct.dc.html",
       "group": "source",
-      "bytes": 11349,
-      "sha256": "4af8abbd9b69e4d0cf844bce30cad0820568414eb7604d2ae4b48ab23ede0d3b"
+      "bytes": 11031,
+      "sha256": "3a781f06eeb80444bc6eb48c8d8c567633a1025a0dc68a219301b13ca9c9856d"
     },
     {
       "file": "PublicShop.dc.html",
@@ -188,44 +194,62 @@
     {
       "file": "TSUMUGI Admin.dc.html",
       "group": "source",
-      "bytes": 89443,
-      "sha256": "fbe1ef42e5528369749288137d7541057e25ce944a7ebfe30480a9fcedb34a95"
+      "bytes": 95125,
+      "sha256": "56416dbbad1ad858cd0af1143d1112b7495c4e184f62c3d1b5bd99c0c6a61858"
     },
     {
       "file": "TSUMUGI.dc.html",
       "group": "source",
-      "bytes": 131649,
-      "sha256": "2c2639d67aba9c7538bacf0951876aec2e767ef86eec3704d5533948fd2e8513"
+      "bytes": 137059,
+      "sha256": "ab60405d0faad22ef7037da812a384a91f23a9050ea2091f13a7ca768d813182"
     },
     {
       "file": "admin.html",
       "group": "source",
-      "bytes": 1614,
-      "sha256": "04ec43f0733032d8c23dc27325e0fe63176154a9c76428d24b33438e299ce6dd"
+      "bytes": 1640,
+      "sha256": "d9dbbdcaedbb224d91d2f6b8d4280257b1df6453539719a400dae0a8cb62f9a1"
+    },
+    {
+      "file": "assets/tsumugi-logo.svg",
+      "group": "source",
+      "bytes": 13323,
+      "sha256": "ba1d2d93cdfffdf48e4799e24bbccc9492a045706a41ca2b3025c3248e15e2b1"
+    },
+    {
+      "file": "assets/tsumugi-wordmark.svg",
+      "group": "source",
+      "bytes": 5570,
+      "sha256": "4027b431687a589784d91ba880025db8512ee69ff18f3153e4edc674f08f380a"
     },
     {
       "file": "auth-config.js",
       "group": "source",
-      "bytes": 2287,
-      "sha256": "a66f4a80f7ad3dd54b547cd7ed5f31f8ed0831a3297b0a8c0c5532378fb2d069"
+      "bytes": 2197,
+      "sha256": "de4f426eab0a4e337a159e7f0e74174c13a0aa5524ffb42d248f404317458dc5"
+    },
+    {
+      "file": "backups/pre-production-content-2026-09-05.json",
+      "group": "source",
+      "bytes": 48560,
+      "sha256": "48b2fc8f4b26553bbc3145916e5b93f94f45d2bd1f6f6175e7f0d0f515c9add3"
     },
     {
       "file": "build/build-app.mjs",
       "group": "source",
-      "bytes": 14627,
-      "sha256": "2f456514adec7b84916cbffc3cbf8f5efec71983d17a08ef4f60257f48068b98"
+      "bytes": 19532,
+      "sha256": "bec0dfb21da40147bc08570353d05dd6f7f3239690caa5a016d91b4cbb49f22f"
     },
     {
       "file": "build/bundle.mjs",
       "group": "source",
-      "bytes": 4272,
-      "sha256": "80f2326daa1883ae7b58828b639118cc96d210d7fcb3ddf94efd3f64196087ad"
+      "bytes": 4290,
+      "sha256": "564df71df1c3952a3a6546663638eac6cedbfc91bff9d5d13e69157b5492fce0"
     },
     {
       "file": "build/cms-wiring.test.mjs",
       "group": "source",
-      "bytes": 5132,
-      "sha256": "5eb1e5d733780d1e05fef2037620cbf0a028581eb712d5e02c16dd94b648fbae"
+      "bytes": 17358,
+      "sha256": "77df4193eb0e34b2420e2f4ebd674cbfd21b40a92e9de29fdb7e987cfc5d3473"
     },
     {
       "file": "build/compile-dc.mjs",
@@ -278,14 +302,20 @@
     {
       "file": "build/prerender.mjs",
       "group": "source",
-      "bytes": 21588,
-      "sha256": "981abd97c809c9c651debce643488876a21294fa9c69fc8d729662dba4af395f"
+      "bytes": 25483,
+      "sha256": "3ca51700663fb36c7172372fbeca9581be781e5834748d811fbaa2618e8ffb17"
+    },
+    {
+      "file": "build/production-content.test.mjs",
+      "group": "source",
+      "bytes": 3649,
+      "sha256": "674eaad6db97a603cd35b96de68e2380da1a552db5b2a75648067ae056b56f2a"
     },
     {
       "file": "build/seed-catalog.json",
       "group": "source",
-      "bytes": 10320,
-      "sha256": "03422c7e55ac54c7e95112ef475280adc8d5a2d8eaf6d01d3a21a6c625e3e985"
+      "bytes": 19713,
+      "sha256": "4946b8a807a6fa803d837281d1126d1a054b1ab09efab36734d2829e5f9cbb42"
     },
     {
       "file": "build/vendor.mjs",
@@ -296,8 +326,8 @@
     {
       "file": "build/verify-dist.mjs",
       "group": "source",
-      "bytes": 14248,
-      "sha256": "b75f87ad19f6acc7a2b3f0a50109a39924095cef3051da3c47e7adcd442f913a"
+      "bytes": 16631,
+      "sha256": "b254e0cf6c08bf36d47842273faa414a14c1ee7f5eb2af5fce8a19fe63345d6b"
     },
     {
       "file": "build/write-artifact-manifest.mjs",
@@ -458,80 +488,86 @@
     {
       "file": "dist/404.html",
       "group": "dist",
-      "bytes": 4765,
-      "sha256": "499f660eec5f87168f139120e51eac52772659c98b007ab0b350265e7ad53b8c"
+      "bytes": 8597,
+      "sha256": "58b808f412494232ad8492749de0c7fe1c8c22f57f00435b53a8608d94c18059"
     },
     {
-      "file": "dist/a/a-week-in-hokkaido-looking-for-wool/index.html",
+      "file": "dist/a/before-you-date-a-vintage-garment/index.html",
       "group": "dist",
-      "bytes": 7313,
-      "sha256": "ab9a0c9c828c623e9737ab3e14c2127ba111c1466a48a356e35ef2ef1f72e173"
+      "bytes": 12793,
+      "sha256": "255c898b8024295ac90b78540a2f66a8b0f86a636f7e2acb6013be1d12ef6117"
     },
     {
-      "file": "dist/a/august-arrivals-2026/index.html",
+      "file": "dist/a/how-we-measure-one-garment/index.html",
       "group": "dist",
-      "bytes": 7300,
-      "sha256": "8a43ac7b0905001982efc8a8e4daa9a7e2e7a288a226fe4223e7781ba77fab77"
+      "bytes": 12246,
+      "sha256": "976e40062318a625417566a2f7197039894d567a8c1053eea2c507644a95acc7"
     },
     {
-      "file": "dist/a/august-opening-hours/index.html",
+      "file": "dist/a/recording-light-and-colour/index.html",
       "group": "dist",
-      "bytes": 7214,
-      "sha256": "8c097d402bb50c2bf0d2e7577f9fd09e693c960a56866e82233763842a6c7adf"
+      "bytes": 12554,
+      "sha256": "2b018b6b8bd0309aa894936021865ab9b4fb14b728ae27c8ab3fafefc9072ebe"
     },
     {
-      "file": "dist/a/autumn-arrivals-from-12-september/index.html",
+      "file": "dist/a/rest-before-you-wash/index.html",
       "group": "dist",
-      "bytes": 7324,
-      "sha256": "2a7707a9245688ee9768abed71ad0aa4d19ff629a8496df4fbe00777828854b4"
+      "bytes": 12440,
+      "sha256": "9c9582ef87c219ea0d1173a1c9a8b7deca4d71aaa3e07f2f3db2a1e94e1e2237"
     },
     {
-      "file": "dist/a/how-much-of-a-repair-we-leave-showing/index.html",
+      "file": "dist/a/september-archive-notes-2026/index.html",
       "group": "dist",
-      "bytes": 7429,
-      "sha256": "7afb4bfee3b3293e18453903f998a4ecd9c04382f13bc557b693585872e6a2dc"
+      "bytes": 12310,
+      "sha256": "96da5ba4f27331001b307ed08b1d5f32ff2655597be73f872fa380a3cc1b02f9"
     },
     {
-      "file": "dist/a/july-arrivals-2026/index.html",
+      "file": "dist/a/visible-repair-is-part-of-the-record/index.html",
       "group": "dist",
-      "bytes": 7162,
-      "sha256": "036ffcdd1291499b7523b803df8da25e6700bd8cc863c64f7c319c2b67e0642e"
-    },
-    {
-      "file": "dist/a/repair-consultations-first-saturday-of-the-month/index.html",
-      "group": "dist",
-      "bytes": 7449,
-      "sha256": "df15df65c75badd0f5c89a06b6a71fb952caaf5efc40213a8ea71a14801f30f8"
-    },
-    {
-      "file": "dist/a/what-a-label-tells-you-and-what-it-does-not/index.html",
-      "group": "dist",
-      "bytes": 7492,
-      "sha256": "f9c57d7e153da554eef7012e33f62006f8eb103f42048f17b3dd677049d39353"
+      "bytes": 12506,
+      "sha256": "4b1732cfa21f2e6b12050e4b0f0e6ae2689f5360f678e6ac14944c98a856c83c"
     },
     {
       "file": "dist/about/index.html",
       "group": "dist",
-      "bytes": 7539,
-      "sha256": "dedc6d93e31ed67b79707dd00ff7eba87dd61e6cc53236224320f1d95013f3d1"
+      "bytes": 11296,
+      "sha256": "c8d4e2a4baa8a5d4614d34ea3e061dace982fecc8268c4477c17cb0aab3b2774"
     },
     {
       "file": "dist/admin.html",
       "group": "dist",
-      "bytes": 2503,
-      "sha256": "50bdc41a9ddc1f2f9d1bbaaf0f55666b9e2600d949d6bfe0b2cf178e9ccdee68"
+      "bytes": 6815,
+      "sha256": "b8d129b82bbb869364310dbc62eeb2d9705f2e1dc32f132f054d6651b8f889f5"
+    },
+    {
+      "file": "dist/assets/tsumugi-logo.svg",
+      "group": "dist",
+      "bytes": 13323,
+      "sha256": "ba1d2d93cdfffdf48e4799e24bbccc9492a045706a41ca2b3025c3248e15e2b1"
+    },
+    {
+      "file": "dist/assets/tsumugi-wordmark.svg",
+      "group": "dist",
+      "bytes": 5570,
+      "sha256": "4027b431687a589784d91ba880025db8512ee69ff18f3153e4edc674f08f380a"
     },
     {
       "file": "dist/auth-config.js",
       "group": "dist",
-      "bytes": 2297,
-      "sha256": "0cb9d1230067f6acc5e2d720522d21ccffebf90ff55ff4b829aff456b6c3c580"
+      "bytes": 2293,
+      "sha256": "adf1dfddb7b6d347cf427b1a8f4018247dcbf260c5dfb433023ffe95df21e805"
     },
     {
       "file": "dist/contact/index.html",
       "group": "dist",
-      "bytes": 6938,
-      "sha256": "fc5ff8893b8849f8939c7601306562cf40cbf90a7ce8a653e69882f3ff2adfce"
+      "bytes": 10695,
+      "sha256": "661adc23ebd36bac5c0e2fbd45e0a0f519583df4b292ef05387cbc469214d0ba"
+    },
+    {
+      "file": "dist/favicon 2.svg",
+      "group": "dist",
+      "bytes": 378,
+      "sha256": "75a106de2140618c2a42727c1c2da1dc48eefb4f9f07fd8f6501a43394acfcfc"
     },
     {
       "file": "dist/favicon.svg",
@@ -542,80 +578,98 @@
     {
       "file": "dist/generated/pseudo.css",
       "group": "dist",
-      "bytes": 2449,
-      "sha256": "868af1bc2b8be6755199bb200881f544fe2e03f442236c181089658d5a9bc176"
+      "bytes": 2396,
+      "sha256": "6c38d6754d6c434bb8210e9dfac081fac39b48e31267be5c8d60619fd5d9ec66"
     },
     {
       "file": "dist/index.html",
       "group": "dist",
-      "bytes": 7235,
-      "sha256": "06a3e496824bd7d0065aab5598ad8a9f511c12c4c3ccc7420523bed38be4ab04"
+      "bytes": 10991,
+      "sha256": "a059fe6ab5a20528431650a7167119cff59222828d35c7aaae50e54d125fffd2"
     },
     {
       "file": "dist/journal/index.html",
       "group": "dist",
-      "bytes": 9248,
-      "sha256": "70faf9f5d2622e2b198c58c6bac736ffdc388cb66fa6ea9f16b9df5020580c5d"
+      "bytes": 12635,
+      "sha256": "fcf34e30a41b4ab99695c406a25de806bae2587429d06483ec8e0b6610a25f25"
     },
     {
       "file": "dist/p/1/index.html",
       "group": "dist",
-      "bytes": 8023,
-      "sha256": "cb783eda922caa57612c9bc937936c324dc21d2f5ad97bf76a25d75366312776"
+      "bytes": 12116,
+      "sha256": "66ed3d8589b6ac02bc58a0ed114899a39ca4f80b8a479d14cf156056f8535957"
     },
     {
       "file": "dist/p/10/index.html",
       "group": "dist",
-      "bytes": 7990,
-      "sha256": "02a2b14e09715bb33b8beb71113787095420515eeb79f396085359c3383fcf40"
+      "bytes": 11836,
+      "sha256": "cc2539d87fae0f2fe9f02c66c0036620649f3d8f74cdac35ea0e895004f277a8"
+    },
+    {
+      "file": "dist/p/11/index.html",
+      "group": "dist",
+      "bytes": 11930,
+      "sha256": "eb9f259c04c05f568c5baf33108589365aa3c6b6cb546d235a2adc0311c47371"
+    },
+    {
+      "file": "dist/p/12/index.html",
+      "group": "dist",
+      "bytes": 11878,
+      "sha256": "b9dfef91c0c98d5dd9cf6008f0ef4e5791fece7b7fb84d40b75682e64d740ef2"
     },
     {
       "file": "dist/p/2/index.html",
       "group": "dist",
-      "bytes": 8046,
-      "sha256": "7ba4e21b6018fc44eaea4032ec2c360e4d24dde49f98df647a59f53dd17f0c27"
+      "bytes": 11964,
+      "sha256": "7b0ed327e29cb3a0439004c4ffbcebb87a628ae3a99ff37df9afd9d4577079b4"
     },
     {
       "file": "dist/p/3/index.html",
       "group": "dist",
-      "bytes": 7960,
-      "sha256": "f9d8093d931c479b7bb6eb6f9fa135b1d88b1474d61d99565d8071a108c11df0"
+      "bytes": 11832,
+      "sha256": "bcca2680596ae44c0e2d62a714015e812d5280ad91afedd2d6d57e91c39c10ed"
     },
     {
       "file": "dist/p/4/index.html",
       "group": "dist",
-      "bytes": 7986,
-      "sha256": "f2020ef4069a7e1ab20b1a4a28330dd2bd9b873fed4e3b4f5d06fb3869fe2e80"
+      "bytes": 12088,
+      "sha256": "f36f53b9a4573e88d082a1535a30c119cb7690854a12c009eb8537cbd919abda"
     },
     {
       "file": "dist/p/5/index.html",
       "group": "dist",
-      "bytes": 7883,
-      "sha256": "21834163557c1d13bcb9a32af34dec947a204b18ee34d6d4c2f296b2ba8e44a5"
+      "bytes": 11693,
+      "sha256": "21a3456254e2f35e6207394a17829900a8b90526e3f2512e52279e2fe92aca88"
     },
     {
       "file": "dist/p/6/index.html",
       "group": "dist",
-      "bytes": 8001,
-      "sha256": "dc34211c2ddaaeb7c5272807452ff60c7352e51c16e143858e4de66c8000f610"
+      "bytes": 11882,
+      "sha256": "c7dafdd0d8de309dd785cb8ec7e22daa62776eff91e6d9982012e2b2e56998a8"
     },
     {
       "file": "dist/p/7/index.html",
       "group": "dist",
-      "bytes": 7927,
-      "sha256": "8def805e216c92f60c9cb7a6be5b85f83847fa70cf3c2ec759c02b23b76c4a25"
+      "bytes": 11877,
+      "sha256": "750a521b9fc9aa277fbaadbc577518a7d741d01d4171d2abe09aa49f19f69095"
     },
     {
       "file": "dist/p/8/index.html",
       "group": "dist",
-      "bytes": 7988,
-      "sha256": "0d3d0ff05a0e886c25b2c6cf77d713d8482811016665ca14a120d683dde39f23"
+      "bytes": 12065,
+      "sha256": "33b226e624239ef05902852162a846e15795501e616d770eec66a1af3145d266"
     },
     {
       "file": "dist/p/9/index.html",
       "group": "dist",
-      "bytes": 7880,
-      "sha256": "b9b2d8213b490c23b05ee1444d11bb2945d9689b91ab437de81348325c77cf8b"
+      "bytes": 11966,
+      "sha256": "70b515f04910e7a75fb8790b60e904946c66b4342243e7e01ea1540ea3d92a1b"
+    },
+    {
+      "file": "dist/robots 2.txt",
+      "group": "dist",
+      "bytes": 449,
+      "sha256": "e5a17db18a730bfa7efce3fe33a55072800f8a54f1fc837ac41f7b0233d7e88b"
     },
     {
       "file": "dist/robots.txt",
@@ -626,44 +680,62 @@
     {
       "file": "dist/runtime/main-admin.bundle.js",
       "group": "dist",
-      "bytes": 408846,
-      "sha256": "f2cf4d7064ac0214dc15eed0496a8bf0ede39f5f0199bce079039d99f491dbfe"
+      "bytes": 416283,
+      "sha256": "aff9fe04531a18bc8b4126d1a3b63d62475cb1442043674b58dee383990f3725"
     },
     {
       "file": "dist/runtime/main-public.bundle.js",
       "group": "dist",
-      "bytes": 231183,
-      "sha256": "c8cef3b3d39a3dcc56442f2572f62cbb6718ffad2bc3e28bb1fc0b1dd8e0afca"
+      "bytes": 234279,
+      "sha256": "fe0f6a1b636b556214b5d47fd61e1be5df03a27efd8e0d4c85423ceef9d3c9e4"
     },
     {
       "file": "dist/shop/index.html",
       "group": "dist",
-      "bytes": 9611,
-      "sha256": "2c92a5bc69bb358bd98c2d51905e553029dbde5cc29ebfb0bc08f3c955c7a4da"
+      "bytes": 14781,
+      "sha256": "2b86f8c18a7830bdb04f5f4b1ee3deaf1e63a3d745e4b11983154248d17bcbc5"
+    },
+    {
+      "file": "dist/sitemap 2.xml",
+      "group": "dist",
+      "bytes": 973,
+      "sha256": "66c7a8ebb752f21e15ec099715693bf3666d2ffb3a0bfedd4a991ae95d39538b"
     },
     {
       "file": "dist/sitemap.xml",
       "group": "dist",
-      "bytes": 1813,
-      "sha256": "7b2fb7e860962b9b89a1418d1821a3cee44a1449e6c6e285170d03585b0a9d5a"
+      "bytes": 1893,
+      "sha256": "3366446f7d32baadb4bad44aecbbe469c41492064de14fc7fd2ab391245ee825"
     },
     {
       "file": "dist/tsumugi-auth.js",
       "group": "dist",
-      "bytes": 27321,
-      "sha256": "811ed1ab7a788d78c5eb216413412360c29b62905d5949b395013605fad5cb15"
+      "bytes": 33101,
+      "sha256": "cb77676a98baff1c20365112539e6da678352efbca865fa343cd89f0d54ccf06"
     },
     {
       "file": "dist/tsumugi-data.js",
       "group": "dist",
-      "bytes": 150149,
-      "sha256": "494392bcda792802d06456ffc7962e8a20419f9968e0bf9f647779aedbdd4cd0"
+      "bytes": 151697,
+      "sha256": "eb26779582afb320008c9ea4085ea0f8eba1376fa70b5da3e5df8f4a4fb38dfe"
+    },
+    {
+      "file": "dist/tsumugi-i18n-admin 2.js",
+      "group": "dist",
+      "bytes": 49320,
+      "sha256": "51e9ac110a10be0d5ed63e2b1dc1eb103fdeef42b1eb37f2880250fe7760334f"
     },
     {
       "file": "dist/tsumugi-i18n-admin.js",
       "group": "dist",
-      "bytes": 46366,
-      "sha256": "edad7189fb3c221ed8f6e73c38f5b0340438f776762688aebceac45502194d67"
+      "bytes": 49320,
+      "sha256": "51e9ac110a10be0d5ed63e2b1dc1eb103fdeef42b1eb37f2880250fe7760334f"
+    },
+    {
+      "file": "dist/tsumugi-i18n-content 2.js",
+      "group": "dist",
+      "bytes": 48462,
+      "sha256": "dd767fdbe62ca4d5f454bc5e008ebc16fa187177ae60d5d95dab44e3e87a59b4"
     },
     {
       "file": "dist/tsumugi-i18n-content.js",
@@ -678,10 +750,16 @@
       "sha256": "2cbbbd119803ae23690b3a681b68093398d9a29360e2d8fa7926c2b95cb7afdf"
     },
     {
+      "file": "dist/tsumugi-i18n-public 2.js",
+      "group": "dist",
+      "bytes": 38875,
+      "sha256": "0c66748368f755cda2d24882c483b710970eb47b2a7b7978de92511b71d7e972"
+    },
+    {
       "file": "dist/tsumugi-i18n-public.js",
       "group": "dist",
-      "bytes": 38361,
-      "sha256": "bdbf6026d33c9f319535483b950728ba22b488d733c56149e105254d19730ff7"
+      "bytes": 38875,
+      "sha256": "0c66748368f755cda2d24882c483b710970eb47b2a7b7978de92511b71d7e972"
     },
     {
       "file": "dist/tsumugi-i18n.js",
@@ -698,14 +776,20 @@
     {
       "file": "dist/tsumugi-repository.js",
       "group": "dist",
-      "bytes": 23330,
-      "sha256": "80fa93302070450927adb8cf9328955f30875f7b56eb1e93ef8a906f43f8207d"
+      "bytes": 24616,
+      "sha256": "4540944584b7fcfae01abc1b1bb4e811203858a3b6f407cb27b053b7743a1ad3"
     },
     {
       "file": "dist/tsumugi-sanitize.js",
       "group": "dist",
       "bytes": 11316,
       "sha256": "8365865ebd8b42545b92989f00bcb42dbe4c933c5d92aa332f7e271899eab2cf"
+    },
+    {
+      "file": "dist/tsumugi-supabase 2.js",
+      "group": "dist",
+      "bytes": 1996,
+      "sha256": "844fd301dd5c229a8dee252337aebf11f90dd92f75b0990bed73590929e020da"
     },
     {
       "file": "dist/tsumugi-supabase.js",
@@ -742,6 +826,132 @@
       "group": "dist",
       "bytes": 92242,
       "sha256": "5522200c994b0f7845e1759cbd7ddcd1166fdccc3265f258fb52b4ebc8a9a288"
+    },
+    {
+      "file": "dist/uploads/production/IMAGEGEN.md",
+      "group": "dist",
+      "bytes": 13989,
+      "sha256": "555e4788301a509c2848219db45229123d3dab24d72583f58b7d85884de3b2bc"
+    },
+    {
+      "file": "dist/uploads/production/hero-archive-rail.jpg",
+      "group": "dist",
+      "bytes": 336523,
+      "sha256": "58c7497c589c8d9fdcf79764ed9472ef42f8f38e507a9e904521457bdd2373e8"
+    },
+    {
+      "file": "dist/uploads/production/hero-textile-table.jpg",
+      "group": "dist",
+      "bytes": 307918,
+      "sha256": "c6cdee83ec5c27e2b2b26fb21213b6baa626ba2f776545fef9edaf2861994680"
+    },
+    {
+      "file": "dist/uploads/production/journal-choosing-vintage.jpg",
+      "group": "dist",
+      "bytes": 396338,
+      "sha256": "bdb8579d18865cfeaa0c735deb19575dfc402d259ada1a5c91bed6f0f161d52b"
+    },
+    {
+      "file": "dist/uploads/production/journal-light-and-color.jpg",
+      "group": "dist",
+      "bytes": 277883,
+      "sha256": "0cf0c437b2ec2997d5679657264ab860962339645594ed0a124bdfc29c6660cd"
+    },
+    {
+      "file": "dist/uploads/production/journal-measuring.jpg",
+      "group": "dist",
+      "bytes": 368799,
+      "sha256": "b334088a8c445e3613901225b7e164c8bd66b34e0bc0c997d8f84f5ec9ce8854"
+    },
+    {
+      "file": "dist/uploads/production/journal-repair.jpg",
+      "group": "dist",
+      "bytes": 346489,
+      "sha256": "fe5536277eadf9a59c80793ffcfea6b20351d1f983fde863a9db4eabefaccb43"
+    },
+    {
+      "file": "dist/uploads/production/journal-september-notes.jpg",
+      "group": "dist",
+      "bytes": 379884,
+      "sha256": "cd8b45ef2fd0cb99cf586c2281db9c742ae5f1cfe4eb9b3e55b9f83167ee5310"
+    },
+    {
+      "file": "dist/uploads/production/journal-washing.jpg",
+      "group": "dist",
+      "bytes": 317554,
+      "sha256": "1343dc2589946854493d19a0a491ec47fb71acc40eebe23659135c55a2e8c91c"
+    },
+    {
+      "file": "dist/uploads/production/product-black-wool-trousers.jpg",
+      "group": "dist",
+      "bytes": 302954,
+      "sha256": "9de6d8e74e2a5ecb7c67f5528f9f2ac100f113390db530a3b50862a3aff66d83"
+    },
+    {
+      "file": "dist/uploads/production/product-brown-leather-blouson.jpg",
+      "group": "dist",
+      "bytes": 467243,
+      "sha256": "99d1e43712699e62bc0b95fa31db0afa3288199c66e61f4372be52c367201a77"
+    },
+    {
+      "file": "dist/uploads/production/product-chambray-shirt.jpg",
+      "group": "dist",
+      "bytes": 464289,
+      "sha256": "542b41d7f52977ccef3c97f3c03fbba700ee4fa2b2afad852bb2771352caade0"
+    },
+    {
+      "file": "dist/uploads/production/product-charcoal-coverall.jpg",
+      "group": "dist",
+      "bytes": 449494,
+      "sha256": "43e5cbefa7c75342134254871421e86eda1c5644526ee06cdbd05e1a2054c652"
+    },
+    {
+      "file": "dist/uploads/production/product-ecru-knit.jpg",
+      "group": "dist",
+      "bytes": 509978,
+      "sha256": "8458dd10bd7f0ca8a3fbb3ccf96167796ed14a4b22ba181072c3233c7358860c"
+    },
+    {
+      "file": "dist/uploads/production/product-grey-sweat.jpg",
+      "group": "dist",
+      "bytes": 532105,
+      "sha256": "3987e00a29351dcd589dd86b12b6371e1855a5da0d367d2497660659b7429aec"
+    },
+    {
+      "file": "dist/uploads/production/product-indigo-chore.jpg",
+      "group": "dist",
+      "bytes": 480372,
+      "sha256": "e553db249a540c4ee2e94f05404ad06ef815476f44d1cf3ce23ee830fb6b2ec3"
+    },
+    {
+      "file": "dist/uploads/production/product-ivory-linen-shirt.jpg",
+      "group": "dist",
+      "bytes": 439241,
+      "sha256": "1e9de4a4d5c0ce5b249cc6de2b0f0b178b28db496a5f3f603d14a8d853a3aa2c"
+    },
+    {
+      "file": "dist/uploads/production/product-navy-balmacaan.jpg",
+      "group": "dist",
+      "bytes": 320547,
+      "sha256": "8feaf770c74680bd43c77d7b55fba57ee351a6933a458dc3352f4f5679f0c8ff"
+    },
+    {
+      "file": "dist/uploads/production/product-olive-fatigue-trousers.jpg",
+      "group": "dist",
+      "bytes": 376554,
+      "sha256": "284438510525a1ebec536b30a95f69fe47aa711f47ce0d4511695fc392a78450"
+    },
+    {
+      "file": "dist/uploads/production/product-quilted-liner.jpg",
+      "group": "dist",
+      "bytes": 428712,
+      "sha256": "21acaa710491a22f9e1089ad8f7bcf4eb8172352c170b7caebe0dce68db53c2a"
+    },
+    {
+      "file": "dist/uploads/production/product-washed-black-denim.jpg",
+      "group": "dist",
+      "bytes": 468284,
+      "sha256": "b2730a24552c69e96d57dcf1947379cc2c8e10aa6f4ae6ad7d44b08604d027ec"
     },
     {
       "file": "dist/vendor/LICENSE.react-dom.txt",
@@ -818,14 +1028,26 @@
     {
       "file": "generated/AdminFeatured.js",
       "group": "generated",
-      "bytes": 20158,
-      "sha256": "b2bf23157c3f13e34e0f4717cfd6db7218209b317264fa1c3b21ae7336a610ed"
+      "bytes": 19975,
+      "sha256": "e87b2a237d292575589a161846ae808a343d852b1fc85e3bddcf65011f15b59a"
+    },
+    {
+      "file": "generated/AdminLogin 2.js",
+      "group": "generated",
+      "bytes": 13761,
+      "sha256": "27286bd67a8de68369f2f217952bf88b4caf451262856f4ba4abdca8200d24f2"
     },
     {
       "file": "generated/AdminLogin.js",
       "group": "generated",
-      "bytes": 9176,
-      "sha256": "2ff150419b0966a9423d3553d2bd1c15946c76d0672714e8e830e8e91bfd5bd0"
+      "bytes": 13761,
+      "sha256": "27286bd67a8de68369f2f217952bf88b4caf451262856f4ba4abdca8200d24f2"
+    },
+    {
+      "file": "generated/AdminNews 2.js",
+      "group": "generated",
+      "bytes": 98632,
+      "sha256": "7c5105cd5f3f4b7c32cdeb9ef97e973d47c1e022f41067e0386671a84d7b12c3"
     },
     {
       "file": "generated/AdminNews.js",
@@ -840,10 +1062,22 @@
       "sha256": "267990b355dc734955e765c4c87e87e3d5aa2c63d13adb8fff7a80a4087cdebd"
     },
     {
+      "file": "generated/AdminProducts 2.js",
+      "group": "generated",
+      "bytes": 146316,
+      "sha256": "88c61ed45683307d23ff4d58b707f7515016ba25127d0164c493d9e2995bc2df"
+    },
+    {
       "file": "generated/AdminProducts.js",
       "group": "generated",
       "bytes": 146316,
       "sha256": "88c61ed45683307d23ff4d58b707f7515016ba25127d0164c493d9e2995bc2df"
+    },
+    {
+      "file": "generated/AdminSpecials 2.js",
+      "group": "generated",
+      "bytes": 66753,
+      "sha256": "0b75ea8d1f377aad8a31a5e9d6d0ac4dd34b1c99dccf1dfe8017b4e7246a718d"
     },
     {
       "file": "generated/AdminSpecials.js",
@@ -854,8 +1088,14 @@
     {
       "file": "generated/PublicAbout.js",
       "group": "generated",
-      "bytes": 10314,
-      "sha256": "693fa44ee898474c8ddf158ea7c290fdd68c607195dd9141707a00acb4c781ad"
+      "bytes": 10158,
+      "sha256": "345a3a33e8263cf36516323cda7e6dcde2855c17dca2e4f940a7c0001e5b0b80"
+    },
+    {
+      "file": "generated/PublicAccount 2.js",
+      "group": "generated",
+      "bytes": 27629,
+      "sha256": "0f8599a12eb3e406b848ce25c4d746ec2915d0fde1e79ab8e4762e9da9b85485"
     },
     {
       "file": "generated/PublicAccount.js",
@@ -864,16 +1104,34 @@
       "sha256": "0f8599a12eb3e406b848ce25c4d746ec2915d0fde1e79ab8e4762e9da9b85485"
     },
     {
+      "file": "generated/PublicArticle 2.js",
+      "group": "generated",
+      "bytes": 12449,
+      "sha256": "6fb88233dbb1e6fe71496e88be6ea0a96b81723a35282c6101448250bd12f61b"
+    },
+    {
       "file": "generated/PublicArticle.js",
       "group": "generated",
       "bytes": 12449,
       "sha256": "6fb88233dbb1e6fe71496e88be6ea0a96b81723a35282c6101448250bd12f61b"
     },
     {
+      "file": "generated/PublicAuth 2.js",
+      "group": "generated",
+      "bytes": 13142,
+      "sha256": "262dd97841489471cc94a400319116a87fc2b31b128d136e794055ddece01966"
+    },
+    {
       "file": "generated/PublicAuth.js",
       "group": "generated",
-      "bytes": 12846,
-      "sha256": "b4102e1001e3992b80f6245a769efcd6abd361078545a68649ba5d8901398a55"
+      "bytes": 13142,
+      "sha256": "262dd97841489471cc94a400319116a87fc2b31b128d136e794055ddece01966"
+    },
+    {
+      "file": "generated/PublicCart 2.js",
+      "group": "generated",
+      "bytes": 8100,
+      "sha256": "102a0b891b683377c8f803aea7db40c29619570d88fb172da697d4d478cfe78f"
     },
     {
       "file": "generated/PublicCart.js",
@@ -888,10 +1146,22 @@
       "sha256": "a80e4ab15fe7c9d94a419a222238ba8e449c59f6f3f64b652a0bf90538ca3152"
     },
     {
+      "file": "generated/PublicContact 2.js",
+      "group": "generated",
+      "bytes": 13084,
+      "sha256": "f87bc45f7821923bf08a9a3feef1d3a8d92ac51bacbc48ad707a1e05a431cfdb"
+    },
+    {
       "file": "generated/PublicContact.js",
       "group": "generated",
-      "bytes": 13385,
-      "sha256": "360a6c3da9f6e8094c4c49fc07cabe633c55af2d892659257459edb1987f39a0"
+      "bytes": 13084,
+      "sha256": "f87bc45f7821923bf08a9a3feef1d3a8d92ac51bacbc48ad707a1e05a431cfdb"
+    },
+    {
+      "file": "generated/PublicFeature 2.js",
+      "group": "generated",
+      "bytes": 10452,
+      "sha256": "6a42a407a0f0a5642102ba5dfd8084709650028b950a0f1894015845a8b53519"
     },
     {
       "file": "generated/PublicFeature.js",
@@ -906,6 +1176,12 @@
       "sha256": "051c1347e0f1f3d5e8ad088cf8967ed3067be545a4f5313341ae12c4618e54f9"
     },
     {
+      "file": "generated/PublicJournal 2.js",
+      "group": "generated",
+      "bytes": 4128,
+      "sha256": "a678e6caba6d5c7be35592854963239695f2152cf18dd46e0402b95613fc9712"
+    },
+    {
       "file": "generated/PublicJournal.js",
       "group": "generated",
       "bytes": 4128,
@@ -914,8 +1190,8 @@
     {
       "file": "generated/PublicProduct.js",
       "group": "generated",
-      "bytes": 15416,
-      "sha256": "a2c5597150002cb2b2fb92faac09862ed4b52fffcd5953c436d832b9bbb2dc08"
+      "bytes": 15104,
+      "sha256": "9954663b2151e630c67bea6a645c6c3090c5fb556d0970d8e932489d846afd2b"
     },
     {
       "file": "generated/PublicShop.js",
@@ -924,52 +1200,76 @@
       "sha256": "933071ab5dea5f467beda9f53b3eacb68437db5bead143a953c439f77b5b9bff"
     },
     {
+      "file": "generated/TSUMUGI 2.js",
+      "group": "generated",
+      "bytes": 142197,
+      "sha256": "cc1f459821bc26024f5193647eee6b4cb01a6c1e137efb26712cd5ca3c5b0396"
+    },
+    {
       "file": "generated/TSUMUGI.js",
       "group": "generated",
-      "bytes": 138349,
-      "sha256": "eccadfd97bc20762fd5b5cb5a546bdceccc0904a648c521c98bb304b1100546c"
+      "bytes": 142197,
+      "sha256": "cc1f459821bc26024f5193647eee6b4cb01a6c1e137efb26712cd5ca3c5b0396"
+    },
+    {
+      "file": "generated/TSUMUGIAdmin 2.js",
+      "group": "generated",
+      "bytes": 115172,
+      "sha256": "781e535264d51b13a3ba94bf5bcdac0b772948e3a636298364fb929c48d481e5"
     },
     {
       "file": "generated/TSUMUGIAdmin.js",
       "group": "generated",
-      "bytes": 109460,
-      "sha256": "1fce447ec70c4580411b44d15fb45d2234d446b46789185adac6e5309b1876f5"
+      "bytes": 115172,
+      "sha256": "781e535264d51b13a3ba94bf5bcdac0b772948e3a636298364fb929c48d481e5"
     },
     {
       "file": "generated/helmets.json",
       "group": "generated",
-      "bytes": 6539,
-      "sha256": "daf23a7a167c00df94a7f77507dcffb6219c02456b4db8e8959b8ff09c93c015"
+      "bytes": 6900,
+      "sha256": "5ffd1b72b658de646e49da386e245c780d88484725326a98b9422ed97a7890a1"
+    },
+    {
+      "file": "generated/manifest 2.json",
+      "group": "generated",
+      "bytes": 6547,
+      "sha256": "843fda1eb4bd03f9fb73d0867015a4f719f39dc8779b71a31fe7c50f6a05025f"
     },
     {
       "file": "generated/manifest.json",
       "group": "generated",
-      "bytes": 6411,
-      "sha256": "8acfc27dcdc154bdbf36cde802b70c14688a5575a488da303e46754af86f9467"
+      "bytes": 6547,
+      "sha256": "843fda1eb4bd03f9fb73d0867015a4f719f39dc8779b71a31fe7c50f6a05025f"
+    },
+    {
+      "file": "generated/pseudo 2.css",
+      "group": "generated",
+      "bytes": 2396,
+      "sha256": "6c38d6754d6c434bb8210e9dfac081fac39b48e31267be5c8d60619fd5d9ec66"
     },
     {
       "file": "generated/pseudo.css",
       "group": "generated",
-      "bytes": 2449,
-      "sha256": "868af1bc2b8be6755199bb200881f544fe2e03f442236c181089658d5a9bc176"
+      "bytes": 2396,
+      "sha256": "6c38d6754d6c434bb8210e9dfac081fac39b48e31267be5c8d60619fd5d9ec66"
     },
     {
       "file": "index.html",
       "group": "source",
-      "bytes": 4268,
-      "sha256": "dc855ff0e64ebbf210a41513eb1b516acd0f7da64ac15b32bf29dadbcf45b1e7"
+      "bytes": 4294,
+      "sha256": "9608a39a10889b395be951cabbd250bfcdf14849ce327a9bd3dfcb66f0f98d58"
     },
     {
       "file": "package-lock.json",
       "group": "source",
-      "bytes": 28666,
-      "sha256": "ee337c02880d57434faa118b07390ed0736745e793c1002b434a035bb59d37af"
+      "bytes": 28665,
+      "sha256": "ac2381169aa26030deefc1032bb93f7703c2c2a89db160b30f07bd573a843b84"
     },
     {
       "file": "package.json",
       "group": "source",
-      "bytes": 2800,
-      "sha256": "366e2ac5359daf3f5a778ac912474f23f9e6b7406c65c5b870e871fded81f846"
+      "bytes": 2874,
+      "sha256": "3881e91605031e0743584ccfdf847bbe336174008c3e17b964415d582fb85b20"
     },
     {
       "file": "robots.txt",
@@ -986,14 +1286,14 @@
     {
       "file": "runtime/main-admin.js",
       "group": "source",
-      "bytes": 1245,
-      "sha256": "287f95727bf55767148bc2e25daed7ddc751c33a3162fb39e1a6768c5b9f3ebc"
+      "bytes": 1838,
+      "sha256": "e88eb1d9b3d193dc53446695a070a9ff627a71315fe762efe990406d48eb5b9d"
     },
     {
       "file": "runtime/main-public.js",
       "group": "source",
-      "bytes": 2288,
-      "sha256": "7e2d4cbccc37fca2a3ffdf4e7a3a3e155ed88ccfd467c2485d1051a142c22e83"
+      "bytes": 2594,
+      "sha256": "867e8752877926f08c693019142134212678408eef19bc0118b43bafc9484c52"
     },
     {
       "file": "runtime/supabase-client.js",
@@ -1030,6 +1330,12 @@
       "group": "source",
       "bytes": 5183,
       "sha256": "acbb088c839726de40ddec3d07ce8fbfad934616797abb50dfeeb01815a83ec7"
+    },
+    {
+      "file": "scripts/import-production-content.mjs",
+      "group": "source",
+      "bytes": 3458,
+      "sha256": "b064ace2c9118c6f0d9f133156966e478cdbca95f58c74a47b350546368fb6a2"
     },
     {
       "file": "scripts/load-local-env.mjs",
@@ -1341,13 +1647,13 @@
       "file": "supabase/functions/contact/index.ts",
       "group": "source",
       "bytes": 9655,
-      "sha256": "54436adb1b83f8c165fb98a2ad2edc2e575bce5689c4eda248e59190281df2d9"
+      "sha256": "00ec2770e2c01108f0cbd1b09c3b6c153b3e49c1446caa7a281098b02b2f5186"
     },
     {
       "file": "supabase/functions/create-order/index.ts",
       "group": "source",
-      "bytes": 11377,
-      "sha256": "9ee17ff63f24d9e25e5c97988fa82bfcb4d490b3b5c9b6cfa67876815efaea5d"
+      "bytes": 11282,
+      "sha256": "12ba9e1c8c31a4608f996951b786a051caccabd10869047e5916a1dadab3ab25"
     },
     {
       "file": "supabase/functions/request-site-build/index.ts",
@@ -1358,8 +1664,8 @@
     {
       "file": "supabase/migrations/0001_extensions_and_helpers.sql",
       "group": "source",
-      "bytes": 2789,
-      "sha256": "91b2a7eba2aefd2c4e596f5bce971b859833048865645c08a416726407440a0d"
+      "bytes": 3456,
+      "sha256": "a74216821c2905a4613b0663f3222e1070e171718f8d90368e6017bc03bad47d"
     },
     {
       "file": "supabase/migrations/0002_staff_roles.sql",
@@ -1376,44 +1682,44 @@
     {
       "file": "supabase/migrations/0004_orders.sql",
       "group": "source",
-      "bytes": 8737,
-      "sha256": "50ba5025fe8890969291d6a782e3240a7b24bed4e96ef3716c2c6014117a39a2"
+      "bytes": 8759,
+      "sha256": "3ad69c356c558a9b16ccdb71d8a9a14498ff941a1d427140ea1509c91d3cfb26"
     },
     {
       "file": "supabase/migrations/0005_catalog_content.sql",
       "group": "source",
-      "bytes": 9572,
-      "sha256": "f718e4cfc30738778f9365189ba3cdf98baf394f953ac2bf47ad4d7cedf06eed"
+      "bytes": 9594,
+      "sha256": "c412a3167895e0f42c9d177cc5b9b42214b8dbb497079f588d85495a60b978ef"
     },
     {
       "file": "supabase/migrations/0006_demo_dataset.sql",
       "group": "source",
-      "bytes": 4276,
-      "sha256": "a0464e80ba42ebcaa90f8fac947f46c8f8c1dff004bf6d783649ef85346057f0"
+      "bytes": 4298,
+      "sha256": "1b07f981368a0aec2271c68b1307aef9025c03b1b1fae88f91aff433df0842a4"
     },
     {
       "file": "supabase/migrations/0007_payments_and_storage.sql",
       "group": "source",
-      "bytes": 7489,
-      "sha256": "6dfaeb4f9f064caf0a0bbf549ab67cd5e92307a26038ca34107baf0b125a9f4e"
+      "bytes": 7447,
+      "sha256": "dd222395c7ed2bd43cd65f4dec9c614b2de6361408c0a8ec6aa7b8a70a027712"
     },
     {
       "file": "supabase/migrations/0008_create_order_rpc.sql",
       "group": "source",
-      "bytes": 5500,
-      "sha256": "6297a0acd4d94006677a9a92b1526f02c13efa373a2fcdf2899212cb4139bbac"
+      "bytes": 5544,
+      "sha256": "de309de25ea6a27e25152f867a8c9e31201af71510eece2ca4788a52b6e9000e"
     },
     {
       "file": "supabase/migrations/0009_rate_limit.sql",
       "group": "source",
-      "bytes": 7429,
-      "sha256": "39f931d0df98a767c0c8482682fb572190a6ce795c5539296d95a4dd07509475"
+      "bytes": 7480,
+      "sha256": "6e2b62ff3a7c5dd90bef12c6e00a34d0416e40b978ff10811fabf4b349a981d6"
     },
     {
       "file": "supabase/migrations/0010_staff_revocation.sql",
       "group": "source",
-      "bytes": 5300,
-      "sha256": "2907a83c6ab21bd7fe2192bd29b729780fab673989e47f32558bb7216a9d22d8"
+      "bytes": 5326,
+      "sha256": "382e2745fab6d289c5d74e93bfcbf2cd877c1bb131bcb29e4ca19c9b6205008d"
     },
     {
       "file": "supabase/migrations/0011_cms_runtime.sql",
@@ -1422,10 +1728,34 @@
       "sha256": "ec17b1f935292e4507d195aabb60a9fdf8009ebccaa600f686c2fce268654df8"
     },
     {
+      "file": "supabase/migrations/20260831092423_harden_public_special_features.sql",
+      "group": "source",
+      "bytes": 4772,
+      "sha256": "7540228d8ffab4df7bb7b8a4f6e574ac566f18d2445fd4f35f7c6545105a450d"
+    },
+    {
+      "file": "supabase/migrations/20260831093001_expose_safe_rpc_wrappers.sql",
+      "group": "source",
+      "bytes": 2565,
+      "sha256": "fd79c76003a740765b766eaa26dd3e6130071c832743e28e793cee9a97f0a5eb"
+    },
+    {
+      "file": "supabase/migrations/20260831093121_grant_service_role_app_usage.sql",
+      "group": "source",
+      "bytes": 287,
+      "sha256": "d10559747360b1532e66c1e24640e9c574a6ce8d25b332884e54b64c5a36767b"
+    },
+    {
       "file": "supabase/seed/demo-content.json",
       "group": "source",
       "bytes": 110041,
       "sha256": "499be3d3aaecd38d582d0e74dcfbe153837e99a485379dc0d86bc2db5b6e5ccb"
+    },
+    {
+      "file": "supabase/seed/production-content.json",
+      "group": "source",
+      "bytes": 49560,
+      "sha256": "9e7ec3b9e069bc2e7cf9e25f072b32c852a646f65a2204ddea11fb496dbbdc96"
     },
     {
       "file": "supabase/tests/rls_matrix.sql",
@@ -1442,20 +1772,20 @@
     {
       "file": "tsumugi-auth.js",
       "group": "source",
-      "bytes": 27253,
-      "sha256": "dc26b5e89f98fcfc0e99fe111168d63ade30666addd5e4a342565f84996ad966"
+      "bytes": 33033,
+      "sha256": "d6d3f7922eaf75ba07e96a457cb627736418eab1d4c2b7b8e6e38e08bab7311a"
     },
     {
       "file": "tsumugi-data.js",
       "group": "source",
-      "bytes": 150149,
-      "sha256": "494392bcda792802d06456ffc7962e8a20419f9968e0bf9f647779aedbdd4cd0"
+      "bytes": 151697,
+      "sha256": "eb26779582afb320008c9ea4085ea0f8eba1376fa70b5da3e5df8f4a4fb38dfe"
     },
     {
       "file": "tsumugi-i18n-admin.js",
       "group": "source",
-      "bytes": 46366,
-      "sha256": "edad7189fb3c221ed8f6e73c38f5b0340438f776762688aebceac45502194d67"
+      "bytes": 49320,
+      "sha256": "51e9ac110a10be0d5ed63e2b1dc1eb103fdeef42b1eb37f2880250fe7760334f"
     },
     {
       "file": "tsumugi-i18n-content.js",
@@ -1472,8 +1802,8 @@
     {
       "file": "tsumugi-i18n-public.js",
       "group": "source",
-      "bytes": 38361,
-      "sha256": "bdbf6026d33c9f319535483b950728ba22b488d733c56149e105254d19730ff7"
+      "bytes": 38875,
+      "sha256": "0c66748368f755cda2d24882c483b710970eb47b2a7b7978de92511b71d7e972"
     },
     {
       "file": "tsumugi-i18n.js",
@@ -1490,8 +1820,8 @@
     {
       "file": "tsumugi-repository.js",
       "group": "source",
-      "bytes": 23330,
-      "sha256": "80fa93302070450927adb8cf9328955f30875f7b56eb1e93ef8a906f43f8207d"
+      "bytes": 24616,
+      "sha256": "4540944584b7fcfae01abc1b1bb4e811203858a3b6f407cb27b053b7743a1ad3"
     },
     {
       "file": "tsumugi-sanitize.js",
@@ -1536,6 +1866,132 @@
       "sha256": "5522200c994b0f7845e1759cbd7ddcd1166fdccc3265f258fb52b4ebc8a9a288"
     },
     {
+      "file": "uploads/production/IMAGEGEN.md",
+      "group": "source",
+      "bytes": 13989,
+      "sha256": "555e4788301a509c2848219db45229123d3dab24d72583f58b7d85884de3b2bc"
+    },
+    {
+      "file": "uploads/production/hero-archive-rail.jpg",
+      "group": "source",
+      "bytes": 336523,
+      "sha256": "58c7497c589c8d9fdcf79764ed9472ef42f8f38e507a9e904521457bdd2373e8"
+    },
+    {
+      "file": "uploads/production/hero-textile-table.jpg",
+      "group": "source",
+      "bytes": 307918,
+      "sha256": "c6cdee83ec5c27e2b2b26fb21213b6baa626ba2f776545fef9edaf2861994680"
+    },
+    {
+      "file": "uploads/production/journal-choosing-vintage.jpg",
+      "group": "source",
+      "bytes": 396338,
+      "sha256": "bdb8579d18865cfeaa0c735deb19575dfc402d259ada1a5c91bed6f0f161d52b"
+    },
+    {
+      "file": "uploads/production/journal-light-and-color.jpg",
+      "group": "source",
+      "bytes": 277883,
+      "sha256": "0cf0c437b2ec2997d5679657264ab860962339645594ed0a124bdfc29c6660cd"
+    },
+    {
+      "file": "uploads/production/journal-measuring.jpg",
+      "group": "source",
+      "bytes": 368799,
+      "sha256": "b334088a8c445e3613901225b7e164c8bd66b34e0bc0c997d8f84f5ec9ce8854"
+    },
+    {
+      "file": "uploads/production/journal-repair.jpg",
+      "group": "source",
+      "bytes": 346489,
+      "sha256": "fe5536277eadf9a59c80793ffcfea6b20351d1f983fde863a9db4eabefaccb43"
+    },
+    {
+      "file": "uploads/production/journal-september-notes.jpg",
+      "group": "source",
+      "bytes": 379884,
+      "sha256": "cd8b45ef2fd0cb99cf586c2281db9c742ae5f1cfe4eb9b3e55b9f83167ee5310"
+    },
+    {
+      "file": "uploads/production/journal-washing.jpg",
+      "group": "source",
+      "bytes": 317554,
+      "sha256": "1343dc2589946854493d19a0a491ec47fb71acc40eebe23659135c55a2e8c91c"
+    },
+    {
+      "file": "uploads/production/product-black-wool-trousers.jpg",
+      "group": "source",
+      "bytes": 302954,
+      "sha256": "9de6d8e74e2a5ecb7c67f5528f9f2ac100f113390db530a3b50862a3aff66d83"
+    },
+    {
+      "file": "uploads/production/product-brown-leather-blouson.jpg",
+      "group": "source",
+      "bytes": 467243,
+      "sha256": "99d1e43712699e62bc0b95fa31db0afa3288199c66e61f4372be52c367201a77"
+    },
+    {
+      "file": "uploads/production/product-chambray-shirt.jpg",
+      "group": "source",
+      "bytes": 464289,
+      "sha256": "542b41d7f52977ccef3c97f3c03fbba700ee4fa2b2afad852bb2771352caade0"
+    },
+    {
+      "file": "uploads/production/product-charcoal-coverall.jpg",
+      "group": "source",
+      "bytes": 449494,
+      "sha256": "43e5cbefa7c75342134254871421e86eda1c5644526ee06cdbd05e1a2054c652"
+    },
+    {
+      "file": "uploads/production/product-ecru-knit.jpg",
+      "group": "source",
+      "bytes": 509978,
+      "sha256": "8458dd10bd7f0ca8a3fbb3ccf96167796ed14a4b22ba181072c3233c7358860c"
+    },
+    {
+      "file": "uploads/production/product-grey-sweat.jpg",
+      "group": "source",
+      "bytes": 532105,
+      "sha256": "3987e00a29351dcd589dd86b12b6371e1855a5da0d367d2497660659b7429aec"
+    },
+    {
+      "file": "uploads/production/product-indigo-chore.jpg",
+      "group": "source",
+      "bytes": 480372,
+      "sha256": "e553db249a540c4ee2e94f05404ad06ef815476f44d1cf3ce23ee830fb6b2ec3"
+    },
+    {
+      "file": "uploads/production/product-ivory-linen-shirt.jpg",
+      "group": "source",
+      "bytes": 439241,
+      "sha256": "1e9de4a4d5c0ce5b249cc6de2b0f0b178b28db496a5f3f603d14a8d853a3aa2c"
+    },
+    {
+      "file": "uploads/production/product-navy-balmacaan.jpg",
+      "group": "source",
+      "bytes": 320547,
+      "sha256": "8feaf770c74680bd43c77d7b55fba57ee351a6933a458dc3352f4f5679f0c8ff"
+    },
+    {
+      "file": "uploads/production/product-olive-fatigue-trousers.jpg",
+      "group": "source",
+      "bytes": 376554,
+      "sha256": "284438510525a1ebec536b30a95f69fe47aa711f47ce0d4511695fc392a78450"
+    },
+    {
+      "file": "uploads/production/product-quilted-liner.jpg",
+      "group": "source",
+      "bytes": 428712,
+      "sha256": "21acaa710491a22f9e1089ad8f7bcf4eb8172352c170b7caebe0dce68db53c2a"
+    },
+    {
+      "file": "uploads/production/product-washed-black-denim.jpg",
+      "group": "source",
+      "bytes": 468284,
+      "sha256": "b2730a24552c69e96d57dcf1947379cc2c8e10aa6f4ae6ad7d44b08604d027ec"
+    },
+    {
       "file": "vendor/LICENSE.react-dom.txt",
       "group": "vendor",
       "bytes": 1086,
@@ -1554,6 +2010,12 @@
       "sha256": "334dd6820e2eaeab2064e7c59001b810566728a28a41a7c1dbf69bbee17d0936"
     },
     {
+      "file": "vendor/manifest 2.json",
+      "group": "vendor",
+      "bytes": 707,
+      "sha256": "cb570ab601102646ce2cb2ec09a9af7530c02e19a20275c952a89412a5822b5f"
+    },
+    {
       "file": "vendor/manifest.json",
       "group": "vendor",
       "bytes": 707,
@@ -1564,6 +2026,12 @@
       "group": "vendor",
       "bytes": 500,
       "sha256": "80bb82f528644654eb95faf10b057e449fc85949cce0634f32529d2d63520bdf"
+    },
+    {
+      "file": "vendor/react-dom.production.min 2.js",
+      "group": "vendor",
+      "bytes": 131835,
+      "sha256": "35f4f974f4b2bcd44da73963347f8952e341f83909e4498227d4e26b98f66f0d"
     },
     {
       "file": "vendor/react-dom.production.min.js",
@@ -1578,10 +2046,22 @@
       "sha256": "c8c58e73364ffbfe634eede8f907a939090ae2fffc77f77f0332c8e7571d6935"
     },
     {
+      "file": "vendor/react.production.min 2.js",
+      "group": "vendor",
+      "bytes": 10751,
+      "sha256": "d949f1c3687aedadcedac85261865f29b17cd273997e7f6b2bfc53b2f9d4c4dd"
+    },
+    {
       "file": "vendor/react.production.min.js",
       "group": "vendor",
       "bytes": 10751,
       "sha256": "d949f1c3687aedadcedac85261865f29b17cd273997e7f6b2bfc53b2f9d4c4dd"
+    },
+    {
+      "file": "vendor/supabase-js 2.js",
+      "group": "vendor",
+      "bytes": 394,
+      "sha256": "2b98a4294d8f6b49f7c34190aa35e9c70c501718d934d2cfdf698cd42297f5ad"
     },
     {
       "file": "vendor/supabase-js.js",

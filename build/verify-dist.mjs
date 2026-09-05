@@ -301,7 +301,10 @@ for (const f of files.filter((f) => /\.(js|mjs)$/.test(f))) {
   }
   /* Component image paths are bundled JavaScript strings, not HTML attributes,
      so the per-page asset walk above cannot see them. */
-  for (const m of raw.matchAll(/\buploads\/[A-Za-z0-9._/-]+/g)) {
+  /* Match complete asset filenames, not a dynamic directory prefix such as
+     "uploads/production/" + file. The release-content tests validate every
+     member of those controlled filename pools before this dist check runs. */
+  for (const m of raw.matchAll(/\buploads\/[A-Za-z0-9._/-]+\.[A-Za-z0-9]{2,6}\b/g)) {
     const target = m[0].replace(/[),;'"`]+$/, "");
     if (!has(target)) problems.push(`${rel(f)}: references ${target}, which is missing from dist/`);
   }

@@ -11,7 +11,6 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,400;0,500;1,400&family=Hanken+Grotesk:wght@300;400;500&family=IBM+Plex+Mono:wght@400&display=swap" rel="stylesheet">
-<link rel="preconnect" href="https://images.unsplash.com" crossorigin>
 <title>TSUMUGI — 古着とアーカイブの店 | Vintage &amp; Archive Clothing</title>
 <meta name="description" content="TSUMUGI は東京の古着店です。年代やブランドではなく、生地・仕立て・今の服と合わせて着られるかで一点ずつ選んでいます。">
 <meta name="robots" content="index,follow">
@@ -316,7 +315,22 @@
 
 </x-dc>
 <script type="text/x-dc" data-dc-script data-props="{&quot;showRelatedNotes&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:true,&quot;tsType&quot;:&quot;boolean&quot;,&quot;section&quot;:&quot;Product page&quot;}}">
-const U = (id, w) => "https://images.unsplash.com/photo-" + id + "?auto=format&fit=crop&q=72&w=" + w;
+/* Local release imagery also covers loading/error fallbacks. This keeps a
+   temporary CMS outage from replacing the TSUMUGI art direction with remote
+   stock photography. The id only chooses a stable member of the local pool. */
+const FALLBACK_IMAGES = [
+  "product-indigo-chore.jpg", "product-charcoal-coverall.jpg", "product-chambray-shirt.jpg",
+  "product-quilted-liner.jpg", "product-ecru-knit.jpg", "product-grey-sweat.jpg",
+  "product-black-wool-trousers.jpg", "product-olive-fatigue-trousers.jpg",
+  "product-brown-leather-blouson.jpg", "product-navy-balmacaan.jpg",
+  "product-washed-black-denim.jpg", "product-ivory-linen-shirt.jpg"
+];
+const U = (id) => {
+  const hash = String(id || "").split("").reduce((sum, ch) => sum + ch.charCodeAt(0), 0);
+  const path = "uploads/production/" + FALLBACK_IMAGES[hash % FALLBACK_IMAGES.length];
+  return (window.TSUMUGI_IMAGES && window.TSUMUGI_IMAGES.asset)
+    ? window.TSUMUGI_IMAGES.asset(path) : path;
+};
 
 // garment / rail / flat-lay pool — warm neutral, natural daylight, film-like
 const GARMENTS = [
@@ -1913,6 +1927,11 @@ class Component extends DCLogic {
        resolves against the router. If the whole list resolves to nothing, the
        two permanent pages keep the hero standing. */
     const AR = v => (I && I.art ? I.art(v, lang) : v);
+    const productionImage = file => {
+      const path = "uploads/production/" + file;
+      return (window.TSUMUGI_IMAGES && window.TSUMUGI_IMAGES.asset)
+        ? window.TSUMUGI_IMAGES.asset(path) : path;
+    };
     /* The eyebrow stays Latin in both languages, like the arrivals titles. */
     const monthMeta = (n) => {
       const d = new Date((n.publishDate || "") + "T00:00:00");
@@ -1923,25 +1942,25 @@ class Component extends DCLogic {
       shop: {
         eyebrow: "",
         title: T.heroShopTitle, cta: T.heroShopCta,
-        image: U("1544022613-e87ca75a784a", 1800),
-        alt: isJa ? "ヴィンテージのフィールドジャケットを着た人物" : "Model outdoors in a vintage field jacket"
+        image: productionImage("hero-textile-table.jpg"),
+        alt: isJa ? "古い木のテーブルに重ねた藍・墨黒・生成り・オリーブの布" : "Indigo, charcoal, ecru and olive textiles arranged on an old wooden table"
       },
       about: {
         eyebrow: "", title: T.heroAboutTitle, cta: T.heroAboutCta,
-        image: U(INTERIORS[0], 1800),
-        alt: isJa ? "服が掛かる店内" : "Interior of the shop with a clothing rail"
+        image: productionImage("hero-archive-rail.jpg"),
+        alt: isJa ? "朝の光が差すアーカイブスタジオの衣類ラック" : "An archive studio clothing rail in morning light"
       },
       journal: {
         eyebrow: isJa ? "読みもの" : "READING",
         title: T.journal, cta: T.allEntries,
-        image: U(GARMENTS[4], 1800),
-        alt: isJa ? "木のハンガーに掛かるニット" : "Cream knitwear on a wooden hanger"
+        image: productionImage("journal-choosing-vintage.jpg"),
+        alt: isJa ? "藍色のカバーオールの織りを確かめる手元" : "Hands examining the weave of an indigo chore jacket"
       },
       contact: {
         eyebrow: isJa ? "霧ヶ谷" : "KIRIGAYA",
         title: T.navContact, cta: T.heroAboutCta,
-        image: U(INTERIORS[2], 1800),
-        alt: isJa ? "店内の様子" : "Inside the shop"
+        image: productionImage("journal-september-notes.jpg"),
+        alt: isJa ? "初秋の色を揃えたアーカイブスタジオの衣類ラック" : "An archive studio rail arranged in early-autumn colours"
       }
     };
     const heroCfg = (this.store && this.store.publicHeroFeatures) ? this.store.publicHeroFeatures() : [];
@@ -2144,8 +2163,13 @@ class Component extends DCLogic {
       })(),
       art: this._articleVals(T, isJa, TX),
       co: this._checkoutVals(T, isJa, TX),
-      gram: ["1512436991641-6745cdb1723f","1556905055-8f358a7a47b2","1519058082700-08a0b56da9b4","1523381210434-271e8be1f52b","1447752875215-b2761acb3c5d","1490114538077-0a7f8cb49891"]
-        .map((id, n) => ({ img: U(id, 420), shot: (isJa ? "アーカイブ写真 " : "Archive photograph ") + (n + 1) })),
+      gram: [
+        "product-indigo-chore.jpg", "product-ecru-knit.jpg", "product-olive-fatigue-trousers.jpg",
+        "product-washed-black-denim.jpg", "product-brown-leather-blouson.jpg", "product-ivory-linen-shirt.jpg"
+      ].map((file, n) => ({
+        img: productionImage(file),
+        shot: (isJa ? "TSUMUGI アーカイブ商品写真 " : "TSUMUGI archive product photograph ") + (n + 1)
+      })),
       // shop
       showRelatedNotes: this.props.showRelatedNotes ?? true,
       shopColumns: isDesktop ? "250px 1fr" : "1fr",
@@ -2277,6 +2301,24 @@ class Component extends DCLogic {
       onZoomUp: () => { this._drag = null; },
       prodMeasurements: cur.measurements,
       prodNote: ED.note,
+      detailImage1: (window.TSUMUGI_IMAGES && window.TSUMUGI_IMAGES.asset)
+        ? window.TSUMUGI_IMAGES.asset("uploads/production/journal-choosing-vintage.jpg")
+        : "uploads/production/journal-choosing-vintage.jpg",
+      detailImage2: (window.TSUMUGI_IMAGES && window.TSUMUGI_IMAGES.asset)
+        ? window.TSUMUGI_IMAGES.asset("uploads/production/journal-light-and-color.jpg")
+        : "uploads/production/journal-light-and-color.jpg",
+      detailImage3: (window.TSUMUGI_IMAGES && window.TSUMUGI_IMAGES.asset)
+        ? window.TSUMUGI_IMAGES.asset("uploads/production/journal-repair.jpg")
+        : "uploads/production/journal-repair.jpg",
+      detailAlt1: isJa
+        ? "藍色のカバーオールの織りをルーペで確認する手元"
+        : "Hands inspecting the weave of an indigo chore jacket",
+      detailAlt2: isJa
+        ? "撮影背景に置かれたウォッシュドブラックのデニムジャケット"
+        : "A washed-black denim jacket on a studio backdrop",
+      detailAlt3: isJa
+        ? "藍布に濃い藍糸で小さな補修を施す手元"
+        : "Hands making a small repair in dark indigo thread",
       detailCap1: ED.details[0],
       detailCap2: ED.details[1],
       detailCap3: ED.details[2],
@@ -2341,9 +2383,24 @@ class Component extends DCLogic {
         founderImage: (window.TSUMUGI_IMAGES && window.TSUMUGI_IMAGES.asset)
           ? window.TSUMUGI_IMAGES.asset("uploads/RSeo.png")
           : "uploads/RSeo.png",
-        steps: L.steps.map((x, n) => ({ ...x, img: U([INTERIORS[0], DETAILS[0], DETAILS[3], INTERIORS[3]][n], 700) })),
+        heroImage: productionImage("hero-archive-rail.jpg"),
+        heroAlt: isJa ? "朝の光が差すアーカイブスタジオの衣類ラック" : "An archive studio clothing rail in morning light",
+        closingImage: productionImage("journal-september-notes.jpg"),
+        closingAlt: isJa ? "初秋の色を揃えたアーカイブスタジオの衣類ラック" : "An archive studio rail arranged in early-autumn colours",
+        steps: L.steps.map((x, n) => {
+          const files = ["journal-choosing-vintage.jpg", "journal-measuring.jpg", "journal-washing.jpg", "journal-repair.jpg"];
+          const altsJa = ["藍色の布の織りを確認する手元", "ウールジャケットの肩幅を測る手元", "窓辺のラックで乾かすコットンシャツ", "藍布に小さな補修を施す手元"];
+          const altsEn = ["Hands examining an indigo textile", "Hands measuring a wool jacket", "A cotton shirt drying beside a window", "Hands making a small repair in indigo cloth"];
+          return { ...x, img: productionImage(files[n]), shot: (isJa ? altsJa : altsEn)[n] };
+        }),
         standards: L.standards
       },
+      contactImage1: productionImage("hero-archive-rail.jpg"),
+      contactAlt1: isJa ? "朝の光が差すアーカイブスタジオ" : "An archive studio in morning light",
+      contactImage2: productionImage("journal-september-notes.jpg"),
+      contactAlt2: isJa ? "初秋の衣類を揃えたラック" : "A clothing rail curated for early autumn",
+      contactImage3: productionImage("hero-textile-table.jpg"),
+      contactAlt3: isJa ? "古い木のテーブルに重ねたアーカイブ生地" : "Archive textiles arranged on an old wooden table",
       footerShop: L.footerShop.map((label, n) => ({
         label,
         onClick: () => {
@@ -2378,8 +2435,8 @@ class Component extends DCLogic {
     V.homeVm = vm(["goShop","goAbout","allPiecesLabel","arrivals","featureA","featureB","featureC","goJournal","journalHome","gram","newsletter","onNewsletter","subscribe","newsletterNote",
                    "heroFeatures","heroCounter","heroHref","heroOpen","heroPause","heroResume","heroKey","heroPrev","heroNext"]);
     V.shopVm = vm(["shopIntro","sfShow","sf","isDesktop","shopQuery","onShopQuery","toggleSort","sortLabel","sortOpen","sortOptions","sortExpanded","onSortBackdrop","isCompact","filterBarTop","toggleFilters","closeFilters","onFilterBackdrop","filtersExpanded","filterCountLabel","filtersOpen","filterGroups","clearAll","showResultsLabel","shopColumns","hasChips","chips","noResults","gridProducts","showingLabel","isPaged","hasPrev","goPrev","prevLabel","pageLinks","hasNext","goNext","nextLabel"]);
-    V.productVm = vm(["prodCrumb","prodCrumbs","toggleZoom","onZoomDown","onZoomMove","onZoomUp","zoomCursor","zoomScale","zoomOrigin","zoomTransition","prodAlt","prodMainCss","zoomLabel","prodGallery","prod","prodSizeMeta","prodNote","addCurrent","prodSoldOut","prodCtaCursor","prodCtaBg","prodAddLabel","wishCurrent","wishCurrentLabel","prodMeasurements","accordion","detailCap1","detailCap2","detailCap3","related"]);
-    V.contactVm = vm(["contactCols","contactHelp","contactSent","contactOpen","contactName","onContactName","cNameInvalid","cNameDesc","cNameBorder","cNameError","contactEmail","onContactEmail","cEmailInvalid","cEmailDesc","cEmailBorder","cEmailError","contactMessage","onContactMessage","cMsgInvalid","cMsgDesc","cMsgBorder","cMsgError","sendContact","contactSending","cSendLabel"]);
+    V.productVm = vm(["prodCrumb","prodCrumbs","toggleZoom","onZoomDown","onZoomMove","onZoomUp","zoomCursor","zoomScale","zoomOrigin","zoomTransition","prodAlt","prodMainCss","zoomLabel","prodGallery","prod","prodSizeMeta","prodNote","addCurrent","prodSoldOut","prodCtaCursor","prodCtaBg","prodAddLabel","wishCurrent","wishCurrentLabel","prodMeasurements","accordion","detailImage1","detailImage2","detailImage3","detailAlt1","detailAlt2","detailAlt3","detailCap1","detailCap2","detailCap3","related"]);
+    V.contactVm = vm(["contactCols","contactHelp","contactSent","contactOpen","contactName","onContactName","cNameInvalid","cNameDesc","cNameBorder","cNameError","contactEmail","onContactEmail","cEmailInvalid","cEmailDesc","cEmailBorder","cEmailError","contactMessage","onContactMessage","cMsgInvalid","cMsgDesc","cMsgBorder","cMsgError","sendContact","contactSending","cSendLabel","contactImage1","contactAlt1","contactImage2","contactAlt2","contactImage3","contactAlt3"]);
     V.journalVm = vm(["journalAll"]);
     V.featureVm = vm(["sfFound","sfMissing","feature","goShopLink"]);
     V.articleVm = vm(["articleMissing","art","goJournal","articleFound"]);
