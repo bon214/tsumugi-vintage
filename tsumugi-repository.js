@@ -352,6 +352,11 @@
       if (next.sourceType === "page") next.sourceId = null; else next.route = "";
       if (s.heroSourceState(next) === "unset") next.enabled = false;
       if (!persisted && s.heroFeatures().length >= s.HERO_MAX) return Promise.resolve(null);
+      // Deleting a middle row leaves gaps in the database order. Count + 1
+      // can collide with a surviving row's unique sort_order.
+      if (!persisted) next.order = s.heroFeatures().reduce(function (max, f) {
+        return Math.max(max, Number(f.order) || 0);
+      }, 0) + 1;
       var row = heroToRow(next);
       return mutation("content.edit", function (client) {
         return client.from("hero_features").upsert(row, { onConflict: "id" })

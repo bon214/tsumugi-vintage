@@ -11,16 +11,6 @@
 
   <sc-if value="{{ isList }}" hint-placeholder-val="{{ true }}">
     <div style="display:flex;flex-direction:column;gap:14px">
-      <div style="background:#FFFFFF;border:1px solid #E3DFD7;padding:14px;display:flex;gap:12px;align-items:flex-start;flex-wrap:wrap">
-        <div style="flex:1 1 320px;min-width:0;display:flex;flex-direction:column;gap:6px">
-          <span style="font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:0.16em;color:#8C887F">{{ t.sfIntroHead }}</span>
-          <p style="margin:0;font-size:13px;line-height:1.65;color:#77736B;max-width:620px">{{ t.sfIntroNote }}</p>
-        </div>
-        <sc-if value="{{ canEdit }}" hint-placeholder-val="{{ true }}">
-          <button type="button" onClick="{{ onNew }}" style="border:none;background:#6D7761;color:#FFFFFF;padding:10px 16px;min-height:44px;font-size:13.5px;white-space:nowrap;cursor:pointer" style-hover="background:#59614F">{{ t.sfNew }}</button>
-        </sc-if>
-      </div>
-
       <sc-if value="{{ readOnly }}" hint-placeholder-val="{{ false }}">
         <div role="note" style="background:#F5F3EE;border:1px solid #E3DFD7;padding:12px 14px;font-size:13px;line-height:1.6;color:#55534C">{{ t.sfReadOnly }}</div>
       </sc-if>
@@ -533,11 +523,6 @@ class Component extends DCLogic {
         rows,
         isEmpty: list.length === 0,
         noLive: !activeId,
-        onNew: async () => {
-          const blank = S.blankSpecialFeature();
-          const id = await S.saveSpecialFeature(blank);
-          if (id) { S.toast(T.sfSavedToast, "success"); this.props.nav("/admin/specials/" + id); }
-        }
       });
     }
 

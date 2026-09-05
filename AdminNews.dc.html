@@ -16,9 +16,9 @@
 </sc-if>
 
 <sc-if value="{{ isList }}" hint-placeholder-val="{{ true }}">
-  <div style="display:flex;flex-direction:column;gap:14px">
+  <div class="admin-list" style="display:flex;flex-direction:column;gap:14px">
 
-    <div style="background:#FFFFFF;border:1px solid #E3DFD7;padding:13px 14px;display:flex;gap:10px;flex-wrap:wrap;align-items:center">
+    <div class="admin-list-filters" style="background:#FFFFFF;border:1px solid #E3DFD7;padding:13px 14px;display:flex;gap:10px;flex-wrap:wrap;align-items:center">
       <div style="position:relative;flex:1 1 230px;min-width:0">
         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#9C978F" stroke-width="1.7" stroke-linecap="round" aria-hidden="true" style="position:absolute;left:11px;top:50%;transform:translateY(-50%)"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-3.5-3.5"></path></svg>
         <label for="nw-search" style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)">{{ t.kSearchContent }}</label>
@@ -51,6 +51,7 @@
       </div>
     </sc-if>
 
+    <div class="admin-list-scroll" data-adm-scroll="1" role="region" aria-label="{{ t.kNewsAndJournal }}" tabindex="0">
     <sc-if value="{{ isEmpty }}" hint-placeholder-val="{{ false }}">
       <div style="background:#FFFFFF;border:1px solid #E3DFD7;padding:56px 24px;display:flex;flex-direction:column;align-items:center;gap:12px;text-align:center">
         <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="#C6C1B7" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 4h13a2 2 0 0 1 2 2v12a2 2 0 0 0 2 2H5a1 1 0 0 1-1-1zM8 8h7M8 12h7M8 16h4"></path></svg>
@@ -107,8 +108,9 @@
       </div>
     </sc-if>
 
+    </div>
     <sc-if value="{{ showPager }}" hint-placeholder-val="{{ true }}">
-      <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;padding:2px 2px 6px">
+      <div class="admin-list-pager" style="display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;padding:2px 2px 6px">
         <span style="font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:0.12em;color:#8C887F">{{ rangeLabel }}</span>
         <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap">
           <button type="button" onClick="{{ prevPage }}" disabled="{{ atFirst }}" style="border:1px solid #DAD5CB;background:#FFFFFF;padding:8px 13px;min-height:40px;font-size:13px;white-space:nowrap;cursor:pointer;opacity:{{ prevOpacity }}" style-hover="border-color:#6D7761">{{ t.kPrevious }}</button>
@@ -511,6 +513,13 @@ class Component extends DCLogic {
     if (this._unsub) this._unsub();
   }
   componentDidUpdate(prev) {
+    const s = this.state;
+    const listKey = JSON.stringify([s.page, s.query, s.sort, s.f, s.fPayment, s.fFulfilment, s.fDelivery, s.afterDate, s.regAfter, s.createdAfter, s.updatedAfter]);
+    if (this._listKey !== listKey) {
+      this._listKey = listKey;
+      const area = document.querySelector('[data-sc-name="AdminNews"] .admin-list-scroll');
+      if (area) area.scrollTop = 0;
+    }
     if (prev.view !== this.props.view || prev.entityId !== this.props.entityId) this._syncForm();
   }
 

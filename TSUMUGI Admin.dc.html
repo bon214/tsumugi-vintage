@@ -40,6 +40,22 @@
   @keyframes admPulse { 0%,100% { opacity: 1; } 50% { opacity: 0.45; } }
   [data-adm-scroll]::-webkit-scrollbar { height: 10px; width: 10px; }
   [data-adm-scroll]::-webkit-scrollbar-thumb { background: #D8D3C9; border-radius: 6px; }
+  /* Keep list controls outside the single, bounded data scroll area. */
+  [data-admin-fixed="true"] { height:100vh; height:100dvh; min-height:0 !important; overflow:hidden; }
+  [data-admin-fixed="true"] > aside { height:100%; overflow-y:auto; }
+  [data-admin-fixed="true"] > .admin-workspace { min-height:0; }
+  [data-admin-fixed="true"] .admin-workspace > header,
+  [data-admin-fixed="true"] .admin-workspace > [role="note"] { flex-shrink:0; }
+  [data-admin-fixed="true"] main { display:flex; min-height:0; overflow:hidden; }
+  [data-admin-fixed="true"] main > .sc-host,
+  [data-admin-fixed="true"] main > .sc-host-x > .sc-host { display:flex; flex:1; min-width:0; min-height:0; }
+  .admin-list { flex:1; min-width:0; min-height:0; }
+  .admin-list > :not(.admin-list-scroll) { flex-shrink:0; }
+  .admin-list-scroll { flex:1; min-height:0; min-width:0; overflow:auto; overscroll-behavior:contain; scrollbar-gutter:stable; padding:2px; }
+  .admin-list-scroll [data-adm-scroll] { overflow:visible !important; }
+  .admin-list-scroll thead { position:sticky; top:-2px; z-index:10; background:#F7F5F1; }
+  .admin-list-filters { max-height:35dvh; overflow:auto; }
+  .admin-list-pager { max-height:20dvh; overflow:auto; }
   [data-adm-editor] h2 { font-family: 'EB Garamond', serif; font-size: 24px; font-weight: 500; margin: 20px 0 8px; }
   [data-adm-editor] h3 { font-size: 15px; font-weight: 600; letter-spacing: 0.02em; margin: 18px 0 6px; }
   [data-adm-editor] p { margin: 0 0 12px; line-height: 1.75; }
@@ -70,7 +86,7 @@
 </sc-if>
 
 <sc-if value="{{ showApp }}" hint-placeholder-val="{{ true }}">
-  <div style="min-height:100vh;display:flex;background:#F6F5F2">
+  <div data-admin-fixed="{{ fixedList }}" style="min-height:100vh;display:flex;background:#F6F5F2">
 
     <sc-if value="{{ showSidebar }}" hint-placeholder-val="{{ true }}">
       <aside style="width:236px;flex:0 0 236px;background:#FFFFFF;border-right:1px solid #E3DFD7;position:sticky;top:0;height:100vh;display:flex;flex-direction:column">
@@ -102,7 +118,7 @@
       </aside>
     </sc-if>
 
-    <div style="flex:1;min-width:0;display:flex;flex-direction:column">
+    <div class="admin-workspace" style="flex:1;min-width:0;display:flex;flex-direction:column">
 
       <header style="position:sticky;top:0;z-index:30;background:rgba(246,245,242,0.95);backdrop-filter:blur(8px);border-bottom:1px solid #E3DFD7">
         <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;padding:10px clamp(16px,2.4vw,28px);min-height:60px">
@@ -206,7 +222,7 @@
           <div style="display:flex;align-items:center;gap:16px;flex-wrap:wrap">
           <button type="button" onClick="{{ goPublicStore }}" style="border:none;background:transparent;padding:4px 0;min-height:36px;font-size:12.5px;color:#6D7761;white-space:nowrap;cursor:pointer;text-decoration:underline;text-underline-offset:3px" style-hover="color:#3F3D38">{{ t.viewPublicStore }}</button>
           <sc-if value="{{ hasPrimaryAction }}" hint-placeholder-val="{{ true }}">
-            <button type="button" onClick="{{ onPrimaryAction }}" style="display:flex;align-items:center;gap:8px;border:none;background:#6D7761;color:#FFFFFF;padding:11px 18px;min-height:44px;font-size:13.5px;font-weight:500;letter-spacing:0.03em;cursor:pointer;transition:background 160ms ease" style-hover="background:#59614F" style-active="background:#4C5344">
+            <button type="button" onClick="{{ onPrimaryAction }}" disabled="{{ primaryBusy }}" style="display:flex;align-items:center;gap:8px;border:none;background:#6D7761;color:#FFFFFF;padding:11px 18px;min-height:44px;font-size:13.5px;font-weight:500;letter-spacing:0.03em;cursor:pointer;transition:background 160ms ease" style-hover="background:#59614F" style-active="background:#4C5344">
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"></path></svg>
               <span style="white-space:nowrap">{{ primaryActionLabel }}</span>
             </button>
@@ -1166,6 +1182,20 @@ class Component extends DCLogic {
       products: s.view === "list" && canNewProduct ? [T2.kNewProduct, () => { if (this._guard("products.edit", "product.create")) this.nav("/admin/products/new"); }] : null,
       customers: null,
       news: s.view === "list" && canNewEntry ? [T2.kNewEntry, () => { if (this._guard("content.edit", "content.create")) this.nav("/admin/news/new"); }] : null,
+      featured: s.view === "list" && canNewEntry ? [T.fcAdd, () => {
+        if (!this._guard("content.edit", "content.create")) return;
+        if (S.heroFeatures().length >= S.HERO_MAX) { S.toast(String(T.fcAtMax).replace("{n}", S.HERO_MAX), "warning"); return; }
+        this.nav("/admin/featured/new");
+      }] : null,
+      specials: s.view === "list" && canNewEntry ? [T.sfNew, async () => {
+        if (this._creatingSpecial || !this._guard("content.edit", "content.create")) return;
+        this._creatingSpecial = true;
+        this.setState({ primaryBusy: true });
+        try {
+          const id = await S.saveSpecialFeature(S.blankSpecialFeature());
+          if (id) { S.toast(T.sfSavedToast, "success"); this.nav("/admin/specials/" + id); }
+        } finally { this._creatingSpecial = false; this.setState({ primaryBusy: false }); }
+      }] : null,
       dashboard: canNewProduct ? [T2.kNewProduct, () => { if (this._guard("products.edit", "product.create")) this.nav("/admin/products/new"); }] : null,
       settings: null
     }[s.section] || null;
@@ -1194,6 +1224,8 @@ class Component extends DCLogic {
     return {
       ...base, ...login,
       tick: s.tick, view: s.view, entityId: s.entityId, nav: this.nav,
+      fixedList: !isDenied && s.view === "list" && ["orders", "products", "customers", "news"].includes(s.section),
+      primaryBusy: !!s.primaryBusy,
       showSidebar: !isCompact,
       isDashboard: !isDenied && s.section === "dashboard", isProducts: !isDenied && s.section === "products",
       isOrders: !isDenied && s.section === "orders",

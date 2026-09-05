@@ -9,15 +9,24 @@
 <x-dc>
 <div style="display:flex;flex-direction:column;gap:14px;max-width:1180px">
 
-  <div style="background:#FFFFFF;border:1px solid #E3DFD7;padding:14px;display:flex;gap:12px;align-items:flex-start;flex-wrap:wrap">
-    <div style="flex:1 1 320px;min-width:0;display:flex;flex-direction:column;gap:6px">
-      <span style="font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:0.16em;color:#8C887F">{{ t.fcHeroHead }}</span>
-      <p style="margin:0;font-size:13px;line-height:1.65;color:#77736B;max-width:560px">{{ t.fcHeroNote }}</p>
-    </div>
-    <sc-if value="{{ canEdit }}" hint-placeholder-val="{{ true }}">
-      <button type="button" onClick="{{ onAdd }}" disabled="{{ atMax }}" style="border:none;background:#6D7761;color:#FFFFFF;padding:10px 16px;min-height:44px;font-size:13.5px;white-space:nowrap;cursor:pointer;opacity:{{ addOpacity }}" style-hover="background:#59614F">{{ t.fcAdd }}</button>
-    </sc-if>
-  </div>
+  <sc-if value="{{ isNew }}" hint-placeholder-val="{{ false }}">
+    <form onSubmit="{{ onCreate }}" aria-label="{{ t.fcAdd }}" style="background:#FFFFFF;border:1px solid #E3DFD7;padding:20px;display:flex;flex-direction:column;gap:16px;max-width:640px">
+      <h2 style="margin:0;font-size:18px">{{ t.fcAdd }}</h2>
+      <label for="fc-new-type">{{ t.fcSourceType }}</label>
+      <select id="fc-new-type" value="{{ draftType }}" onChange="{{ onDraftType }}" disabled="{{ saving }}" style="width:100%;min-height:44px;padding:10px;border:1px solid #DAD5CB;background:#FCFBF9">
+        <sc-for list="{{ typeOptions }}" as="o"><option value="{{ o.v }}">{{ o.t }}</option></sc-for>
+      </select>
+      <label for="fc-new-source">{{ t.fcSource }}</label>
+      <select id="fc-new-source" value="{{ draftSource }}" onChange="{{ onDraftSource }}" required disabled="{{ saving }}" style="width:100%;min-height:44px;padding:10px;border:1px solid #DAD5CB;background:#FCFBF9">
+        <sc-for list="{{ draftOptions }}" as="o"><option value="{{ o.v }}">{{ o.t }}</option></sc-for>
+      </select>
+      <span style="font-size:13px;color:#77736B">{{ t.fcNotLive }}</span>
+      <div style="display:flex;gap:10px;flex-wrap:wrap">
+        <button type="submit" disabled="{{ createDisabled }}" style="border:none;background:#6D7761;color:white;padding:11px 18px;min-height:44px;cursor:pointer">{{ t.fcAdd }}</button>
+        <button type="button" onClick="{{ onCancelCreate }}" disabled="{{ saving }}" style="border:1px solid #DAD5CB;background:white;padding:11px 18px;min-height:44px;cursor:pointer">{{ t.cancel }}</button>
+      </div>
+    </form>
+  </sc-if>
 
   <sc-if value="{{ readOnly }}" hint-placeholder-val="{{ false }}">
     <div role="note" style="background:#F5F3EE;border:1px solid #E3DFD7;padding:12px 14px;font-size:13px;line-height:1.6;color:#55534C">{{ t.fcReadOnly }}</div>
@@ -113,7 +122,7 @@ const PAGE_IMG = {
 };
 
 class Component extends DCLogic {
-  state = { tick: 0, vw: typeof window !== "undefined" ? window.innerWidth : 1440 };
+  state = { tick: 0, draftType: "journal", draftSource: "", saving: false, sourceTypes: {}, vw: typeof window !== "undefined" ? window.innerWidth : 1440 };
 
   componentDidMount() {
     this.S = window.TSUMUGI_STORE;
@@ -125,6 +134,39 @@ class Component extends DCLogic {
   componentWillUnmount() {
     if (this._unsub) this._unsub();
     window.removeEventListener("resize", this._onResize);
+  }
+
+  componentDidUpdate(prev) {
+    if (prev.view !== this.props.view) {
+      this.setState({ draftType: "journal", draftSource: "", sourceTypes: {} });
+      if (this.props.view === "new") document.getElementById("fc-new-type")?.focus();
+    }
+  }
+
+  async _create(ev) {
+    ev.preventDefault();
+    const S = this.S || window.TSUMUGI_STORE;
+    if (this._saving || !S || !S.can("content.edit") || !this.state.draftSource) return;
+    const T = this._dict();
+    if (S.heroFeatures().length >= S.HERO_MAX) {
+      S.toast(String(T.fcAtMax).replace("{n}", S.HERO_MAX), "warning"); return;
+    }
+    const type = this.state.draftType, value = this.state.draftSource;
+    if (type === "page" ? !S.HERO_PAGES.includes(value) : !S.getNews(Number(value))) return;
+    this._saving = true;
+    this.setState({ saving: true });
+    try {
+      const draft = Object.assign(S.blankHeroFeature(), {
+        sourceType: type, sourceId: type === "page" ? null : Number(value),
+        route: type === "page" ? value : "", enabled: false
+      });
+      const id = await S.saveHeroFeature(draft);
+      if (id) {
+        S.toast(T.fcSavedToast, "success");
+        this.setState({ draftSource: "" });
+        this.props.nav("/admin/featured");
+      }
+    } finally { this._saving = false; this.setState({ saving: false }); }
   }
 
   _lang() { const S = this.S || window.TSUMUGI_STORE; return (S && S.lang) ? S.lang() : "en"; }
@@ -141,6 +183,7 @@ class Component extends DCLogic {
     const isJa = this._lang() === "ja";
     if (!S) return { t: T, rows: [], isEmpty: false, typeOptions: [] };
 
+    const isNew = this.props.view === "new" && S.can("content.edit");
     const list = S.heroFeatures();
     const canEdit = S.can("content.edit");
     const news = S.news().slice().sort((a, b) => (b.publishDate || "").localeCompare(a.publishDate || ""));
@@ -158,7 +201,9 @@ class Component extends DCLogic {
       missing: [T.fcMissing, "#FBF0EE", "#8A3F33", T.fcMissingNote]
     };
 
-    const rows = list.map((f, i) => {
+    const rows = (isNew ? [] : list).map((f, i) => {
+      const sourceType = this.state.sourceTypes[f.id] || f.sourceType;
+      const pendingType = sourceType !== f.sourceType;
       const state = S.heroSourceState(f);
       const rec = f.sourceType === "journal" && f.sourceId != null ? S.getNews(f.sourceId) : null;
       const title = f.sourceType === "page"
@@ -175,13 +220,13 @@ class Component extends DCLogic {
         || (f.sourceType === "page" ? (PAGE_IMG[f.route] || "") : "");
       const statusPart = rec ? this._statusLabel(rec, T) : (f.sourceType === "page" ? T.fcPageType : T.fcUnset);
       return {
-        no: String(f.order).padStart(2, "0"),
+        no: String(i + 1).padStart(2, "0"),
         typeId: "fc-type-" + f.id,
         srcId: "fc-src-" + f.id,
         typeLabel: f.sourceType === "page" ? T.fcPageType : T.fcJournalType,
-        sourceType: f.sourceType,
-        sourceValue: f.sourceType === "page" ? (f.route || "") : (f.sourceId == null ? "" : String(f.sourceId)),
-        sourceOptions: f.sourceType === "page" ? pageOptions : articleOptions,
+        sourceType,
+        sourceValue: pendingType ? "" : f.sourceType === "page" ? (f.route || "") : (f.sourceId == null ? "" : String(f.sourceId)),
+        sourceOptions: sourceType === "page" ? pageOptions : articleOptions,
         title,
         titleColour: state === "ok" ? "#232220" : "#8C887F",
         meta: T.fcDestination + " " + dest + " · " + T.fcSourceStatus + " " + statusPart,
@@ -202,20 +247,28 @@ class Component extends DCLogic {
         locked: !canEdit,
         removeOpacity: canEdit ? 1 : 0.4,
         toggleLabel: f.enabled ? T.fcDisable : T.fcEnable,
-        toggleLocked: !canEdit || (!f.enabled && state === "unset"),
+        toggleLocked: !canEdit || pendingType || (!f.enabled && state === "unset"),
         toggleOpacity: (!canEdit || (!f.enabled && state === "unset")) ? 0.4 : 1,
         toggleBg: f.enabled ? "#FFFFFF" : "#6D7761",
         toggleFg: f.enabled ? "#77736B" : "#FFFFFF",
         toggleBorder: f.enabled ? "#DAD5CB" : "#6D7761",
-        onType: async ev => {
-          const sourceType = ev.target.value;
-          await S.saveHeroFeature({ id: f.id, sourceType, sourceId: null, route: "" });
+        onType: ev => {
+          if (!S.can("content.edit")) return;
+          const value = ev.target.value;
+          this.setState(s => ({ sourceTypes: { ...s.sourceTypes, [f.id]: value } }));
         },
         onSource: async ev => {
           const v = ev.target.value;
-          const patch = f.sourceType === "page" ? { route: v } : { sourceId: v === "" ? null : Number(v) };
-          const id = await S.saveHeroFeature(Object.assign({ id: f.id, sourceType: f.sourceType }, patch));
-          if (id) S.toast(T.fcSavedToast, "success");
+          if (!v || !S.can("content.edit") || this._sourceSaving) return;
+          this._sourceSaving = true;
+          try {
+            const patch = sourceType === "page" ? { route: v, sourceId: null } : { sourceId: Number(v), route: "" };
+            const id = await S.saveHeroFeature(Object.assign({ id: f.id, sourceType }, patch));
+            if (id) {
+              this.setState(s => { const types = { ...s.sourceTypes }; delete types[f.id]; return { sourceTypes: types }; });
+              S.toast(T.fcSavedToast, "success");
+            }
+          } finally { this._sourceSaving = false; this.forceUpdate(); }
         },
         onUp: async () => { const ok = await S.reorderHeroFeatures(f.id, -1); if (ok) S.toast(T.fcMovedToast, "info"); },
         onDown: async () => { const ok = await S.reorderHeroFeatures(f.id, 1); if (ok) S.toast(T.fcMovedToast, "info"); },
@@ -237,22 +290,20 @@ class Component extends DCLogic {
 
     const liveCount = S.publicHeroFeatures().length;
     return {
-      t: T, rows, typeOptions,
+      t: T, rows, typeOptions, isNew,
+      draftType: this.state.draftType, draftSource: this.state.draftSource,
+      draftOptions: this.state.draftType === "page" ? pageOptions : articleOptions,
+      saving: this.state.saving,
+      createDisabled: this.state.saving || !this.state.draftSource || list.length >= S.HERO_MAX,
+      onDraftType: ev => this.setState({ draftType: ev.target.value, draftSource: "" }),
+      onDraftSource: ev => this.setState({ draftSource: ev.target.value }),
+      onCreate: ev => this._create(ev),
+      onCancelCreate: () => this.props.nav("/admin/featured"),
       canEdit, readOnly: !canEdit,
-      isEmpty: list.length === 0,
-      noLive: liveCount === 0,
-      manyNotice: list.length >= 5,
-      atMax: list.length >= S.HERO_MAX || !canEdit,
-      addOpacity: (list.length >= S.HERO_MAX || !canEdit) ? 0.4 : 1,
+      isEmpty: !isNew && list.length === 0,
+      noLive: !isNew && liveCount === 0,
+      manyNotice: !isNew && list.length >= 5,
       wrapMode: this.state.vw < 900 ? "wrap" : "nowrap",
-      onAdd: async () => {
-        if (list.length >= S.HERO_MAX) {
-          S.toast(String(T.fcAtMax).split("{n}").join(S.HERO_MAX), "warning");
-          return;
-        }
-        const id = await S.saveHeroFeature(S.blankHeroFeature());
-        if (id) S.toast(T.fcSavedToast, "success");
-      }
     };
   }
 }

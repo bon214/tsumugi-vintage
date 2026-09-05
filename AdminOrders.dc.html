@@ -23,9 +23,9 @@
 </sc-if>
 
 <sc-if value="{{ isList }}" hint-placeholder-val="{{ true }}">
-  <div style="display:flex;flex-direction:column;gap:14px">
+  <div class="admin-list" style="display:flex;flex-direction:column;gap:14px">
 
-    <div style="background:#FFFFFF;border:1px solid #E3DFD7;padding:13px 14px;display:flex;flex-direction:column;gap:12px">
+    <div class="admin-list-filters" style="background:#FFFFFF;border:1px solid #E3DFD7;padding:13px 14px;display:flex;flex-direction:column;gap:12px">
       <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center">
         <div style="position:relative;flex:1 1 240px;min-width:0">
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#9C978F" stroke-width="1.7" stroke-linecap="round" aria-hidden="true" style="position:absolute;left:11px;top:50%;transform:translateY(-50%)"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-3.5-3.5"></path></svg>
@@ -78,6 +78,7 @@
       </sc-if>
     </div>
 
+    <div class="admin-list-scroll" data-adm-scroll="1" role="region" aria-label="{{ t.orders }}" tabindex="0">
     <sc-if value="{{ isEmpty }}" hint-placeholder-val="{{ false }}">
       <div style="background:#FFFFFF;border:1px solid #E3DFD7;padding:56px 24px;display:flex;flex-direction:column;align-items:center;gap:12px;text-align:center">
         <span style="font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:0.16em;color:#8C887F">{{ t.kNoResults }}</span>
@@ -160,8 +161,9 @@
       </div>
     </sc-if>
 
+    </div>
     <sc-if value="{{ showPager }}" hint-placeholder-val="{{ false }}">
-      <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap">
+      <div class="admin-list-pager" style="display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap">
         <span style="font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:0.1em;color:#6E6A62">{{ pagerLabel }}</span>
         <div style="display:flex;gap:8px">
           <button type="button" onClick="{{ prevPage }}" disabled="{{ onFirst }}" style="border:1px solid #DAD5CB;background:#FFFFFF;padding:10px 14px;min-height:44px;font-size:13px;white-space:nowrap;cursor:{{ prevCursor }};color:{{ prevColor }}" style-hover="border-color:#6D7761">{{ t.kPrevious }}</button>
@@ -386,6 +388,13 @@ class Component extends DCLogic {
     if (this._unsub) this._unsub();
   }
   componentDidUpdate(prev) {
+    const s = this.state;
+    const listKey = JSON.stringify([s.page, s.query, s.sort, s.f, s.fPayment, s.fFulfilment, s.fDelivery, s.afterDate, s.regAfter, s.createdAfter, s.updatedAfter]);
+    if (this._listKey !== listKey) {
+      this._listKey = listKey;
+      const area = document.querySelector('[data-sc-name="AdminOrders"] .admin-list-scroll');
+      if (area) area.scrollTop = 0;
+    }
     if (prev.entityId !== this.props.entityId || prev.view !== this.props.view) {
       this.setState({ selected: [], noteDraft: "", trackingDraft: null });
     }
