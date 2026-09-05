@@ -8,8 +8,8 @@ import path from "node:path";
 
 const ROOT = path.resolve(import.meta.dirname, "..");
 const OUT = path.join(ROOT, "build", "artifact-manifest.json");
-const EXCLUDED_DIRS = new Set([".git", "node_modules", "outputs", "work"]);
-const EXCLUDED_FILES = new Set([".thumbnail", "build/artifact-manifest.json"]);
+const EXCLUDED_DIRS = new Set([".git", "backups", "node_modules", "outputs", "work"]);
+const EXCLUDED_FILES = new Set([".env.local", ".thumbnail", "build/artifact-manifest.json"]);
 
 const paths = [];
 async function walk(dir, relative = "") {

@@ -2,18 +2,20 @@
   "manifestVersion": 2,
   "projectRoot": "project-relative",
   "excludes": [
+    ".env.local",
     ".git",
     ".thumbnail",
+    "backups",
     "build/artifact-manifest.json",
     "node_modules",
     "outputs",
     "work"
   ],
   "totals": {
-    "files": 342,
-    "bytes": 36364203,
+    "files": 340,
+    "bytes": 36315431,
     "groups": {
-      "source": 200,
+      "source": 198,
       "generated": 39,
       "vendor": 14,
       "dist": 89
@@ -28,12 +30,6 @@
       "group": "source",
       "bytes": 348,
       "sha256": "f609d6f6c9079fdfad7f533836a8b71af314a9ba413d55c1bc76d35b7b3e50fc"
-    },
-    {
-      "file": ".env.local",
-      "group": "source",
-      "bytes": 237,
-      "sha256": "de6ff8a611f99f28a53198d6dafa5f910cf96fb74de3b9d6426c9fe8a9df6f16"
     },
     {
       "file": ".github/workflows/deploy-pages.yml",
@@ -228,12 +224,6 @@
       "sha256": "de4f426eab0a4e337a159e7f0e74174c13a0aa5524ffb42d248f404317458dc5"
     },
     {
-      "file": "backups/pre-production-content-2026-09-05.json",
-      "group": "source",
-      "bytes": 48560,
-      "sha256": "48b2fc8f4b26553bbc3145916e5b93f94f45d2bd1f6f6175e7f0d0f515c9add3"
-    },
-    {
       "file": "build/build-app.mjs",
       "group": "source",
       "bytes": 19532,
@@ -332,8 +322,8 @@
     {
       "file": "build/write-artifact-manifest.mjs",
       "group": "source",
-      "bytes": 2132,
-      "sha256": "4b00c644effc7f207e03c953c9051fa11aac5ac5ec3666b8ec659dcec0dd2459"
+      "bytes": 2157,
+      "sha256": "4420659a19e21995d9648aede57625766290f5478571987ab3865b2b6a6de815"
     },
     {
       "file": "dist-prerender/a/a-week-in-hokkaido-looking-for-wool/index.html",
