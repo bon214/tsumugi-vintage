@@ -65,6 +65,17 @@ test("every article is substantive, safe to sanitize and fully described", () =>
   }
 });
 
+test("the vintage selection guide matches the shared ecru-wall photography system", () => {
+  const article = data.news.find((entry) => entry.title === "古着を選ぶときに必ず見ること");
+  assert.ok(article, "updated selection guide");
+  assert.equal(article.slug, "古着を選ぶときに必ず見ること");
+  assert.match(article.body, /生成りの壁/);
+  assert.match(article.body, /自然光/);
+  assert.match(article.body, /正面と背面/);
+  assert.match(article.body, /ポートフォリオ用の生成イメージ/);
+  assert.match(article.image, /journal-choosing-vintage-v2\.jpg$/);
+});
+
 test("hero and special features only reference this release set", () => {
   const productIds = new Set(data.products.map((p) => p.id));
   const articleIds = new Set(data.news.map((n) => n.id));
