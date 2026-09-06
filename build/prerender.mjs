@@ -36,6 +36,12 @@
 
 import { readFile, mkdir, writeFile } from "node:fs/promises";
 import { dirname, join } from "node:path";
+import { runInNewContext } from "node:vm";
+
+// Use the same Japanese taxonomy as the interactive site, including imported Bottoms.
+const taxonomyContext = { window: {} };
+runInNewContext(await readFile("tsumugi-i18n-content.js", "utf8"), taxonomyContext);
+const taxonomyJa = taxonomyContext.window.TSUMUGI_I18N_PARTS.TAX;
 
 const args = process.argv.slice(2);
 const argOf = (name, fallback) => {
@@ -349,7 +355,7 @@ for (const p of catalog.prods) {
         eligibleQuantity: { "@type": "QuantitativeValue", value: 1, unitText: "piece" },
       },
     },
-    kicker: `${p.category} · ${p.year} · ${p.country}`,
+    kicker: `${taxonomyJa[p.category] || p.category} · ${p.year} · ${p.country}`,
     heading: title,
     body: [p.note, "一点物です。同じ状態のものは他にありません。"],
     facts: [

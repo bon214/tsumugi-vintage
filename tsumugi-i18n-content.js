@@ -14,13 +14,16 @@
     Essays: "随筆",
     Outerwear: "アウター", Knitwear: "ニット", Shirts: "シャツ", Shirting: "シャツ", Trousers: "パンツ",
     Sweatshirts: "スウェット", Accessories: "小物", Footwear: "靴", Denim: "デニム",
+    Bottoms: "ボトムス", Tops: "トップス", Shorts: "ショートパンツ", Skirts: "スカート", Dresses: "ワンピース",
     Excellent: "極美品", "Very Good": "美品", Good: "良品", Fair: "可",
     Active: "有効", Inactive: "休止", VIP: "VIP", Blocked: "停止",
     Paid: "支払済", Pending: "保留", Refunded: "返金済",
     journal: "ジャーナル", news: "お知らせ",
     Arrivals: "入荷", arrivals: "入荷",
     Shoulder: "肩幅", Chest: "身幅", Length: "着丈", Sleeve: "袖丈",
-    Waist: "ウエスト", Rise: "股上", Inseam: "股下", Hem: "裾幅"
+    Waist: "ウエスト", Rise: "股上", Inseam: "股下", Hem: "裾幅", Hip: "ヒップ", Thigh: "わたり幅",
+    "Skirt length": "総丈", "Overall length": "全長", Width: "幅", Height: "高さ", Depth: "マチ", Circumference: "周囲",
+    "Outsole length": "アウトソール全長", "Sole width": "ソール幅", "Heel height": "ヒール高", "Shaft height": "筒丈"
   };
 
   /* ---- product names (public site shows these in Japanese) ---- */

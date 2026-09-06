@@ -289,8 +289,8 @@
               </sc-if>
             </div>
             <div style="display:flex;flex-direction:column;gap:6px">
-              <label for="f-sku" style="font-size:12px;font-weight:500;color:#55534C">{{ t.kProductIdSku }}<span style="color:#A2493C">*</span></label>
-              <input id="f-sku" value="{{ fSku }}" onChange="{{ onSku }}" aria-invalid="{{ skuInvalid }}" aria-describedby="f-sku-err" style="border:1px solid {{ skuBorder }};background:#FCFBF9;padding:11px 12px;font-size:14px;font-family:'IBM Plex Mono',monospace;min-height:44px" style-focus="border-color:#6D7761;background:#FFFFFF">
+              <label for="f-sku" style="font-size:12px;font-weight:500;color:#55534C">{{ t.kProductIdSku }}</label>
+              <input id="f-sku" value="{{ fSku }}" readOnly="{{ true }}" aria-readonly="true" aria-invalid="{{ skuInvalid }}" aria-describedby="f-sku-err" style="border:1px solid {{ skuBorder }};background:#F2F0EB;padding:11px 12px;font-size:12px;font-family:'IBM Plex Mono',monospace;min-height:44px;min-width:0;width:100%">
               <sc-if value="{{ skuError }}" hint-placeholder-val="{{ false }}">
                 <span id="f-sku-err" style="font-size:12px;color:#A2493C">{{ skuError }}</span>
               </sc-if>
@@ -308,7 +308,7 @@
               <label for="f-cat" style="font-size:12px;font-weight:500;color:#55534C">{{ t.kCategory }}</label>
               <select id="f-cat" value="{{ fCategory }}" onChange="{{ onCategory }}" style="border:1px solid #DAD5CB;background:#FCFBF9;padding:11px 12px;font-size:14px;min-height:44px" style-focus="border-color:#6D7761">
                 <sc-for list="{{ categoryList }}" as="c" hint-placeholder-count="5">
-                  <option value="{{ c }}">{{ c }}</option>
+                  <option value="{{ c.v }}">{{ c.t }}</option>
                 </sc-for>
               </select>
             </div>
@@ -731,9 +731,7 @@ const BADGE = {
   soldout: ["#FBF0EE", "#8A3F33", "SOLD OUT"],
   archived: ["#EDEDF0", "#5D5B66", "ARCHIVED"]
 };
-const CATEGORIES = ["Outerwear", "Trousers", "Knitwear", "Shirting", "Sweatshirts"];
-const TROUSER_MEASURES = () => [["waist", T3.kWaist], ["rise", T3.kRise], ["inseam", T3.kInseam], ["hem", T3.kHemWidth]];
-const TOP_MEASURES = () => [["shoulder", T3.kShoulderWidth], ["chest", T3.kChestWidth], ["length", T3.kBodyLength], ["sleeve", T3.kSleeveLength]];
+const TAX_LABEL = value => window.TSUMUGI_I18N ? window.TSUMUGI_I18N.tx(value, window.TSUMUGI_STORE.lang()) : value;
 const SORTS = ["Recently updated", "Recently created", "Name A–Z", "Price: high to low", "Price: low to high", "Stock: low first"];
 
 class Component extends DCLogic {
@@ -794,6 +792,7 @@ class Component extends DCLogic {
     } else if (view === "detail") {
       const p = S.getProduct(entityId);
       const form = p ? JSON.parse(JSON.stringify(p)) : null;
+      if (form && !String(form.sku || "").trim()) form.sku = S.generateProductSku();
       this.setState({
         form, baseline: form ? JSON.stringify(form) : "", errors: {}, submitted: false, previewOpen: false,
         // The record already exists, so debounced autosave is available immediately.
@@ -870,8 +869,7 @@ class Component extends DCLogic {
   _completeness() {
     const f = this.state.form || {};
     const T = this._dict();
-    const m = f.measurements || {};
-    const measured = Object.keys(m).filter(k => Number(m[k]) > 0).length;
+    const measured = this.S.measuredFieldCount(f);
     const imgs = f.images || [];
     const primary = imgs.some(im => im.primary && (im.url || im.thumb));
     const missingAlt = imgs.filter(im => !String(im.alt || "").trim()).length;
@@ -1144,12 +1142,12 @@ class Component extends DCLogic {
       const uniq = k => [...new Set(all.map(p => p[k]))].sort();
       const sel = s.selected;
       const chipDefs = [];
-      const labels = { status: "Status", stock: "Stock", category: "Category", brand: "Brand", era: "Era", size: "Size", condition: "Condition", price: "Price" };
+      const labels = { status: "Status", stock: "Stock", category: T3.kCategory2, brand: "Brand", era: "Era", size: "Size", condition: "Condition", price: "Price" };
       const priceText = { lt20: "Under ¥20,000", "20to35": "¥20,000–35,000", gt35: "Over ¥35,000" };
       const stockText = { in: T3.kInStock, out: T3.kOutOfStock };
       Object.keys(s.f).forEach(k => {
         if (!s.f[k]) return;
-        const v = k === "price" ? priceText[s.f[k]] : k === "stock" ? stockText[s.f[k]] : s.f[k];
+        const v = k === "price" ? priceText[s.f[k]] : k === "stock" ? stockText[s.f[k]] : k === "category" ? TAX_LABEL(s.f[k]) : s.f[k];
         chipDefs.push({ label: labels[k] + ": " + v, onClick: () => this.setState(st => ({ f: { ...st.f, [k]: "" }, page: 1 })) });
       });
       if (s.createdAfter) chipDefs.push({ label: "Created ≥ " + s.createdAfter, onClick: () => this.setState({ createdAfter: "", page: 1 }) });
@@ -1181,7 +1179,7 @@ class Component extends DCLogic {
         filterSelects: [
           mkFilter("status", T3.kPublication2, opts([{ v: "published", t: T3.kPublished }, { v: "draft", t: T3.kDraft }, { v: "soldout", t: T3.kSoldOut }, { v: "archived", t: T3.kArchived }], T3.kAllStatuses)),
           mkFilter("stock", T3.kStock, opts([{ v: "in", t: T3.kInStock }, { v: "out", t: T3.kOutOfStock }], T3.kAnyStock)),
-          mkFilter("category", T3.kCategory2, opts(uniq("category"), T3.kAllCategories)),
+          mkFilter("category", T3.kCategory2, opts(uniq("category").map(c => ({v:c, t:TAX_LABEL(c)})), T3.kAllCategories)),
           mkFilter("brand", T3.kBrand2, opts(uniq("brand"), T3.kAllBrands)),
           mkFilter("era", T3.kEra, opts(uniq("era"), T3.kAllEras)),
           mkFilter("size", T3.kSize2, opts(uniq("size"), T3.kAllSizes)),
@@ -1244,7 +1242,7 @@ class Component extends DCLogic {
         bulkOpacity: S.can("products.edit") ? 1 : 0.45,
         bulkPublish: async () => { const ok = await S.setProductStatus(sel, "published"); if (ok) { S.toast(T3.productsPublishedN.split("{n}").join(sel.length), "success"); this.setState({ selected: [] }); } },
         bulkUnpublish: async () => { const ok = await S.setProductStatus(sel, "draft"); if (ok) { S.toast(T3.productsDraftedN.split("{n}").join(sel.length), "warning"); this.setState({ selected: [] }); } },
-        bulkCategory: "", bulkCategoryOptions: [{ v: "", t: T3.moveToCategoryPh }].concat(CATEGORIES.map(c => ({ v: c, t: c }))),
+        bulkCategory: "", bulkCategoryOptions: [{ v: "", t: T3.moveToCategoryPh }].concat(S.productCategories().map(c => ({ v: c, t: TAX_LABEL(c) }))),
         onBulkCategory: async e => {
           const v = e.target.value; if (!v) return;
           const ok = await S.setProductCategory(sel, v); if (ok) { S.toast(T3.productsMovedN.split("{n}").join(sel.length).split("{x}").join(v), "success"); this.setState({ selected: [] }); }
@@ -1276,8 +1274,7 @@ class Component extends DCLogic {
       notFound: !!this.props.entityId && !S.getProduct(this.props.entityId),
       backToList: () => nav("/admin/products")
     };
-    const isTrouser = f.category === "Trousers";
-    const measures = isTrouser ? TROUSER_MEASURES() : TOP_MEASURES();
+    const measures = S.measurementFields(f.category);
     const e = s.errors;
     const errKeys = Object.keys(e);
     const dirty = this._dirty();
@@ -1351,24 +1348,12 @@ class Component extends DCLogic {
       onName: ev => { const v = ev.target.value; this.setState(st => ({ form: { ...st.form, name: v, slug: st.form.slug && st.form.id ? st.form.slug : S.slugify((st.form.brand || "") + " " + v) } }), () => this.state.submitted && this._validate()); },
       fSku: f.sku, skuError: s.submitted ? e.sku : "", skuInvalid: s.submitted && e.sku ? "true" : "false",
       skuBorder: s.submitted && e.sku ? "#D8A79C" : "#DAD5CB",
-      onSku: ev => this._set("sku", ev.target.value.toUpperCase()),
       fBrand: f.brand, brandInvalid: s.submitted && e.brand ? "true" : "false",
       brandBorder: s.submitted && e.brand ? "#D8A79C" : "#DAD5CB",
       onBrand: ev => this._set("brand", ev.target.value),
       brandList: [...new Set(all.map(p => p.brand))].sort(),
-      fCategory: f.category, categoryList: CATEGORIES,
-      onCategory: ev => {
-        const v = ev.target.value;
-        const trouser = v === "Trousers";
-        this.setState(st => ({
-          form: {
-            ...st.form, category: v,
-            measurements: trouser
-              ? { waist: st.form.measurements.waist || 0, rise: st.form.measurements.rise || 0, inseam: st.form.measurements.inseam || 0, hem: st.form.measurements.hem || 0 }
-              : { shoulder: st.form.measurements.shoulder || 0, chest: st.form.measurements.chest || 0, length: st.form.measurements.length || 0, sleeve: st.form.measurements.sleeve || 0 }
-          }
-        }));
-      },
+      fCategory: f.category, categoryList: S.productCategories().map(c => ({v:c, t:TAX_LABEL(c)})),
+      onCategory: ev => this._set("category", ev.target.value),
       fSubcategory: f.subcategory, onSubcategory: ev => this._set("subcategory", ev.target.value),
       fPrice: f.price, priceError: s.submitted ? e.price : "", priceInvalid: s.submitted && e.price ? "true" : "false",
       priceBorder: s.submitted && e.price ? "#D8A79C" : "#DAD5CB",
@@ -1389,9 +1374,9 @@ class Component extends DCLogic {
       curatorCount: cnt(f.curatorNote, 200), curatorCountTone: tone(f.curatorNote, 200),
       fStory: f.story, onStory: ev => this._set("story", ev.target.value),
 
-      measurementHint: isTrouser ? T3.kTrouserFields : T3.kTopOuterwearFields,
+      measurementHint: TAX_LABEL(f.category) + " / cm",
       measurementFields: measures.map(([k, label]) => ({
-        id: "f-m-" + k, label, value: (f.measurements || {})[k] || 0,
+        id: "f-m-" + k, label: TAX_LABEL(label), value: (f.measurements || {})[k] || "",
         onChange: ev => this._setMeasure(k, ev.target.value)
       })),
 

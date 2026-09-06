@@ -270,6 +270,7 @@
     s.placeOrder = function () { return { ok: false, code: "portfolio_only" }; };
 
     s.saveProduct = function (product) {
+      if (!String(product.sku || "").trim()) product.sku = (product.id && s.getProduct(product.id) || {}).sku || s.generateProductSku();
       var row = productToRow(product);
       return mutation("products.edit", function (client) {
         var q = product.id
@@ -299,7 +300,7 @@
       var copy = clone(source);
       delete copy.id;
       copy.name += " (copy)";
-      copy.sku += "-COPY-" + Date.now().toString(36).slice(-5);
+      copy.sku = s.generateProductSku();
       copy.slug += "-copy-" + Date.now().toString(36).slice(-5);
       copy.status = "draft"; copy.featured = false;
       return s.saveProduct(copy);

@@ -240,7 +240,7 @@
     secPriceStock:     ["Price and stock", "価格と在庫"],
     secVintage:        ["Vintage information", "ヴィンテージ情報"],
     secMeasurements:   ["Measurements", "実寸"],
-    secCondition:      ["Condition and damage", "状態と傷み"],
+    secCondition:      ["Condition", "状態"],
     secImages:         ["Images", "画像"],
     secPublishing:     ["Publishing", "公開設定"],
     secSeo:            ["SEO", "SEO"],

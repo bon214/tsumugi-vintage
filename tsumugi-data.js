@@ -1018,6 +1018,34 @@
 
     all: function () { return db; },
     products: function () { return db.products; },
+    // Keep persisted category keys stable; only their display labels are translated.
+    productCategories: function () {
+      return Array.from(new Set(["Outerwear", "Trousers", "Bottoms", "Knitwear", "Shirting", "Sweatshirts", "Skirts", "Dresses", "Footwear", "Accessories"]
+        .concat(db.products.map(function (p) { return p.category; }).filter(Boolean))));
+    },
+    measurementFields: function (category) {
+      var top = [["shoulder", "Shoulder"], ["chest", "Chest"], ["length", "Length"], ["sleeve", "Sleeve"]];
+      var bottom = [["waist", "Waist"], ["hip", "Hip"], ["rise", "Rise"], ["inseam", "Inseam"], ["thigh", "Thigh"], ["hem", "Hem"]];
+      if (["Trousers", "Bottoms", "Denim", "Shorts", "パンツ", "ボトムス", "デニム", "ショートパンツ"].indexOf(category) >= 0) return bottom;
+      if (["Skirts", "スカート"].indexOf(category) >= 0) return [["waist", "Waist"], ["hip", "Hip"], ["length", "Skirt length"], ["hem", "Hem"]];
+      if (["Dresses", "ワンピース"].indexOf(category) >= 0) return top.concat([["waist", "Waist"], ["hip", "Hip"]]);
+      if (["Footwear", "靴"].indexOf(category) >= 0) return [["outsole", "Outsole length"], ["width", "Sole width"], ["heel", "Heel height"], ["height", "Shaft height"]];
+      if (["Outerwear", "Knitwear", "Shirting", "Shirts", "Sweatshirts", "Tops", "アウター", "ニット", "シャツ", "スウェット", "トップス"].indexOf(category) >= 0) return top;
+      // Accessories and any imported, unfamiliar category still have usable dimensions.
+      return [["length", "Overall length"], ["width", "Width"], ["height", "Height"], ["depth", "Depth"], ["circumference", "Circumference"]];
+    },
+    measuredFieldCount: function (p) {
+      return Store.measurementFields(p.category).filter(function (field) {
+        var n = Number((p.measurements || {})[field[0]]);
+        return Number.isFinite(n) && n > 0;
+      }).length;
+    },
+    generateProductSku: function () {
+      // A full random identifier avoids collisions between simultaneous editors.
+      var bytes = new Uint8Array(16);
+      window.crypto.getRandomValues(bytes);
+      return "TSU-" + Array.from(bytes, function (b) { return b.toString(16).padStart(2, "0"); }).join("").toUpperCase();
+    },
     customers: function () { return db.customers; },
     news: function () { return db.news; },
     activity: function () { return db.activity; },
@@ -1040,7 +1068,7 @@
         if (!text(p.name) || !text(p.sku) || !text(p.slug) || !text(p.category) ||
             !text(p.size) || !text(p.condition) || !text(p.conditionNote) ||
             !Number.isFinite(Number(p.price)) || Number(p.price) <= 0 ||
-            Object.values(p.measurements || {}).filter(function (n) { return Number(n) > 0; }).length < 2) reasons.push("issueRequired");
+            Store.measuredFieldCount(p) < 2) reasons.push("issueRequired");
         if (images.some(function (im) { return !text(im.alt); })) reasons.push("issueImageAlt");
         if (reasons.length) issues.push({ id:"product-" + p.id, name:p.name || p.sku || String(p.id),
           detail:p.sku || "", reasons:reasons, path:"/admin/products/" + p.id, permission:"products.view" });
@@ -1080,6 +1108,7 @@
     getProduct: function (id) { return db.products.find(function (p) { return String(p.id) === String(id); }); },
     saveProduct: function (p) {
       var existing = db.products.findIndex(function (x) { return String(x.id) === String(p.id); });
+      if (!String(p.sku || "").trim()) p.sku = existing >= 0 && db.products[existing].sku || Store.generateProductSku();
       p.updatedAt = new Date().toISOString();
       if (existing >= 0) { db.products[existing] = Object.assign({}, db.products[existing], p); logActivity("Updated “" + p.name + "”", "update"); }
       else {
@@ -1104,7 +1133,7 @@
       var copy = JSON.parse(JSON.stringify(src));
       copy.id = nextId(db.products);
       copy.name = src.name + " (copy)";
-      copy.sku = src.sku + "-C" + (copy.id);
+      copy.sku = Store.generateProductSku();
       copy.slug = slugify(copy.name + " " + copy.brand);
       copy.status = "draft"; copy.featured = false;
       copy.createdAt = copy.updatedAt = new Date().toISOString();
@@ -1119,7 +1148,7 @@
     },
     blankProduct: function () {
       return {
-        id: null, sku: "TSU-GN-" + pad(nextId(db.products), 3), name: "", brand: "", year: 1990, price: 0, taxStatus: "Tax included",
+        id: null, sku: Store.generateProductSku(), name: "", brand: "", year: 1990, price: 0, taxStatus: "Tax included",
         category: "Outerwear", subcategory: "", size: "M", sizeNotation: "", colour: "", material: "", country: "",
         era: "1990s", condition: "Very Good", conditionNote: "", stains: "None found.", damage: "None.", repairs: "None.",
         fading: "Minimal.", missingParts: "None.", curatorNote: "", story: "", styling: "",

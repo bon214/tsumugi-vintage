@@ -717,7 +717,7 @@ var ADMPAIRS = [
  ],
  [
   "Product ID / SKU",
-  "商品ID / SKU"
+  "商品管理番号（自動生成）"
  ],
  [
   "Brand",
@@ -2167,6 +2167,7 @@ var ADMPAIRS = [
       if (seen[k]) { seen[k]++; k = k + seen[k]; } else { seen[k] = 1; }
       out[k] = [decode(ADMPAIRS[n][0]), decode(ADMPAIRS[n][1])];
     }
+    out.kProductIdSku = ["Product number (automatically generated)", "商品管理番号（自動生成）"];
     return out;
   })();
 

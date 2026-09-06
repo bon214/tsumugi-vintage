@@ -81,6 +81,41 @@ try {
     }
   }
   await page.setViewportSize({ width:1440, height:900 });
+  await page.evaluate(() => { location.hash = "#/admin/products/new"; });
+  await page.locator("#f-cat").waitFor();
+  assert.equal(await page.locator("header h1 + p").count(),0);
+  assert.equal(await page.locator('label[for="f-sku"]').textContent(),"商品管理番号（自動生成）");
+  assert.equal(await page.locator("#f-sku").evaluate(el=>el.readOnly),true);
+  const autoSku=await page.locator("#f-sku").inputValue();
+  assert.match(autoSku,/^TSU-[A-F0-9]{32}$/);
+  for (const [category,label,key] of [
+    ["Outerwear","アウター","shoulder"],["Trousers","パンツ","waist"],["Bottoms","ボトムス","waist"],
+    ["Knitwear","ニット","chest"],["Shirting","シャツ","chest"],["Sweatshirts","スウェット","sleeve"],
+    ["Skirts","スカート","hip"],["Dresses","ワンピース","waist"],["Footwear","靴","outsole"],["Accessories","小物","depth"]
+  ]) {
+    await page.locator("#f-cat").selectOption({label});
+    assert.equal(await page.locator("#f-cat").inputValue(),category);
+    await page.locator("#f-m-"+key).fill("50");
+    assert.equal(await page.locator("#f-sku").inputValue(),autoSku);
+    assert.equal(await page.locator("#sec-condition-h").textContent(),"状態");
+  }
+  await page.locator("#f-cat").selectOption("Bottoms");
+  assert.equal(await page.locator("#f-m-waist").inputValue(),"50");
+  assert.equal(await page.locator("#f-m-shoulder").count(),0);
+  await page.locator("#f-cat").selectOption("Outerwear");
+  assert.equal(await page.locator("#f-m-shoulder").inputValue(),"50");
+  for (const width of [1440,768,390]) {
+    await page.setViewportSize({width,height:900});
+    assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false);
+    await page.locator("#f-cat").scrollIntoViewIfNeeded();
+    await page.screenshot({path:"/private/tmp/tsumugi-product-editor-"+width+".png"});
+  }
+  console.log("PASS Japanese categories, 10 measurement layouts, preserved values, automatic read-only SKU, headings, 3 widths");
+  // Discard only this test browser's unsaved form by reloading before continuing.
+  page.once("dialog",dialog=>dialog.accept());
+  await page.goto(base + "/admin.html#/admin/products");
+  await page.locator(".admin-list").waitFor();
+  await page.setViewportSize({ width:1440, height:900 });
   await page.evaluate(() => { location.hash = "#/admin/featured"; });
   const add = page.locator("header button").filter({ hasText:/Feature を追加|Featureを追加|Add feature|追加/ }).last();
   await add.waitFor();

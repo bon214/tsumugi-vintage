@@ -1074,9 +1074,7 @@ class Component extends DCLogic {
       const urls = (p.images || []).map(im => im.url).filter(Boolean);
       const thumbs = (p.images || []).map(im => im.thumb || im.url).filter(Boolean);
       const m = p.measurements || {};
-      const keys = p.category === "Trousers"
-        ? [["Waist", "waist"], ["Rise", "rise"], ["Inseam", "inseam"], ["Hem", "hem"]]
-        : [["Shoulder", "shoulder"], ["Chest", "chest"], ["Length", "length"], ["Sleeve", "sleeve"]];
+      const keys = S.measurementFields(p.category);
       return {
         id: p.id, name: PN(p.name), brand: p.brand, year: p.year, price: p.price,
         category: p.category, size: p.size, colour: p.colour, material: p.material,
@@ -1094,9 +1092,9 @@ class Component extends DCLogic {
         metaNoBrand: "C. " + p.year + " · " + p.size,
         priceLabel: YEN(p.price),
         shot: ((p.images || [])[0] || {}).alt || (p.name + " — " + p.brand + ", photographed in daylight"),
-        measurements: keys.filter(k => m[k[1]] != null).map(k => ({
-          k: (window.TSUMUGI_I18N && S.lang) ? window.TSUMUGI_I18N.tx(k[0], S.lang()) : k[0],
-          v: m[k[1]] + " cm"
+        measurements: keys.filter(k => Number.isFinite(Number(m[k[0]])) && Number(m[k[0]]) > 0).map(k => ({
+          k: I ? I.tx(k[1], lang) : k[1],
+          v: m[k[0]] + " cm"
         }))
       };
     });
