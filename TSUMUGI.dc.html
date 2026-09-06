@@ -1076,10 +1076,17 @@ class Component extends DCLogic {
       const m = p.measurements || {};
       const keys = S.measurementFields(p.category);
       return {
-        id: p.id, name: PN(p.name), brand: p.brand, year: p.year, price: p.price,
-        category: p.category, size: p.size, colour: p.colour, material: p.material,
+        id: p.id, sku: p.sku, slug: p.slug, name: PN(p.name), brand: p.brand, year: p.year, price: p.price,
+        taxStatus: p.taxStatus, category: p.category, subcategory: p.subcategory,
+        size: p.size, sizeNotation: p.sizeNotation, colour: p.colour, material: p.material,
         condition: GRADE[p.condition] || "B", conditionName: p.condition,
-        short: (I && I.note ? I.note(p.curatorNote, lang) : p.curatorNote), story: (I && I.story ? I.story(p.story, lang) : p.story), era: p.era, country: p.country,
+        conditionNote: (I && I.note ? I.note(p.conditionNote, lang) : p.conditionNote),
+        stains: p.stains, damage: p.damage, repairs: p.repairs, fading: p.fading, missingParts: p.missingParts,
+        short: (I && I.note ? I.note(p.curatorNote, lang) : p.curatorNote),
+        story: (I && I.story ? I.story(p.story, lang) : p.story), styling: p.styling,
+        era: p.era, country: p.country, collection: p.collection,
+        status: p.status, featured: !!p.featured, metaTitle: p.metaTitle,
+        metaDescription: p.metaDescription, publishDate: p.publishDate,
         stock: Number(p.stock) || 0,
         soldOut: p.status === "soldout" || Number(p.stock) <= 0,
         gallery: urls.length ? urls : [U(GARMENTS[0], 900)],
@@ -1896,6 +1903,27 @@ class Component extends DCLogic {
     const onAccount = s.page === "account";
     const cur = matched || all[14] || all[0] || BLANK;
     const ED = (I && I.editorial) ? I.editorial(cur, lang) : { note: cur.story, condition: cur.short, styling: "", care: "", details: ["", "", ""] };
+    const displayValue = value => (I && I.label ? I.label(value, lang) : value);
+    const productFacts = [
+      [T.productCode, cur.sku],
+      [T.productCategory, [TX(cur.category), TX(cur.subcategory)].filter(Boolean).join(" / ")],
+      [T.productEra, [cur.year, cur.era].filter(Boolean).join(" / ")],
+      [T.productOrigin, TX(cur.country)],
+      [T.productMaterial, TX(cur.material)],
+      [T.productColour, TX(cur.colour)],
+      [T.productLabelSize, cur.sizeNotation || cur.size],
+      [T.productTax, displayValue(cur.taxStatus)]
+    ].filter(row => String(row[1] == null ? "" : row[1]).trim()).map(row => ({ k: row[0], v: row[1] }));
+    const conditionBody = [
+      [T.conditionGrade, [cur.condition, TX(cur.conditionName)].filter(Boolean).join(" — ")],
+      [T.conditionNote, cur.conditionNote],
+      [T.conditionStains, displayValue(cur.stains)],
+      [T.conditionDamage, displayValue(cur.damage)],
+      [T.conditionRepairs, displayValue(cur.repairs)],
+      [T.conditionFading, displayValue(cur.fading)],
+      [T.conditionMissing, displayValue(cur.missingParts)]
+    ].filter(row => String(row[1] == null ? "" : row[1]).trim())
+      .map(row => row[0] + "\n" + row[1]).join("\n\n");
     const nav = [[T.navAbout, "about"], [T.navShop, "shop"], [T.navJournal, "journal"], [T.navContact, "contact"]];
     const q = s.query.trim().toLowerCase();
     const results = q ? all.filter(p => (p.name + " " + p.brand + " " + p.material).toLowerCase().includes(q)).slice(0, 6) : all.slice(0, 4);
@@ -2298,7 +2326,8 @@ class Component extends DCLogic {
       },
       onZoomUp: () => { this._drag = null; },
       prodMeasurements: cur.measurements,
-      prodNote: ED.note,
+      prodFacts: productFacts,
+      prodNote: cur.short || cur.story || ED.note,
       prodAddLabel: cur.soldOut ? T.soldOutLong : T.addToCart + " — " + cur.priceLabel,
       prodSoldOut: !!cur.soldOut,
       prodCtaBg: cur.soldOut ? "#B8B1A6" : "#6B665D",
@@ -2307,10 +2336,12 @@ class Component extends DCLogic {
       wishCurrent: () => this.toggleWish(cur.id),
       wishCurrentLabel: this.isWished(cur.id) ? "♥" : "♡",
       accordion: [
-        { key: "Condition", body: ED.condition },
+        { key: "Product story", body: cur.story },
+        { key: "Condition", body: conditionBody || ED.condition },
+        { key: "Styling suggestions", body: cur.styling },
         { key: "Shipping & returns", body: L.body("shipping", {}) },
         { key: "Care", body: ED.care }
-      ].map(a => ({
+      ].filter(a => String(a.body || "").trim()).map(a => ({
         title: L.accordionTitle(a.key), body: a.body,
         sign: (s.accordion || []).includes(a.key) ? "—" : "+", open: (s.accordion || []).includes(a.key),
         onToggle: () => this.setState(st => {
@@ -2412,7 +2443,7 @@ class Component extends DCLogic {
     V.homeVm = vm(["goShop","goAbout","allPiecesLabel","arrivals","featureA","featureB","featureC","goJournal","journalHome","gram","newsletter","onNewsletter","subscribe","newsletterNote",
                    "heroFeatures","heroCounter","heroHref","heroOpen","heroPause","heroResume","heroKey","heroPrev","heroNext"]);
     V.shopVm = vm(["shopIntro","sfShow","sf","isDesktop","shopQuery","onShopQuery","toggleSort","sortLabel","sortOpen","sortOptions","sortExpanded","onSortBackdrop","isCompact","filterBarTop","toggleFilters","closeFilters","onFilterBackdrop","filtersExpanded","filterCountLabel","filtersOpen","filterGroups","clearAll","showResultsLabel","shopColumns","hasChips","chips","noResults","gridProducts","showingLabel","isPaged","hasPrev","goPrev","prevLabel","pageLinks","hasNext","goNext","nextLabel"]);
-    V.productVm = vm(["prodCrumb","prodCrumbs","toggleZoom","onZoomDown","onZoomMove","onZoomUp","zoomCursor","zoomScale","zoomOrigin","zoomTransition","prodAlt","prodMainCss","zoomLabel","prodGallery","prod","prodSizeMeta","prodNote","addCurrent","prodSoldOut","prodCtaCursor","prodCtaBg","prodAddLabel","wishCurrent","wishCurrentLabel","prodMeasurements","accordion","related"]);
+    V.productVm = vm(["prodCrumb","prodCrumbs","toggleZoom","onZoomDown","onZoomMove","onZoomUp","zoomCursor","zoomScale","zoomOrigin","zoomTransition","prodAlt","prodMainCss","zoomLabel","prodGallery","prod","prodSizeMeta","prodNote","addCurrent","prodSoldOut","prodCtaCursor","prodCtaBg","prodAddLabel","wishCurrent","wishCurrentLabel","prodMeasurements","prodFacts","accordion","related"]);
     V.contactVm = vm(["contactCols","contactHelp","contactSent","contactOpen","contactName","onContactName","cNameInvalid","cNameDesc","cNameBorder","cNameError","contactEmail","onContactEmail","cEmailInvalid","cEmailDesc","cEmailBorder","cEmailError","contactMessage","onContactMessage","cMsgInvalid","cMsgDesc","cMsgBorder","cMsgError","sendContact","contactSending","cSendLabel","contactImage1","contactAlt1","contactImage2","contactAlt2","contactImage3","contactAlt3"]);
     V.journalVm = vm(["journalAll"]);
     V.featureVm = vm(["sfFound","sfMissing","feature","goShopLink"]);

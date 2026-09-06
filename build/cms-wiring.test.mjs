@@ -98,6 +98,30 @@ test("repository maps editor data to database rows without privileged secrets", 
   assert.deepEqual(row.images, [{ src: "https://example.test/coat.jpg" }]);
 });
 
+test("product repository round-trips every editable field without loss", async () => {
+  const source = await read("tsumugi-repository.js");
+  const context = { window: { TSUMUGI_AUTH_CONFIG: {} }, console, setTimeout, clearTimeout };
+  vm.runInNewContext(source, context, { filename: "tsumugi-repository.js" });
+  const cms = context.window.TSUMUGI_CMS;
+  const product = {
+    id: 77, sku: "TSU-ROUNDTRIP-77", slug: "roundtrip-garment", name: "Roundtrip garment",
+    brand: "QA", year: 1987, price: 24680, taxStatus: "Tax included",
+    category: "Outerwear", subcategory: "Field jacket", size: "L", sizeNotation: "42 REG",
+    colour: "Olive", material: "Cotton twill", country: "Japan", era: "1980s",
+    condition: "Good", conditionNote: "状態説明", stains: "薄い汚れ", damage: "小傷",
+    repairs: "補修あり", fading: "肩に退色", missingParts: "欠品なし",
+    curatorNote: "キュレーターコメント", story: "商品の背景", styling: "着こなしの提案",
+    collection: "QA Collection", measurements: { shoulder: 47, chest: 58, length: 72, sleeve: 61 },
+    images: [{ id: "qa-front", url: "https://example.test/front.jpg", alt: "前面", role: "front" }],
+    stock: 1, status: "published", featured: true, metaTitle: "SEO title",
+    metaDescription: "SEO description", publishDate: "2026-09-06"
+  };
+  const row = cms.productToRow(product);
+  row.id = product.id;
+  const restored = cms.productFromRow(row);
+  for (const key of Object.keys(product)) assert.deepEqual(restored[key], product[key], key);
+});
+
 test("remote CMS displays only the RLS-isolated portfolio commerce dataset", async () => {
   const source = await read("tsumugi-data.js");
   assert.match(source, /db\.customers = Array\.isArray\(snapshot\.customers\)/);

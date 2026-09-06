@@ -98,6 +98,52 @@ test("public product pages omit the former fabric and detail gallery",async()=>{
   }
 });
 
+test("product image registration is visually first in both new and edit forms",async()=>{
+  const source=await read("AdminProducts.dc.html");
+  assert.ok(source.indexOf('<section id="sec-images"') < source.indexOf('<section id="sec-basic"'));
+  assert.match(source,/const SECTIONS = \[\s*\["sec-images", T3\.kImages\], \["sec-basic", T3\.kBasicInformation\]/);
+  assert.doesNotMatch(source,/activeSection: "sec-basic"/);
+});
+
+test("a newly registered product keeps every field and exposes customer-facing values without substitutions",async()=>{
+  const {S,context}=await fixture();
+  const p={
+    ...S.blankProduct(), id:321, sku:"TSU-QA-321", slug:"qa-field-jacket",
+    name:"QA Field Jacket", brand:"QA Atelier", year:1987, price:24680,
+    taxStatus:"Tax included", category:"Outerwear", subcategory:"Field jacket",
+    size:"L", sizeNotation:"42 REG", colour:"Olive", material:"Cotton twill",
+    country:"Japan", era:"1980s", condition:"Good",
+    conditionNote:"登録した状態説明", stains:"右袖に薄い汚れ", damage:"裾に小傷",
+    repairs:"背面を補修", fading:"肩に退色", missingParts:"欠品なし",
+    curatorNote:"登録したキュレーターコメント", story:"登録した商品の背景",
+    styling:"登録した着こなしの提案", collection:"QA Collection",
+    measurements:{shoulder:47,chest:58,length:72,sleeve:61},
+    images:[{url:"https://example.invalid/front.jpg",thumb:"https://example.invalid/front-thumb.jpg",alt:"前面",role:"front"}],
+    stock:1,status:"published",featured:true,metaTitle:"QA SEO title",
+    metaDescription:"QA SEO description",publishDate:"2026-09-06"
+  };
+  S.all().products=[p];
+  const logic=(await read("TSUMUGI.dc.html")).match(/<script type="text\/x-dc"[^>]*>([\s\S]*?)<\/script>/)[1];
+  const C=vm.runInNewContext("(()=>{"+logic+";return Component;})()",context);
+  const c=new C({}); c.store=S;
+  const mapped=JSON.parse(JSON.stringify(c.products()[0]));
+  for(const key of ["sku","slug","taxStatus","subcategory","sizeNotation","conditionNote","stains","damage","repairs","fading","missingParts","short","story","styling","collection","status","featured","metaTitle","metaDescription","publishDate"]){
+    const expected=key==="short" ? p.curatorNote : p[key];
+    assert.deepEqual(mapped[key],expected,key);
+  }
+  c.state.page="product"; c.state.productId=321;
+  const rendered=c.renderVals();
+  assert.equal(rendered.prodNote,p.curatorNote);
+  assert.ok(rendered.prodFacts.some(x=>x.k==="商品管理番号"&&x.v===p.sku));
+  assert.ok(rendered.prodFacts.some(x=>x.k==="ラベル表記サイズ"&&x.v===p.sizeNotation));
+  const accordion=Object.fromEntries(rendered.accordion.map(x=>[x.title,x.body]));
+  assert.equal(accordion["商品の背景"],p.story);
+  assert.equal(accordion["着こなしについて"],p.styling);
+  for(const value of [p.conditionNote,p.stains,p.damage,p.repairs,p.fading,p.missingParts]){
+    assert.match(accordion["状態"],new RegExp(value));
+  }
+});
+
 test("admin header subtitles and seeded publication-setting markers are removed",async()=>{
   assert.doesNotMatch(await read("TSUMUGI Admin.dc.html"),/\{\{ pageSubtitle \}\}/);
   assert.doesNotMatch(await read("supabase/seed/production-content.json"),/（掲載用設定）/);
