@@ -121,3 +121,28 @@ test("remote hero insertion appends after the highest order, including deletion 
   await S.saveHeroFeature({ id:"last", sourceType:"page", route:"shop" });
   assert.equal(sent[1].sort_order, 4);
 });
+
+test("background rebuild failure shows only a successful save notice", async () => {
+  const source = await readFile(new URL("../tsumugi-repository.js", import.meta.url), "utf8");
+  for (const lang of ["ja", "en"]) {
+    const notices = [], requests = [], diagnostics = [];
+    let scheduled;
+    const context = { window:{
+      TSUMUGI_AUTH_CONFIG:{ functions:{ rebuild:"rebuild-site" } },
+      TSUMUGI_STORE:{ lang:()=>lang, toast:(...args)=>notices.push(args) },
+      TSUMUGI_SUPABASE_CLIENT:async()=>({ functions:{ invoke:async(...args)=>{
+        requests.push(args); return { error:new Error("background rebuild unavailable") };
+      } } }),
+    }, console:{ warn:message=>diagnostics.push(message) }, setTimeout:fn=>{ scheduled=fn; return 1; }, clearTimeout(){} };
+    vm.runInNewContext(source, context);
+    context.window.TSUMUGI_CMS.requestRebuild("product_saved");
+    assert.equal(notices.length,0);
+    scheduled();
+    await new Promise(resolve=>setImmediate(resolve));
+    assert.equal(requests.length,1);
+    assert.equal(requests[0][0],"rebuild-site");
+    assert.equal(requests[0][1].body.reason,"product_saved");
+    assert.deepEqual(notices,[[lang==="ja" ? "内容は保存されました" : "The content was saved.","success"]]);
+    assert.equal(diagnostics.length,1);
+  }
+});

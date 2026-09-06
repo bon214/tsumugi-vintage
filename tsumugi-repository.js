@@ -231,12 +231,14 @@
       }).then(function (result) {
         if (result && result.error) throw result.error;
       }).catch(function () {
+        // Saving has already succeeded; background SEO failures are not save failures.
+        try { console.warn("TSUMUGI CMS: SEO rebuild could not be started"); } catch (e) { }
         var s = store();
         if (s && s.toast) s.toast(
           s.lang && s.lang() === "ja"
-            ? "内容は保存されましたが、SEOページの再生成を開始できませんでした。"
-            : "The content was saved, but the SEO rebuild could not be started.",
-          "warning"
+            ? "内容は保存されました"
+            : "The content was saved.",
+          "success"
         );
       });
     }, 1200);
