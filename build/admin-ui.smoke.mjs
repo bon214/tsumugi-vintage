@@ -106,6 +106,33 @@ try {
   await specialAdd.click();
   await page.waitForFunction(() => /^#\/admin\/specials\/.+/.test(location.hash));
   console.log("PASS header special add opens editor");
+  await page.evaluate(() => {
+    const S=window.TSUMUGI_STORE;
+    const p={ id:1,name:"QA Vintage Shirt",sku:"QA-1",slug:"qa-1",category:"Shirting",size:"M",
+      condition:"B",conditionNote:"Minor wear",price:1000,measurements:{chest:50,length:70},
+      images:[{primary:true,url:"./uploads/production/hero-textile-table.jpg",alt:"Shirt"}],stock:1,status:"published" };
+    window.__qaProduct=p;
+    S.all().products=[p,{...p,id:2,status:"soldout",stock:0}];
+    S.all().heroFeatures=[];
+    S.saveSettings({notifyPublicationIssues:true});
+    location.hash="#/admin";
+  });
+  await page.getByText("公開・販売状態に要確認の項目はありません。",{exact:true}).waitFor();
+  assert.equal(await page.locator("[data-publication-issues] > div").count(),0);
+  await page.evaluate(() => {
+    const S=window.TSUMUGI_STORE;
+    S.all().products=Array.from({length:8},(_,i)=>({...window.__qaProduct,id:i+1,sku:"QA-"+i,images:[]}));
+    S.saveSettings({notifyPublicationIssues:true});
+  });
+  await page.waitForFunction(() => document.querySelectorAll("[data-publication-issues] > div").length === 8);
+  await page.locator("header button[aria-expanded]").first().click();
+  await page.getByText("公開・販売状態の確認が必要な項目が8件あります",{exact:true}).waitFor();
+  await page.screenshot({path:"/private/tmp/tsumugi-publication-notification.png"});
+  assert.equal(await page.getByText(/在庫僅少/).count(),0);
+  await page.evaluate(() => { location.hash="#/admin/settings"; });
+  await page.getByLabel("公開・販売状態の不備を通知する",{exact:true}).waitFor();
+  assert.equal(await page.locator("#set-low").count(),0);
+  console.log("PASS normal one-off/sold-out excluded; 8 issues counted; new settings switch");
   assert.deepEqual(errors, []);
   console.log("PASS no browser runtime exceptions; no external requests permitted");
 } finally {

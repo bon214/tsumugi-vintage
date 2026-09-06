@@ -123,6 +123,9 @@ Deno.serve(async (req: Request) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders(origin) });
   if (req.method !== "POST") return bad("method_not_allowed", 405, origin);
   if (origin && !ALLOWED_ORIGINS.includes(origin)) return bad("origin_not_allowed", 403, origin);
+  // Portfolio deployments must not accept orders even if this endpoint is
+  // called directly. Enable only after completing PURCHASE_HANDOFF.md.
+  if (Deno.env.get("COMMERCE_ENABLED") !== "true") return bad("commerce_disabled", 403, origin);
 
   /* service_role: server-side only, never shipped to a browser. Built before
      the limiter because the limiter lives in the database. */

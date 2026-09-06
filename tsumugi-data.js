@@ -759,10 +759,9 @@
         phone: "+81 3-5843-0000",
         address: "〒151-0074 東京都渋谷区霧ヶ谷4-11-6",
         currency: "JPY",
-        lowStockThreshold: 1,
         itemsPerPage: 10,
         notifyDrafts: true,
-        notifyLowStock: true,
+        notifyPublicationIssues: true,
       },
     };
   }
@@ -1022,7 +1021,42 @@
     customers: function () { return db.customers; },
     news: function () { return db.news; },
     activity: function () { return db.activity; },
-    settings: function () { return db.settings; },
+    settings: function () {
+      return Object.assign({}, db.settings, {
+        // Keep an existing operator opt-out when upgrading the old preference.
+        notifyPublicationIssues: typeof db.settings.notifyPublicationIssues === "boolean"
+          ? db.settings.notifyPublicationIssues : db.settings.notifyLowStock !== false
+      });
+    },
+    /* One-of-a-kind stock (1) and an ordinary completed sale (soldout/0) are
+       normal states, not replenishment alerts. Count affected records once. */
+    publicationIssues: function () {
+      var issues = [], text = function (v) { return typeof v === "string" && !!v.trim(); };
+      db.products.forEach(function (p) {
+        if (p.status !== "published") return;
+        var reasons = [], images = p.images || [];
+        if (!Number.isInteger(Number(p.stock)) || Number(p.stock) <= 0) reasons.push("issueStock");
+        if (!images.some(function (im) { return im.primary && text(im.url || im.src); })) reasons.push("issueImage");
+        if (!text(p.name) || !text(p.sku) || !text(p.slug) || !text(p.category) ||
+            !text(p.size) || !text(p.condition) || !text(p.conditionNote) ||
+            !Number.isFinite(Number(p.price)) || Number(p.price) <= 0 ||
+            Object.values(p.measurements || {}).filter(function (n) { return Number(n) > 0; }).length < 2) reasons.push("issueRequired");
+        if (images.some(function (im) { return !text(im.alt); })) reasons.push("issueImageAlt");
+        if (reasons.length) issues.push({ id:"product-" + p.id, name:p.name || p.sku || String(p.id),
+          detail:p.sku || "", reasons:reasons, path:"/admin/products/" + p.id, permission:"products.view" });
+      });
+      Store.heroFeatures().forEach(function (f) {
+        if (!f.enabled) return;
+        var state = Store.heroSourceState(f);
+        // A scheduled/unpublished reference is intentional; only broken
+        // references need action. Disabled drafts do not generate warnings.
+        if (state === "missing" || state === "unset") issues.push({
+          id:"hero-" + f.id, name:"", labelKey:"issueHero", detail:String(f.order),
+          reasons:["issueReference"], path:"/admin/featured", permission:"content.view"
+        });
+      });
+      return issues;
+    },
 
     /* ---- public-site views ---- */
     publicProducts: function () {

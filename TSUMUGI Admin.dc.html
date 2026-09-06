@@ -304,20 +304,20 @@
 
               <section style="background:#FFFFFF;border:1px solid #E3DFD7;display:flex;flex-direction:column">
                 <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;padding:14px 16px;border-bottom:1px solid #EDEAE3">
-                  <h2 style="margin:0;font-size:14px;font-weight:600">{{ t.kLowStockAndSoldOut }}</h2>
-                  <span style="font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:0.14em;color:#9A7A32">{{ lowStockLabel }}</span>
+                  <h2 style="margin:0;font-size:14px;font-weight:600">{{ t.publicationReview }}</h2>
+                  <span style="font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:0.14em;color:#9A7A32">{{ publicationIssueCount }}</span>
                 </div>
-                <sc-if value="{{ noLowStock }}" hint-placeholder-val="{{ false }}">
-                  <p style="margin:0;padding:30px 16px;text-align:center;font-size:13px;color:#8C887F">{{ t.kEveryPublishedPieceIsInStock }}</p>
+                <sc-if value="{{ noPublicationIssues }}" hint-placeholder-val="{{ false }}">
+                  <p style="margin:0;padding:30px 16px;text-align:center;font-size:13px;color:#8C887F">{{ t.publicationClear }}</p>
                 </sc-if>
-                <div style="display:flex;flex-direction:column">
-                  <sc-for list="{{ lowStock }}" as="p" hint-placeholder-count="4">
+                <div data-publication-issues="true" style="display:flex;flex-direction:column;max-height:340px;overflow:auto">
+                  <sc-for list="{{ publicationIssues }}" as="p" hint-placeholder-count="4">
                     <div style="display:flex;align-items:center;gap:12px;padding:11px 16px;border-bottom:1px solid #F2F0EA">
                       <span style="flex:1;min-width:0;display:flex;flex-direction:column;gap:3px">
                         <span style="font-size:13.5px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ p.name }}</span>
                         <span style="font-family:'IBM Plex Mono',monospace;font-size:12px;color:#77736B">{{ p.sku }}</span>
                       </span>
-                      <span style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:{{ p.stockTone }}">{{ p.stockLabel }}</span>
+                      <span style="font-size:12px;color:#9A7A32;max-width:45%;line-height:1.6">{{ p.reason }}</span>
                       <button type="button" onClick="{{ p.onClick }}" style="border:1px solid #DAD5CB;background:#FFFFFF;padding:7px 11px;min-height:36px;font-size:12px;white-space:nowrap;cursor:pointer;border-radius:2px" style-hover="border-color:#6D7761;color:#6D7761">{{ t.kEdit }}</button>
                     </div>
                   </sc-for>
@@ -461,18 +461,13 @@
                     <option value="50">50</option>
                   </select>
                 </div>
-                <div style="display:flex;flex-direction:column;gap:6px">
-                  <label for="set-low" style="font-size:12px;font-weight:500;color:#55534C">{{ t.kLowStockThreshold }}</label>
-                  <input id="set-low" disabled="{{ settingsLocked }}" type="number" min="0" max="10" value="{{ setLowStock }}" onChange="{{ onSetLowStock }}" style="border:1px solid #DAD5CB;background:#FCFBF9;padding:10px 12px;font-size:14px;min-height:44px" style-focus="border-color:#6D7761;background:#FFFFFF">
-                  <span style="font-size:11.5px;color:#8C887F">{{ t.kPublishedPiecesAtOrBelowThisQuanti }}</span>
-                </div>
                 <label style="display:flex;align-items:center;gap:10px;font-size:13.5px;cursor:pointer;min-height:44px">
                   <input type="checkbox" disabled="{{ settingsLocked }}" checked="{{ setNotifyDrafts }}" onChange="{{ onSetNotifyDrafts }}" style="width:16px;height:16px;accent-color:#6D7761">
                   <span>{{ t.kNotifyMeAboutUnpublishedDrafts }}</span>
                 </label>
                 <label style="display:flex;align-items:center;gap:10px;font-size:13.5px;cursor:pointer;min-height:44px">
-                  <input type="checkbox" disabled="{{ settingsLocked }}" checked="{{ setNotifyLowStock }}" onChange="{{ onSetNotifyLowStock }}" style="width:16px;height:16px;accent-color:#6D7761">
-                  <span>{{ t.kNotifyMeAboutLowStock }}</span>
+                  <input type="checkbox" disabled="{{ settingsLocked }}" checked="{{ setNotifyPublication }}" onChange="{{ onSetNotifyPublication }}" style="width:16px;height:16px;accent-color:#6D7761">
+                  <span>{{ t.notifyPublication }}</span>
                 </label>
               </div>
             </section>
@@ -1085,8 +1080,7 @@ class Component extends DCLogic {
     const S = this.S;
     const P = S.products(), C = S.customers(), N = S.news(), ST = S.settings();
     const drafts = P.filter(p => p.status === "draft");
-    const lowThreshold = Number(ST.lowStockThreshold || 1);
-    const low = P.filter(p => (p.status === "published" && p.stock <= lowThreshold) || p.status === "soldout").slice(0, 6);
+    const publicationIssues = S.publicationIssues().filter(issue => S.can(issue.permission));
     const draftNews = N.filter(n => n.status === "draft" || n.status === "scheduled");
     const thisMonth = C.filter(c => c.registered >= "2026-07-01");
 
@@ -1206,9 +1200,9 @@ class Component extends DCLogic {
       title: jp ? "未公開の商品下書きが " + drafts.length + " 件あります" : drafts.length + " product " + (drafts.length === 1 ? "draft is" : "drafts are") + " unpublished",
       meta: T2.kProductsNeedsReview, dot: "#9A7A32", onClick: () => this.nav("/admin/products")
     });
-    if (ST.notifyLowStock && low.length) notifItems.push({
-      title: jp ? "売り切れ、または在庫僅少の商品が " + low.length + " 点あります" : low.length + " " + (low.length === 1 ? "piece is" : "pieces are") + " sold out or low",
-      meta: T2.kInventoryCheckAvailability, dot: "#8A3F33", onClick: () => this.nav("/admin/products")
+    if (ST.notifyPublicationIssues && publicationIssues.length) notifItems.push({
+      title: T.publicationCount.replace("{n}", publicationIssues.length),
+      meta: T.publicationReview, dot: "#9A7A32", onClick: () => this.nav("/admin")
     });
     if (draftNews.length) notifItems.push({
       title: jp ? "公開待ちの記事が " + draftNews.length + " 本あります" : draftNews.length + " " + (draftNews.length === 1 ? "article" : "articles") + " awaiting publication",
@@ -1320,14 +1314,13 @@ class Component extends DCLogic {
           onClick: () => this.nav("/admin/products/" + p.id)
         };
       }),
-      lowStock: low.map(p => ({
-        name: p.name, sku: p.sku,
-        stockLabel: p.status === "soldout" ? T2.kSoldOut2 : p.stock + T2.kLeft,
-        stockTone: p.status === "soldout" || p.stock === 0 ? "#A2493C" : "#9A7A32",
-        onClick: () => this.nav("/admin/products/" + p.id)
+      publicationIssues: publicationIssues.map(issue => ({
+        name: issue.labelKey ? T[issue.labelKey] : issue.name, sku: issue.detail,
+        reason: issue.reasons.map(key => T[key]).join(" / "),
+        onClick: () => this.nav(issue.path)
       })),
-      noLowStock: low.length === 0,
-      lowStockLabel: low.length + T2.kNeedAttention,
+      noPublicationIssues: publicationIssues.length === 0,
+      publicationIssueCount: T.publicationTotal.replace("{n}", publicationIssues.length),
       recentCustomers: C.slice().sort((a, b) => b.registered.localeCompare(a.registered)).slice(0, 5).map(c => {
         const b = statusBadge(c.status);
         return { name: c.name, id: c.id, registered: c.registered, initials: this._initials(c.name), status: b[2], badgeBg: b[0], badgeFg: b[1], onClick: () => this.nav("/admin/customers/" + c.id) };
@@ -1356,18 +1349,16 @@ class Component extends DCLogic {
       setPhone: (s.settingsDraft || ST).phone,
       setAddress: (s.settingsDraft || ST).address,
       setPerPage: String((s.settingsDraft || ST).itemsPerPage),
-      setLowStock: (s.settingsDraft || ST).lowStockThreshold,
       setNotifyDrafts: (s.settingsDraft || ST).notifyDrafts,
-      setNotifyLowStock: (s.settingsDraft || ST).notifyLowStock,
+      setNotifyPublication: (s.settingsDraft || ST).notifyPublicationIssues,
       onSetStoreName: e => this._setSetting("storeName", e.target.value),
       onSetTagline: e => this._setSetting("tagline", e.target.value),
       onSetEmail: e => this._setSetting("email", e.target.value),
       onSetPhone: e => this._setSetting("phone", e.target.value),
       onSetAddress: e => this._setSetting("address", e.target.value),
       onSetPerPage: e => this._setSetting("itemsPerPage", Number(e.target.value)),
-      onSetLowStock: e => this._setSetting("lowStockThreshold", Number(e.target.value)),
       onSetNotifyDrafts: e => this._setSetting("notifyDrafts", e.target.checked),
-      onSetNotifyLowStock: e => this._setSetting("notifyLowStock", e.target.checked)
+      onSetNotifyPublication: e => this._setSetting("notifyPublicationIssues", e.target.checked)
     };
   }
 }
