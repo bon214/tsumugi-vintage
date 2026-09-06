@@ -146,14 +146,37 @@ test("a newly registered product keeps every field and exposes customer-facing v
   c.state.page="product"; c.state.productId=321;
   const rendered=c.renderVals();
   assert.equal(rendered.prodNote,p.curatorNote);
-  assert.ok(rendered.prodFacts.some(x=>x.k==="商品管理番号"&&x.v===p.sku));
   assert.ok(rendered.prodFacts.some(x=>x.k==="ラベル表記サイズ"&&x.v===p.sizeNotation));
+  assert.ok(!rendered.prodFacts.some(x=>x.v===p.sku));
+  assert.ok(!rendered.prodFacts.some(x=>x.k==="税区分"));
   const accordion=Object.fromEntries(rendered.accordion.map(x=>[x.title,x.body]));
-  assert.equal(accordion["商品の背景"],p.story);
-  assert.equal(accordion["着こなしについて"],p.styling);
+  assert.equal(accordion["商品の背景"],undefined);
+  assert.equal(accordion["着こなしについて"],undefined);
+  assert.equal(accordion["お手入れ"],undefined);
   for(const value of [p.conditionNote,p.stains,p.damage,p.repairs,p.fading,p.missingParts]){
     assert.match(accordion["状態"],new RegExp(value));
   }
+});
+
+test("removed editorial controls stay out of admin and public pages while their database fields remain compatible",async()=>{
+  const {I}=await fixture();
+  const admin=await read("AdminProducts.dc.html");
+  const page=await read("PublicProduct.dc.html");
+  const shell=await read("TSUMUGI.dc.html");
+  for(const token of ['id="f-story"','id="f-styling"','addPlaceholder','kAddArchivePlaceholder','previewStory']){
+    assert.doesNotMatch(admin,new RegExp(token));
+  }
+  assert.doesNotMatch(page,/kenjiKirigaya/);
+  assert.doesNotMatch(shell,/\{ key: "Product story"|\{ key: "Styling suggestions"|\{ key: "Care"/);
+  assert.doesNotMatch(shell,/\[T\.productCode, cur\.sku\]|\[T\.productTax, displayValue\(cur\.taxStatus\)\]/);
+  assert.equal(I.t("ja").curatorNote,"商品詳細");
+  assert.equal(I.t("ja").kCuratorSNote,"商品詳細");
+  assert.equal(I.t("ja").kCuratorSNote2,"商品詳細");
+  assert.equal(I.t("ja").kNoCuratorSNoteYet,"商品詳細はまだありません。");
+  const repository=await read("tsumugi-repository.js");
+  assert.match(repository,/story: p\.story \|\| null, styling: p\.styling \|\| null/);
+  assert.match(repository,/sku: String\(p\.sku \|\| ""\)/);
+  assert.match(repository,/tax_status: p\.taxStatus \|\| null/);
 });
 
 test("admin header subtitles and seeded publication-setting markers are removed",async()=>{

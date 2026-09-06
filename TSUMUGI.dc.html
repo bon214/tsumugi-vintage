@@ -1907,14 +1907,12 @@ class Component extends DCLogic {
     const ED = (I && I.editorial) ? I.editorial(cur, lang) : { note: cur.story, condition: cur.short, styling: "", care: "", details: ["", "", ""] };
     const displayValue = value => (I && I.label ? I.label(value, lang) : value);
     const productFacts = [
-      [T.productCode, cur.sku],
       [T.productCategory, [TX(cur.category), TX(cur.subcategory)].filter(Boolean).join(" / ")],
       [T.productEra, [cur.year, cur.era].filter(Boolean).join(" / ")],
       [T.productOrigin, TX(cur.country)],
       [T.productMaterial, TX(cur.material)],
       [T.productColour, TX(cur.colour)],
-      [T.productLabelSize, cur.sizeNotation || cur.size],
-      [T.productTax, displayValue(cur.taxStatus)]
+      [T.productLabelSize, cur.sizeNotation || cur.size]
     ].filter(row => String(row[1] == null ? "" : row[1]).trim()).map(row => ({ k: row[0], v: row[1] }));
     const conditionBody = [
       [T.conditionGrade, [cur.condition, TX(cur.conditionName)].filter(Boolean).join(" — ")],
@@ -2329,7 +2327,7 @@ class Component extends DCLogic {
       onZoomUp: () => { this._drag = null; },
       prodMeasurements: cur.measurements,
       prodFacts: productFacts,
-      prodNote: cur.short || cur.story || ED.note,
+      prodNote: cur.short || "",
       prodAddLabel: cur.soldOut ? T.soldOutLong : T.addToCart + " — " + cur.priceLabel,
       prodSoldOut: !!cur.soldOut,
       prodCtaBg: cur.soldOut ? "#B8B1A6" : "#6B665D",
@@ -2338,11 +2336,8 @@ class Component extends DCLogic {
       wishCurrent: () => this.toggleWish(cur.id),
       wishCurrentLabel: this.isWished(cur.id) ? "♥" : "♡",
       accordion: [
-        { key: "Product story", body: cur.story },
         { key: "Condition", body: conditionBody || ED.condition },
-        { key: "Styling suggestions", body: cur.styling },
-        { key: "Shipping & returns", body: L.body("shipping", {}) },
-        { key: "Care", body: ED.care }
+        { key: "Shipping & returns", body: L.body("shipping", {}) }
       ].filter(a => String(a.body || "").trim()).map(a => ({
         title: L.accordionTitle(a.key), body: a.body,
         sign: (s.accordion || []).includes(a.key) ? "—" : "+", open: (s.accordion || []).includes(a.key),

@@ -2168,6 +2168,9 @@ var ADMPAIRS = [
       out[k] = [decode(ADMPAIRS[n][0]), decode(ADMPAIRS[n][1])];
     }
     out.kProductIdSku = ["Product number (automatically generated)", "商品管理番号（自動生成）"];
+    out.kCuratorSNote = ["Product details", "商品詳細"];
+    out.kCuratorSNote2 = ["Product details", "商品詳細"];
+    out.kNoCuratorSNoteYet = ["No product details yet.", "商品詳細はまだありません。"];
     return out;
   })();
 

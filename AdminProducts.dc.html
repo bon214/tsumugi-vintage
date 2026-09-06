@@ -324,7 +324,6 @@
                 <span>{{ t.kUploadImages }}</span>
                 <input type="file" accept="image/*" multiple="true" onChange="{{ onUpload }}" style="position:absolute;width:1px;height:1px;opacity:0;pointer-events:none">
               </label>
-              <button type="button" onClick="{{ addPlaceholder }}" style="border:1px solid #DAD5CB;background:#FFFFFF;padding:10px 15px;min-height:44px;font-size:13.5px;white-space:nowrap;cursor:pointer" style-hover="border-color:#6D7761;color:#6D7761">{{ t.kAddArchivePlaceholder }}</button>
               <span style="font-size:12px;color:#8C887F">{{ t.kDragATileToReorderTheFirstImageIsU }}</span>
             </div>
           </div>
@@ -444,14 +443,6 @@
                 <span style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:{{ curatorCountTone }}">{{ curatorCount }}</span>
               </div>
               <textarea id="f-curator" rows="2" value="{{ fCuratorNote }}" onChange="{{ onCuratorNote }}" placeholder="{{ t.kOneLineDescribingHowThisPieceHasAg }}" style="border:1px solid #DAD5CB;background:#FCFBF9;padding:11px 12px;font-size:14px;line-height:1.6;resize:vertical" style-focus="border-color:#6D7761;background:#FFFFFF"></textarea>
-            </div>
-            <div style="grid-column:1/-1;display:flex;flex-direction:column;gap:6px">
-              <label for="f-story" style="font-size:12px;font-weight:500;color:#55534C">{{ t.kProductStory }}</label>
-              <textarea id="f-story" rows="4" value="{{ fStory }}" onChange="{{ onStory }}" placeholder="{{ t.kWhereItCameFromWhoWoreItWhatWeDidT }}" style="border:1px solid #DAD5CB;background:#FCFBF9;padding:11px 12px;font-size:14px;line-height:1.7;resize:vertical" style-focus="border-color:#6D7761;background:#FFFFFF"></textarea>
-            </div>
-            <div style="grid-column:1/-1;display:flex;flex-direction:column;gap:6px">
-              <label for="f-styling" style="font-size:12px;font-weight:500;color:#55534C">{{ t.kStylingRecommendation }}</label>
-              <textarea id="f-styling" rows="3" value="{{ fStyling }}" onChange="{{ onStyling }}" style="border:1px solid #DAD5CB;background:#FCFBF9;padding:11px 12px;font-size:14px;line-height:1.7;resize:vertical" style-focus="border-color:#6D7761;background:#FFFFFF"></textarea>
             </div>
           </div>
         </section>
@@ -677,7 +668,6 @@
           <span style="font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:0.18em;color:#9C978F">{{ previewMeta }}</span>
           <h2 style="margin:0;font-family:'EB Garamond',serif;font-size:clamp(24px,3vw,34px);font-weight:400;line-height:1.15;color:#222222">{{ previewName }}</h2>
           <span style="font-family:'IBM Plex Mono',monospace;font-size:14px;color:#222222">{{ previewPrice }}</span>
-          <p style="margin:0;font-size:14.5px;line-height:1.9;color:#4A4740">{{ previewStory }}</p>
           <div style="display:flex;flex-direction:column;gap:9px;border-top:1px solid #E6E0D7;padding-top:16px">
             <sc-for list="{{ previewMeasurements }}" as="m" hint-placeholder-count="4">
               <div style="display:flex;justify-content:space-between;gap:14px;font-size:13.5px;color:#4A4740">
@@ -996,21 +986,6 @@ class Component extends DCLogic {
         this.setState({ uploadBusy: false });
         this.S.toast(ja ? "画像を追加できませんでした" : "The images could not be added.", "error");
       });
-  };
-
-  addPlaceholder = () => {
-    const S = this.S;
-    const pool = S.GARMENTS.concat(S.DETAILS);
-    const n = (this.state.form.images || []).length;
-    const pick = pool[(Number(this.state.form.id || 0) * 3 + n * 5) % pool.length];
-    this.setState(s => ({
-      form: {
-        ...s.form, images: (s.form.images || []).concat({
-          id: "ph-" + Date.now(), url: S.U(pick, 900), thumb: S.U(pick, 220),
-          alt: (s.form.name || "Archive piece") + " — daylight photograph " + (n + 1), primary: n === 0
-        })
-      }
-    }));
   };
 
   _reorder(from, to) {
@@ -1380,8 +1355,6 @@ class Component extends DCLogic {
       fSizeNotation: f.sizeNotation, onSizeNotation: ev => this._set("sizeNotation", ev.target.value),
       fCuratorNote: f.curatorNote, onCuratorNote: ev => this._set("curatorNote", ev.target.value),
       curatorCount: cnt(f.curatorNote, 200), curatorCountTone: tone(f.curatorNote, 200),
-      fStory: f.story, onStory: ev => this._set("story", ev.target.value),
-      fStyling: f.styling, onStyling: ev => this._set("styling", ev.target.value),
 
       measurementHint: TAX_LABEL(f.category) + " / cm",
       measurementFields: measures.map(([k, label]) => ({
@@ -1422,7 +1395,7 @@ class Component extends DCLogic {
         onDrop: ev => { ev.preventDefault(); if (this._drag != null) this._reorder(this._drag, i); this._drag = null; },
         onDragEnd: () => { this._drag = null; this.forceUpdate(); }
       })),
-      onUpload: this.onUpload, addPlaceholder: this.addPlaceholder,
+      onUpload: this.onUpload,
 
       fSlug: f.slug, onSlug: ev => this._set("slug", S.slugify(ev.target.value)),
       regenSlug: () => this._set("slug", S.slugify(f.brand + " " + f.name)),
@@ -1502,7 +1475,6 @@ class Component extends DCLogic {
       previewMeta: "C. " + (f.year || "—") + " · " + (f.brand || "UNBRANDED").toUpperCase() + " · " + (f.size || "—"),
       previewPrice: S.yen(f.price),
       previewNote: f.curatorNote || T3.kNoCuratorSNoteYet,
-      previewStory: f.story || T3.kNoProductStoryWrittenYet,
       previewSoldOut: f.status === "soldout" || Number(f.stock) === 0,
       previewCta: f.status === "soldout" || Number(f.stock) === 0 ? "SOLD OUT" : "ADD TO CART",
       previewMeasurements: measures.map(([k, label]) => ({ k: label, v: ((f.measurements || {})[k] || 0) + " cm" }))
