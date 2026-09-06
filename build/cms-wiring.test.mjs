@@ -112,6 +112,20 @@ test("remote CMS displays only the RLS-isolated portfolio commerce dataset", asy
   assert.match(source, /guest: \["settings\.view", "orders\.view", "products\.view", "customers\.view", "content\.view"\]/);
 });
 
+test("portfolio guest uses the anon role without creating Supabase auth users", async () => {
+  const auth = await read("tsumugi-auth.js");
+  assert.doesNotMatch(auth, /auth\.signInAnonymously\(/);
+  assert.match(auth, /uid: "portfolio-guest"/);
+  assert.match(auth, /apply\(s, false\)/);
+
+  const sql = await read("supabase/migrations/20260906100000_allow_public_portfolio_demo_read.sql");
+  assert.match(sql, /grant select on public\.demo_customers, public\.demo_orders to anon/);
+  assert.match(sql, /demo_customers_select_public_portfolio/);
+  assert.match(sql, /demo_orders_select_public_portfolio/);
+  assert.match(sql, /revoke insert, update, delete on public\.demo_customers, public\.demo_orders/);
+  assert.doesNotMatch(sql, /grant (insert|update|delete)/i);
+});
+
 test("portfolio commerce migration contains five synthetic, non-deliverable records", async () => {
   const sql = await read("supabase/migrations/20260906093000_expand_portfolio_demo_dataset.sql");
   for (let index = 1; index <= 5; index++) {

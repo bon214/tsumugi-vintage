@@ -9,7 +9,7 @@
    record and each scope answers a different question about it:
 
      scope "admin"     staff email + password → role from the profile
-                       anonymous sign-in      → role "guest" (read-only console)
+                       portfolio guest        → role "guest" (read-only console)
      scope "customer"  customer email + password → role "customer"
 
    A session belonging to the other scope reads as signed_out — a customer
@@ -23,7 +23,7 @@
      Public Visitor     no session at all. Shop, journal, cart, checkout.
      Customer           scope customer. Account, wishlist, orders, profile.
      Admin Staff        scope admin, password. Console by role.
-     Admin Demo Guest   scope admin, anonymous. Console, read-only.
+     Admin Demo Guest   scope admin, local preview session. Console, read-only.
 
    Two interchangeable providers behind the same interface:
 
@@ -486,7 +486,19 @@
     boot: function () {
       return sbClient().then(function (c) { return c.auth.getSession(); }).then(function (res) {
         var sb = res && res.data ? res.data.session : null;
-        if (!sb) { clearRecovery(); booted = true; emit(); return null; }
+        if (!sb) {
+          clearRecovery();
+          /* The portfolio console guest is intentionally not a Supabase Auth
+             user. Restore only our exact sessionStorage marker; its database
+             client remains the Postgres `anon` role, which can read only the
+             separate synthetic demo tables. */
+          var saved = store() && store().session ? store().session() : null;
+          if (saved && saved.uid === "portfolio-guest" && saved.mode === "anonymous") {
+            sessionVersion++; /* supersede a queued INITIAL_SESSION(null) */
+            return apply(record({ uid: "portfolio-guest", name: "Guest", role: "guest", mode: "anonymous" }), false);
+          }
+          booted = true; emit(); return null;
+        }
         /* A marker may have crossed from the public callback to admin.html.
            Never apply it to a different signed-in user. */
         if (recoveryPending && recoveryUserId && String(sb.user && sb.user.id || "") !== recoveryUserId) {
@@ -523,12 +535,17 @@
     },
 
     adminSignInAnonymous: function () {
-      return sbClient().then(function (c) { return c.auth.signInAnonymously(); }).then(function (res) {
-        if (res.error || !res.data || !res.data.user) return { ok: false, code: "unavailable", error: res.error ? res.error.message : "" };
-        return resolveUser(res.data.user).then(function (s) {
-          apply(s, true);
-          return { ok: true, session: s };
-        });
+      /* A public portfolio viewer does not need an auth.users row. First clear
+         any customer/staff token in this browser, then use a tab-scoped local
+         marker while PostgREST stays on the `anon` role. RLS grants that role
+         SELECT only on the visibly-fictional demo tables. */
+      return sbClient().then(function (c) { return c.auth.signOut(); }).then(function (res) {
+        if (res && res.error) return { ok: false, code: "unavailable", error: res.error.message || "" };
+        sessionVersion++; /* supersede the queued SIGNED_OUT handler */
+        var s = record({ uid: "portfolio-guest", email: "", name: "Guest", role: "guest", mode: "anonymous" });
+        apply(s, false);
+        try { store().logAudit("login.portfolio_guest", "session", "guest", "Read-only portfolio guest session started"); } catch (e) { }
+        return { ok: true, session: s };
       }).catch(function (e) { return { ok: false, code: "unavailable", error: String(e) }; });
     },
 
