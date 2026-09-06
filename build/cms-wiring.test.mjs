@@ -109,6 +109,8 @@ test("remote CMS displays only the RLS-isolated portfolio commerce dataset", asy
   assert.match(repository, /from\("demo_orders"\)/);
   assert.match(repository, /from\("demo_customers"\)/);
   assert.match(repository, /wantedScope === "staff" \|\| wantedScope === "demo"/);
+  assert.match(repository, /s\.isGuest && s\.isGuest\(\) \? "demo" : "public"/);
+  assert.doesNotMatch(repository, /isAnonymousGuest/);
   assert.match(source, /guest: \["settings\.view", "orders\.view", "products\.view", "customers\.view", "content\.view"\]/);
 });
 

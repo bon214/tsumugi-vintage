@@ -229,7 +229,7 @@
   function scope() {
     if (isStaff()) return "staff";
     var s = store();
-    return s && s.isAnonymousGuest && s.isAnonymousGuest() ? "demo" : "public";
+    return s && s.isGuest && s.isGuest() ? "demo" : "public";
   }
 
   function querySnapshot(client, wantedScope) {
