@@ -36,7 +36,6 @@
             </div>
 
             <div style="display:flex;flex-direction:column;gap:12px;padding:24px 0;border-top:1px solid #E6E0D7;border-bottom:1px solid #E6E0D7">
-              <span style="font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:0.22em;color:#6D7761">{{ vm.t.curatorNote }}</span>
               <p style="margin:0;font-family:'EB Garamond',serif;font-size:15px;line-height:1.85;text-wrap:pretty;white-space:pre-line">{{ vm.prodNote }}</p>
             </div>
 
@@ -47,7 +46,6 @@
             <span style="font-size:13px;color:#9C978F">{{ vm.t.shipNote }}</span>
 
             <div style="display:flex;flex-direction:column;gap:14px;padding-top:6px">
-              <span style="font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:0.22em;color:#6D7761">{{ vm.t.productInformation }}</span>
               <dl style="margin:0;display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:16px 24px">
                 <sc-for list="{{ vm.prodFacts }}" as="f" hint-placeholder-count="8">
                   <div style="min-width:0;display:flex;flex-direction:column;gap:5px;padding-bottom:12px;border-bottom:1px solid #E6E0D7">

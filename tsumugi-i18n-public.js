@@ -64,10 +64,8 @@
     clearAllFilters: ["CLEAR ALL FILTERS", "条件をすべて解除"],
     soldOut:         ["SOLD OUT", "売り切れ"],
 
-    curatorNote:     ["PRODUCT DETAILS", "商品詳細"],
     shipNote:        ["Free shipping within Japan · Ships within two business days · 7-day returns", "日本国内送料無料 · 2営業日以内に発送 · 7日間返品可"],
     measurements:    ["MEASUREMENTS · LAID FLAT", "実寸 · 平置き"],
-    productInformation:["PRODUCT INFORMATION", "商品情報"],
     productCategory: ["Category", "カテゴリー"],
     productEra:      ["Year / era", "推定年 / 年代"],
     productOrigin:   ["Country of manufacture", "製造国"],

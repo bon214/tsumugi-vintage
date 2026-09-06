@@ -167,9 +167,9 @@ test("removed editorial controls stay out of admin and public pages while their 
     assert.doesNotMatch(admin,new RegExp(token));
   }
   assert.doesNotMatch(page,/kenjiKirigaya/);
+  assert.doesNotMatch(page,/vm\.t\.(?:curatorNote|productInformation)/);
   assert.doesNotMatch(shell,/\{ key: "Product story"|\{ key: "Styling suggestions"|\{ key: "Care"/);
   assert.doesNotMatch(shell,/\[T\.productCode, cur\.sku\]|\[T\.productTax, displayValue\(cur\.taxStatus\)\]/);
-  assert.equal(I.t("ja").curatorNote,"商品詳細");
   assert.equal(I.t("ja").kCuratorSNote,"商品詳細");
   assert.equal(I.t("ja").kCuratorSNote2,"商品詳細");
   assert.equal(I.t("ja").kNoCuratorSNoteYet,"商品詳細はまだありません。");
