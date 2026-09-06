@@ -89,6 +89,15 @@ test("public product details use the same measurements and hide unfilled or wron
   assert.deepEqual(result,[{k:"ウエスト",v:"80 cm"},{k:"股下",v:"75 cm"}]);
 });
 
+test("public product pages omit the former fabric and detail gallery",async()=>{
+  const page=await read("PublicProduct.dc.html");
+  const shell=await read("TSUMUGI.dc.html");
+  for(const token of ["fabricDetail","detailImage1","detailImage2","detailImage3","detailCap1","detailCap2","detailCap3"]){
+    assert.doesNotMatch(page,new RegExp(token));
+    assert.doesNotMatch(shell,new RegExp(token));
+  }
+});
+
 test("admin header subtitles and seeded publication-setting markers are removed",async()=>{
   assert.doesNotMatch(await read("TSUMUGI Admin.dc.html"),/\{\{ pageSubtitle \}\}/);
   assert.doesNotMatch(await read("supabase/seed/production-content.json"),/（掲載用設定）/);

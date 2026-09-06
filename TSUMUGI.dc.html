@@ -2299,27 +2299,6 @@ class Component extends DCLogic {
       onZoomUp: () => { this._drag = null; },
       prodMeasurements: cur.measurements,
       prodNote: ED.note,
-      detailImage1: (window.TSUMUGI_IMAGES && window.TSUMUGI_IMAGES.asset)
-        ? window.TSUMUGI_IMAGES.asset("uploads/production/journal-choosing-vintage.jpg")
-        : "uploads/production/journal-choosing-vintage.jpg",
-      detailImage2: (window.TSUMUGI_IMAGES && window.TSUMUGI_IMAGES.asset)
-        ? window.TSUMUGI_IMAGES.asset("uploads/production/journal-light-and-color.jpg")
-        : "uploads/production/journal-light-and-color.jpg",
-      detailImage3: (window.TSUMUGI_IMAGES && window.TSUMUGI_IMAGES.asset)
-        ? window.TSUMUGI_IMAGES.asset("uploads/production/journal-repair.jpg")
-        : "uploads/production/journal-repair.jpg",
-      detailAlt1: isJa
-        ? "藍色のカバーオールの織りをルーペで確認する手元"
-        : "Hands inspecting the weave of an indigo chore jacket",
-      detailAlt2: isJa
-        ? "撮影背景に置かれたウォッシュドブラックのデニムジャケット"
-        : "A washed-black denim jacket on a studio backdrop",
-      detailAlt3: isJa
-        ? "藍布に濃い藍糸で小さな補修を施す手元"
-        : "Hands making a small repair in dark indigo thread",
-      detailCap1: ED.details[0],
-      detailCap2: ED.details[1],
-      detailCap3: ED.details[2],
       prodAddLabel: cur.soldOut ? T.soldOutLong : T.addToCart + " — " + cur.priceLabel,
       prodSoldOut: !!cur.soldOut,
       prodCtaBg: cur.soldOut ? "#B8B1A6" : "#6B665D",
@@ -2433,7 +2412,7 @@ class Component extends DCLogic {
     V.homeVm = vm(["goShop","goAbout","allPiecesLabel","arrivals","featureA","featureB","featureC","goJournal","journalHome","gram","newsletter","onNewsletter","subscribe","newsletterNote",
                    "heroFeatures","heroCounter","heroHref","heroOpen","heroPause","heroResume","heroKey","heroPrev","heroNext"]);
     V.shopVm = vm(["shopIntro","sfShow","sf","isDesktop","shopQuery","onShopQuery","toggleSort","sortLabel","sortOpen","sortOptions","sortExpanded","onSortBackdrop","isCompact","filterBarTop","toggleFilters","closeFilters","onFilterBackdrop","filtersExpanded","filterCountLabel","filtersOpen","filterGroups","clearAll","showResultsLabel","shopColumns","hasChips","chips","noResults","gridProducts","showingLabel","isPaged","hasPrev","goPrev","prevLabel","pageLinks","hasNext","goNext","nextLabel"]);
-    V.productVm = vm(["prodCrumb","prodCrumbs","toggleZoom","onZoomDown","onZoomMove","onZoomUp","zoomCursor","zoomScale","zoomOrigin","zoomTransition","prodAlt","prodMainCss","zoomLabel","prodGallery","prod","prodSizeMeta","prodNote","addCurrent","prodSoldOut","prodCtaCursor","prodCtaBg","prodAddLabel","wishCurrent","wishCurrentLabel","prodMeasurements","accordion","detailImage1","detailImage2","detailImage3","detailAlt1","detailAlt2","detailAlt3","detailCap1","detailCap2","detailCap3","related"]);
+    V.productVm = vm(["prodCrumb","prodCrumbs","toggleZoom","onZoomDown","onZoomMove","onZoomUp","zoomCursor","zoomScale","zoomOrigin","zoomTransition","prodAlt","prodMainCss","zoomLabel","prodGallery","prod","prodSizeMeta","prodNote","addCurrent","prodSoldOut","prodCtaCursor","prodCtaBg","prodAddLabel","wishCurrent","wishCurrentLabel","prodMeasurements","accordion","related"]);
     V.contactVm = vm(["contactCols","contactHelp","contactSent","contactOpen","contactName","onContactName","cNameInvalid","cNameDesc","cNameBorder","cNameError","contactEmail","onContactEmail","cEmailInvalid","cEmailDesc","cEmailBorder","cEmailError","contactMessage","onContactMessage","cMsgInvalid","cMsgDesc","cMsgBorder","cMsgError","sendContact","contactSending","cSendLabel","contactImage1","contactAlt1","contactImage2","contactAlt2","contactImage3","contactAlt3"]);
     V.journalVm = vm(["journalAll"]);
     V.featureVm = vm(["sfFound","sfMissing","feature","goShopLink"]);
