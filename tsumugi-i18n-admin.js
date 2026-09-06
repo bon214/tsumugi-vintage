@@ -800,10 +800,6 @@ var ADMPAIRS = [
   "サイズ"
  ],
  [
-  "Size notation on label",
-  "ラベル表記のサイズ"
- ],
- [
   "Curator's note",
   "キュレーターの覚書"
  ],

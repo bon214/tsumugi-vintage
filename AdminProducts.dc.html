@@ -433,10 +433,6 @@
                 <option value="XS">XS</option><option value="S">S</option><option value="M">M</option><option value="L">L</option><option value="XL">XL</option><option value="XXL">XXL</option>
               </select>
             </div>
-            <div style="display:flex;flex-direction:column;gap:6px">
-              <label for="f-sizenote" style="font-size:12px;font-weight:500;color:#55534C">{{ t.kSizeNotationOnLabel }}</label>
-              <input id="f-sizenote" value="{{ fSizeNotation }}" onChange="{{ onSizeNotation }}" placeholder="{{ t.phSizeNotation }}" style="border:1px solid #DAD5CB;background:#FCFBF9;padding:11px 12px;font-size:14px;min-height:44px" style-focus="border-color:#6D7761;background:#FFFFFF">
-            </div>
             <div style="grid-column:1/-1;display:flex;flex-direction:column;gap:6px">
               <div style="display:flex;justify-content:space-between;align-items:baseline;gap:10px">
                 <label for="f-curator" style="font-size:12px;font-weight:500;color:#55534C">{{ t.kCuratorSNote }}</label>
@@ -1352,7 +1348,6 @@ class Component extends DCLogic {
       fMaterial: f.material, onMaterial: ev => this._set("material", ev.target.value),
       fColour: f.colour, onColour: ev => this._set("colour", ev.target.value),
       fSize: f.size, onSize: ev => this._set("size", ev.target.value),
-      fSizeNotation: f.sizeNotation, onSizeNotation: ev => this._set("sizeNotation", ev.target.value),
       fCuratorNote: f.curatorNote, onCuratorNote: ev => this._set("curatorNote", ev.target.value),
       curatorCount: cnt(f.curatorNote, 200), curatorCountTone: tone(f.curatorNote, 200),
 

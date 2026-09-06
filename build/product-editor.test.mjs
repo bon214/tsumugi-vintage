@@ -146,7 +146,8 @@ test("a newly registered product keeps every field and exposes customer-facing v
   c.state.page="product"; c.state.productId=321;
   const rendered=c.renderVals();
   assert.equal(rendered.prodNote,p.curatorNote);
-  assert.ok(rendered.prodFacts.some(x=>x.k==="ラベル表記サイズ"&&x.v===p.sizeNotation));
+  assert.equal(rendered.prodSizeMeta,"サイズ " + p.size);
+  assert.ok(!rendered.prodFacts.some(x=>x.v===p.sizeNotation));
   assert.ok(!rendered.prodFacts.some(x=>x.v===p.sku));
   assert.ok(!rendered.prodFacts.some(x=>x.k==="税区分"));
   const accordion=Object.fromEntries(rendered.accordion.map(x=>[x.title,x.body]));
@@ -163,7 +164,7 @@ test("removed editorial controls stay out of admin and public pages while their 
   const admin=await read("AdminProducts.dc.html");
   const page=await read("PublicProduct.dc.html");
   const shell=await read("TSUMUGI.dc.html");
-  for(const token of ['id="f-story"','id="f-styling"','addPlaceholder','kAddArchivePlaceholder','previewStory']){
+  for(const token of ['id="f-story"','id="f-styling"','id="f-sizenote"','fSizeNotation','onSizeNotation','addPlaceholder','kAddArchivePlaceholder','previewStory']){
     assert.doesNotMatch(admin,new RegExp(token));
   }
   assert.doesNotMatch(page,/kenjiKirigaya/);

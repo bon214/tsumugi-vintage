@@ -71,7 +71,6 @@
     productOrigin:   ["Country of manufacture", "製造国"],
     productMaterial: ["Material", "素材"],
     productColour:   ["Colour", "色"],
-    productLabelSize:["Label size", "ラベル表記サイズ"],
     conditionGrade:  ["Condition grade", "状態グレード"],
     conditionNote:   ["Condition notes", "状態説明"],
     conditionStains: ["Stains", "汚れ"],

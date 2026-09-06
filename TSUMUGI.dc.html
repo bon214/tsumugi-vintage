@@ -1911,8 +1911,7 @@ class Component extends DCLogic {
       [T.productEra, [cur.year, cur.era].filter(Boolean).join(" / ")],
       [T.productOrigin, TX(cur.country)],
       [T.productMaterial, TX(cur.material)],
-      [T.productColour, TX(cur.colour)],
-      [T.productLabelSize, cur.sizeNotation || cur.size]
+      [T.productColour, TX(cur.colour)]
     ].filter(row => String(row[1] == null ? "" : row[1]).trim()).map(row => ({ k: row[0], v: row[1] }));
     const conditionBody = [
       [T.conditionGrade, [cur.condition, TX(cur.conditionName)].filter(Boolean).join(" — ")],
