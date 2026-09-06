@@ -105,9 +105,9 @@
             </thead>
             <tbody>
               <sc-for list="{{ rows }}" as="r" hint-placeholder-count="8">
-                <tr style="border-bottom:1px solid #F1EFEA;background:{{ r.rowBg }}">
+                <tr onClick="{{ r.onOpen }}" style="border-bottom:1px solid #F1EFEA;background:{{ r.rowBg }};cursor:pointer" style-hover="background:#FAF9F6">
                   <td style="padding:10px">
-                    <input type="checkbox" checked="{{ r.checked }}" onChange="{{ r.onCheck }}" aria-label="{{ r.checkLabel }}" style="width:18px;height:18px;accent-color:#6D7761;cursor:pointer">
+                    <input type="checkbox" checked="{{ r.checked }}" onChange="{{ r.onCheck }}" onClick="{{ r.stopRow }}" aria-label="{{ r.checkLabel }}" style="width:18px;height:18px;accent-color:#6D7761;cursor:pointer">
                   </td>
                   <td style="padding:10px">
                     <button type="button" onClick="{{ r.onOpen }}" style="border:none;background:transparent;padding:0;min-height:24px;font-family:'IBM Plex Mono',monospace;font-size:13px;color:#3F3D38;text-align:left;white-space:nowrap;cursor:pointer;text-decoration:underline;text-underline-offset:3px" style-hover="color:#6D7761">{{ r.number }}</button>
@@ -141,9 +141,9 @@
     <sc-if value="{{ showCards }}" hint-placeholder-val="{{ false }}">
       <div style="display:flex;flex-direction:column;gap:10px">
         <sc-for list="{{ rows }}" as="r" hint-placeholder-count="5">
-          <article style="background:#FFFFFF;border:1px solid #E3DFD7;padding:13px;display:flex;flex-direction:column;gap:10px">
+          <article onClick="{{ r.onOpen }}" style="background:#FFFFFF;border:1px solid #E3DFD7;padding:13px;display:flex;flex-direction:column;gap:10px;cursor:pointer" style-hover="background:#FAF9F6">
             <div style="display:flex;align-items:flex-start;gap:10px">
-              <input type="checkbox" checked="{{ r.checked }}" onChange="{{ r.onCheck }}" aria-label="{{ r.checkLabel }}" style="width:20px;height:20px;margin-top:2px;accent-color:#6D7761;flex:0 0 auto;cursor:pointer">
+              <input type="checkbox" checked="{{ r.checked }}" onChange="{{ r.onCheck }}" onClick="{{ r.stopRow }}" aria-label="{{ r.checkLabel }}" style="width:20px;height:20px;margin-top:2px;accent-color:#6D7761;flex:0 0 auto;cursor:pointer">
               <div style="flex:1;min-width:0;display:flex;flex-direction:column;gap:4px">
                 <button type="button" onClick="{{ r.onOpen }}" style="border:none;background:transparent;padding:0;min-height:32px;font-family:'IBM Plex Mono',monospace;font-size:14px;color:#232220;text-align:left;cursor:pointer;text-decoration:underline;text-underline-offset:3px">{{ r.number }}</button>
                 <span style="font-size:14px;color:#3F3D38;overflow-wrap:anywhere">{{ r.customerName }}</span>
@@ -561,6 +561,7 @@ class Component extends DCLogic {
             onCheck: () => this.setState(st => ({
               selected: st.selected.indexOf(o.id) >= 0 ? st.selected.filter(x => x !== o.id) : st.selected.concat(o.id)
             })),
+            stopRow: e => e.stopPropagation(),
             onOpen: () => nav("/admin/orders/" + o.id)
           };
         }),

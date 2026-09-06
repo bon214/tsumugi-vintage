@@ -28,7 +28,7 @@
 
       <div style="display:flex;flex-direction:column;gap:10px">
         <sc-for list="{{ rows }}" as="r" hint-placeholder-count="3">
-          <article style="background:#FFFFFF;border:1px solid {{ r.border }};padding:13px;display:flex;gap:13px;align-items:flex-start;flex-wrap:{{ wrapMode }}">
+          <article onClick="{{ r.onEdit }}" style="background:#FFFFFF;border:1px solid {{ r.border }};padding:13px;display:flex;gap:13px;align-items:flex-start;flex-wrap:{{ wrapMode }};cursor:pointer" style-hover="background:#FAF9F6">
             <span style="font-family:'IBM Plex Mono',monospace;font-size:12px;letter-spacing:0.1em;color:#8C887F;min-width:26px;padding-top:4px">{{ r.no }}</span>
             <sc-if value="{{ r.hasThumb }}" hint-placeholder-val="{{ true }}">
               <img loading="lazy" decoding="async" src="{{ r.thumb }}" alt="{{ r.thumbAlt }}" style="width:96px;height:72px;object-fit:cover;background:#EDE9E2;flex:0 0 96px;filter:saturate(0.9);opacity:{{ r.thumbOpacity }}">
@@ -53,7 +53,7 @@
               </sc-if>
             </div>
 
-            <div style="display:flex;gap:7px;flex-wrap:wrap;align-items:flex-start">
+            <div onClick="{{ r.stopRow }}" style="display:flex;gap:7px;flex-wrap:wrap;align-items:flex-start">
               <button type="button" onClick="{{ r.onEdit }}" style="border:1px solid #DAD5CB;background:#FFFFFF;padding:9px 13px;min-height:42px;font-size:13px;white-space:nowrap;cursor:pointer;color:#55534C" style-hover="border-color:#6D7761;color:#6D7761">{{ t.sfEdit }}</button>
               <button type="button" onClick="{{ r.onToggle }}" disabled="{{ r.toggleLocked }}" style="border:1px solid {{ r.toggleBorder }};background:{{ r.toggleBg }};color:{{ r.toggleFg }};padding:9px 13px;min-height:42px;font-size:13px;white-space:nowrap;cursor:pointer;opacity:{{ r.toggleOpacity }}" style-hover="border-color:#6D7761">{{ r.toggleLabel }}</button>
               <button type="button" onClick="{{ r.onDuplicate }}" disabled="{{ r.locked }}" style="border:1px solid #DAD5CB;background:#FFFFFF;padding:9px 13px;min-height:42px;font-size:13px;white-space:nowrap;cursor:pointer;color:#55534C;opacity:{{ r.lockedOpacity }}" style-hover="border-color:#6D7761;color:#6D7761">{{ t.sfDuplicate }}</button>
@@ -501,6 +501,7 @@ class Component extends DCLogic {
           toggleFg: f.enabled ? "#77736B" : "#FFFFFF",
           toggleBorder: f.enabled ? "#DAD5CB" : "#6D7761",
           onEdit: () => this.props.nav("/admin/specials/" + f.id),
+          stopRow: e => e.stopPropagation(),
           onToggle: async () => { const ok = await S.setSpecialFeatureEnabled(f.id, !f.enabled); if (ok) S.toast(T.sfSavedToast, f.enabled ? "warning" : "success"); },
           onDuplicate: async () => {
             const id = await S.duplicateSpecialFeature(f.id);

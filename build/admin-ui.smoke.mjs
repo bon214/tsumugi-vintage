@@ -40,6 +40,7 @@ try {
   });
   await page.locator(".admin-list").waitFor();
   await page.locator("#dc-boot").waitFor({ state:"detached" });
+  assert.equal(await page.locator('nav[aria-label="パンくず"]').count(),0);
   for (const width of [1440, 768, 390]) {
     await page.setViewportSize({ width, height:900 });
     for (const section of ["products","orders","customers","news"]) {
@@ -80,6 +81,32 @@ try {
       console.log("PASS fixed list", section, width, "scroll", after.scroll);
     }
   }
+  // The non-control area of every collection item opens its detail screen.
+  await page.setViewportSize({width:1440,height:900});
+  for (const [section, target, detailPattern] of [
+    ["products", "tbody tr:first-child td:nth-child(4)", /^#\/admin\/products\/.+/],
+    ["orders", "tbody tr:first-child td:nth-child(3)", /^#\/admin\/orders\/.+/],
+    ["customers", "tbody tr:first-child td:nth-child(2)", /^#\/admin\/customers\/.+/],
+    ["news", ".admin-list-scroll article:first-child p", /^#\/admin\/news\/.+/],
+    ["specials", "article:first-child span", /^#\/admin\/specials\/.+/]
+  ]) {
+    await page.evaluate(s => { location.hash = "#/admin/" + s; }, section);
+    const area=page.locator(target).first();
+    await area.waitFor();
+    const checkbox=page.locator('.admin-list-scroll input[type="checkbox"]').first();
+    if (await checkbox.count()) {
+      await checkbox.click();
+      assert.equal(await page.evaluate(()=>location.hash),"#/admin/"+section);
+    }
+    await area.click();
+    await page.waitForFunction(pattern => new RegExp(pattern).test(location.hash), detailPattern.source);
+    console.log("PASS collection area opens detail",section);
+  }
+  await page.evaluate(() => { location.hash = "#/admin/products/new"; });
+  await page.locator("#f-stock").waitFor();
+  assert.equal(await page.getByText("ヴィンテージは通常一点物です。",{exact:true}).count(),0);
+  assert.equal(await page.locator('nav[aria-label="パンくず"]').count(),0);
+  console.log("PASS admin eyebrow breadcrumbs and one-of-one stock hint removed");
   await page.setViewportSize({ width:1440, height:900 });
   await page.evaluate(() => { location.hash = "#/admin/products/new"; });
   await page.locator("#f-cat").waitFor();

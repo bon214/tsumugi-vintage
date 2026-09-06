@@ -67,8 +67,8 @@
     <sc-if value="{{ showRows }}" hint-placeholder-val="{{ true }}">
       <div style="display:flex;flex-direction:column;gap:10px">
         <sc-for list="{{ rows }}" as="r" hint-placeholder-count="8">
-          <article style="background:#FFFFFF;border:1px solid {{ r.border }};padding:13px;display:flex;gap:13px;align-items:flex-start;flex-wrap:{{ wrapMode }}">
-            <input type="checkbox" checked="{{ r.checked }}" onChange="{{ r.onCheck }}" aria-label="{{ r.selectLabel }}" style="width:17px;height:17px;accent-color:#6D7761;margin-top:4px;flex:0 0 17px">
+          <article onClick="{{ r.onEdit }}" style="background:#FFFFFF;border:1px solid {{ r.border }};padding:13px;display:flex;gap:13px;align-items:flex-start;flex-wrap:{{ wrapMode }};cursor:pointer" style-hover="background:#FAF9F6">
+            <input type="checkbox" checked="{{ r.checked }}" onChange="{{ r.onCheck }}" onClick="{{ r.stopRow }}" aria-label="{{ r.selectLabel }}" style="width:17px;height:17px;accent-color:#6D7761;margin-top:4px;flex:0 0 17px">
             <sc-if value="{{ r.hasThumb }}" hint-placeholder-val="{{ true }}">
               <img loading="lazy" decoding="async" src="{{ r.thumb }}" alt="{{ r.alt }}" style="width:96px;height:72px;object-fit:cover;background:#EDE9E2;flex:0 0 96px;filter:saturate(0.9)">
             </sc-if>
@@ -87,7 +87,7 @@
               <p style="margin:0;font-size:13px;line-height:1.6;color:#77736B;max-width:640px">{{ r.summary }}</p>
               <span style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:#8C887F">{{ r.meta }}</span>
             </div>
-            <div style="display:flex;gap:7px;flex-wrap:wrap;align-items:flex-start">
+            <div onClick="{{ r.stopRow }}" style="display:flex;gap:7px;flex-wrap:wrap;align-items:flex-start">
               <button type="button" onClick="{{ r.onEdit }}" style="border:1px solid #DAD5CB;background:#FFFFFF;padding:9px 13px;min-height:42px;font-size:13px;white-space:nowrap;cursor:pointer" style-hover="border-color:#6D7761;color:#6D7761">{{ t.kEdit }}</button>
               <button type="button" onClick="{{ r.onPrimary }}" disabled="{{ r.primaryDisabled }}" style="opacity:{{ r.primaryOpacity }};border:none;background:{{ r.primaryBg }};color:#FFFFFF;padding:9px 13px;min-height:42px;font-size:13px;white-space:nowrap;cursor:pointer" style-hover="background:#59614F">{{ r.primaryLabel }}</button>
               <div style="position:relative">
@@ -792,6 +792,7 @@ class Component extends DCLogic {
               : n.author + " · " + n.category + " · " + (n.status === "scheduled" ? "scheduled " : "published ") + n.publishDate + " · updated " + (n.updatedAt || "").slice(0, 10),
             checked: sel.includes(n.id), selectLabel: "Select " + n.title,
             onCheck: e => this.setState({ selected: e.target.checked ? [...sel, n.id] : sel.filter(x => x !== n.id) }),
+            stopRow: e => e.stopPropagation(),
             onEdit: () => nav("/admin/news/" + n.id),
             primaryLabel: n.status === "published" ? T3.kUnpublish : T3.kPublish,
             primaryBg: n.status === "published" ? "#8C887F" : "#6D7761",
