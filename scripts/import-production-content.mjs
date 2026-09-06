@@ -1,6 +1,6 @@
 /* Reproducible portfolio-content import. Run only from a trusted local terminal.
 
-   This updates the twelve product slots and six article slots listed in
+   This updates the seventeen product slots and six article slots listed in
    supabase/seed/production-content.json, then refreshes the existing hero and
    special-feature rows. It never deletes customer, order or authentication
    data. The service-role key stays in the Git-ignored .env.local file and is
@@ -26,7 +26,7 @@ const input = JSON.parse(await readFile(
   process.env.PRODUCTION_CONTENT_FILE || "supabase/seed/production-content.json",
   "utf8",
 ));
-if (!input.meta?.disclosure || input.products?.length !== 12 || input.news?.length !== 6) {
+if (!input.meta?.disclosure || input.products?.length !== 17 || input.news?.length !== 6) {
   throw new Error("production-content.json の件数または開示情報が不正です。取込を中止しました。");
 }
 
@@ -39,7 +39,7 @@ const checked = (result, label) => {
 };
 
 const productColumns = [
-  "id", "sku", "slug", "name", "brand", "year", "year_label", "price", "tax_status",
+  "sku", "slug", "name", "brand", "year", "year_label", "price", "tax_status",
   "category", "subcategory", "size", "size_notation", "colour", "material", "country",
   "era", "condition", "condition_note", "stains", "damage", "repairs", "fading",
   "missing_parts", "curator_note", "story", "styling", "collection", "measurements",
@@ -48,24 +48,48 @@ const productColumns = [
 const productRows = input.products.map((product) => Object.fromEntries(
   productColumns.map((column) => [column, product[column] ?? null]),
 ));
-const newsColumns = [
-  "id", "type", "title", "slug", "category", "summary", "body", "image", "thumb", "alt",
-  "tags", "status", "publish_date", "seo_title", "seo_description", "author", "featured",
-  "related_product_ids",
-];
-const newsRows = input.news.map((entry) => Object.fromEntries(
-  newsColumns.map((column) => [column, entry[column] ?? null]),
-));
-
 const products = checked(await client.from("products")
-  .upsert(productRows, { onConflict: "id" }).select("id"), "products");
+  .upsert(productRows, { onConflict: "sku" }).select("id,sku"), "products");
+const productId = new Map(input.products.map((entry) => {
+  const row = products.find((candidate) => candidate.sku === entry.sku);
+  if (!row) throw new Error(`products: imported row missing for ${entry.sku}`);
+  return [String(entry.id), row.id];
+}));
+
+const newsColumns = [
+  "type", "title", "slug", "category", "summary", "body", "image", "thumb", "alt",
+  "tags", "status", "publish_date", "seo_title", "seo_description", "author", "featured",
+];
+const newsRows = input.news.map((entry) => ({
+  ...Object.fromEntries(newsColumns.map((column) => [column, entry[column] ?? null])),
+  related_product_ids: (entry.related_product_ids || [])
+    .map((id) => productId.get(String(id))).filter(Boolean),
+}));
 const news = checked(await client.from("news")
-  .upsert(newsRows, { onConflict: "id" }).select("id"), "news");
+  .upsert(newsRows, { onConflict: "slug" }).select("id,slug"), "news");
+const newsId = new Map(input.news.map((entry) => {
+  const row = news.find((candidate) => candidate.slug === entry.slug);
+  if (!row) throw new Error(`news: imported row missing for ${entry.slug}`);
+  return [String(entry.id), row.id];
+}));
+
+const heroRows = input.hero_features.map((entry) => ({
+  ...entry,
+  source_id: entry.source_type === "page" ? null : newsId.get(String(entry.source_id)),
+}));
 const heroes = checked(await client.from("hero_features")
-  .upsert(input.hero_features, { onConflict: "id" }).select("id"), "hero features");
+  .upsert(heroRows, { onConflict: "id" }).select("id"), "hero features");
+
+const specialRows = input.special_features.map((entry) => ({
+  ...entry,
+  candidate_product_ids: (entry.candidate_product_ids || [])
+    .map((id) => productId.get(String(id))).filter(Boolean),
+  media: (entry.media || []).map((item) => item.sourceType === "product"
+    ? { ...item, productId: productId.get(String(item.productId)) || null }
+    : item),
+}));
 const specials = checked(await client.from("special_features")
-  .upsert(input.special_features, { onConflict: "id" }).select("id"), "special features");
+  .upsert(specialRows, { onConflict: "id" }).select("id"), "special features");
 
 console.log(`production content imported: ${products.length} products, ${news.length} articles, `
   + `${heroes.length} hero features, ${specials.length} special features`);
-

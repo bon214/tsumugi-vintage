@@ -150,25 +150,120 @@
     };
   }
 
+  var PAYMENT_LABEL = {
+    pending: "Pending", authorized: "Authorized", paid: "Paid",
+    refunded: "Refunded", failed: "Failed"
+  };
+  var FULFILMENT_LABEL = {
+    unfulfilled: "Unfulfilled", preparing: "Preparing", shipped: "Shipped",
+    delivered: "Delivered", cancelled: "Cancelled", returned: "Returned"
+  };
+
+  function portfolioOrderFromRow(r, productsBySku) {
+    var d = r.detail && typeof r.detail === "object" ? r.detail : {};
+    var items = Array.isArray(d.items) ? d.items.map(function (item) {
+      var product = productsBySku[String(item.sku || "")] || null;
+      var primary = product && (product.images || []).find(function (image) { return image.primary; });
+      return {
+        productId: product ? product.id : null,
+        sku: item.sku || "", name: item.name || (product && product.name) || "",
+        brand: item.brand || (product && product.brand) || "",
+        price: Number(item.price) || 0, qty: Math.max(1, Number(item.qty) || 1),
+        thumb: item.thumb || (primary && (primary.thumb || primary.url)) || ""
+      };
+    }) : [];
+    return {
+      id: r.number || r.id, dbId: r.id, number: r.number || "", date: r.date || "",
+      createdAt: r.date ? r.date + "T00:00:00+09:00" : null,
+      updatedAt: d.updatedAt || (r.date ? r.date + "T00:00:00+09:00" : null),
+      customerId: r.customer_id || null, customerName: r.customer_name || "",
+      email: r.contact_email || "", phone: d.phone || "",
+      shipping: d.shipping || { name: r.customer_name || "", postalCode: "", prefecture: "", city: "", address: "" },
+      items: items, itemCount: Number(r.item_count) || items.length,
+      subtotal: Number(val(d.subtotal, r.total)) || 0,
+      shippingFee: Number(d.shippingFee) || 0, total: Number(r.total) || 0,
+      paymentStatus: PAYMENT_LABEL[String(r.payment_status || "").toLowerCase()] || "Pending",
+      fulfilmentStatus: FULFILMENT_LABEL[String(r.fulfilment_status || "").toLowerCase()] || "Unfulfilled",
+      deliveryMethod: r.delivery_method || "Standard shipping",
+      paymentMethod: d.paymentMethod || "Demo card",
+      tracking: d.tracking || "", notes: Array.isArray(d.notes) ? d.notes : [],
+      history: Array.isArray(d.history) ? d.history : [], source: "portfolio-demo",
+      portfolioDemo: true
+    };
+  }
+
+  function portfolioCustomerFromRow(r, orders) {
+    var d = r.detail && typeof r.detail === "object" ? r.detail : {};
+    var mine = orders.filter(function (order) { return String(order.customerId) === String(r.id); });
+    mine.sort(function (a, b) { return String(b.date).localeCompare(String(a.date)); });
+    return {
+      id: r.id, name: r.name || "", kana: d.kana || "", email: r.email || "",
+      phone: d.phone || "", address: d.address || "", country: d.country || "Japan",
+      city: r.city || "", registered: r.registered || "",
+      orders: Number(r.orders) || mine.length, totalSpent: Number(r.total_spent) || 0,
+      lastPurchase: d.lastPurchase || (mine[0] && mine[0].date) || "",
+      status: d.status || "Active", accountStatus: d.accountStatus || "Active",
+      segment: r.segment || "Standard", engagement: d.engagement || "Active",
+      tags: Array.isArray(d.tags) ? d.tags : [], marketing: !!d.marketing,
+      notes: Array.isArray(d.notes) ? d.notes : [],
+      activity: Array.isArray(d.activity) ? d.activity : [],
+      purchases: mine.map(function (order) {
+        return {
+          order: order.id, number: order.number, date: order.date,
+          items: order.items.map(function (item) {
+            return { id: item.productId, name: item.name, brand: item.brand, price: item.price, thumb: item.thumb };
+          }),
+          amount: order.total, payment: order.paymentStatus,
+          delivery: order.fulfilmentStatus === "Shipped" ? "In transit" : order.fulfilmentStatus,
+          card: order.paymentMethod
+        };
+      }),
+      portfolioDemo: true
+    };
+  }
+
   function isStaff() {
     var s = store();
     return !!(s && s.isStaffSession && s.isStaffSession());
   }
-  function scope() { return isStaff() ? "staff" : "public"; }
+  function scope() {
+    if (isStaff()) return "staff";
+    var s = store();
+    return s && s.isAnonymousGuest && s.isAnonymousGuest() ? "demo" : "public";
+  }
 
   function querySnapshot(client, wantedScope) {
     var specialTable = wantedScope === "staff" ? "special_features" : "public_special_features";
+    var includePortfolioDemo = wantedScope === "staff" || wantedScope === "demo";
+    var empty = function () { return Promise.resolve({ data: [], error: null }); };
     return Promise.all([
       client.from("products").select(PRODUCT_SELECT).order("created_at", { ascending: false }),
       client.from("news").select("*").order("publish_date", { ascending: false, nullsFirst: false }),
       client.from("hero_features").select("*").order("sort_order", { ascending: true }),
-      client.from(specialTable).select("*").order("publish_at", { ascending: false, nullsFirst: false })
+      client.from(specialTable).select("*").order("publish_at", { ascending: false, nullsFirst: false }),
+      includePortfolioDemo
+        ? client.from("demo_orders").select("*").order("date", { ascending: false })
+        : empty(),
+      includePortfolioDemo
+        ? client.from("demo_customers").select("*").order("registered", { ascending: false })
+        : empty()
     ]).then(function (rows) {
+      var products = (fail(rows[0]) || []).map(productFromRow);
+      var productsBySku = products.reduce(function (all, product) {
+        all[String(product.sku || "")] = product; return all;
+      }, {});
+      var orders = (fail(rows[4]) || []).map(function (row) {
+        return portfolioOrderFromRow(row, productsBySku);
+      });
       return {
-        products: (fail(rows[0]) || []).map(productFromRow),
+        products: products,
         news: (fail(rows[1]) || []).map(newsFromRow),
         heroFeatures: (fail(rows[2]) || []).map(heroFromRow),
-        specialFeatures: (fail(rows[3]) || []).map(specialFromRow)
+        specialFeatures: (fail(rows[3]) || []).map(specialFromRow),
+        orders: orders,
+        customers: (fail(rows[5]) || []).map(function (row) {
+          return portfolioCustomerFromRow(row, orders);
+        })
       };
     });
   }
@@ -524,6 +619,8 @@
     productToRow: productToRow,
     newsFromRow: newsFromRow,
     newsToRow: newsToRow,
+    portfolioOrderFromRow: portfolioOrderFromRow,
+    portfolioCustomerFromRow: portfolioCustomerFromRow,
     requestRebuild: scheduleRebuild
   };
 

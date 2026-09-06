@@ -80,6 +80,45 @@ logo, label or watermark; do not mirror the front view or alter the background.
 - `product-washed-black-denim-back.jpg` — trucker yoke, shaping seams and waist tabs.
 - `product-ivory-linen-shirt-back.jpg` — rear shoulder yoke and center box pleat.
 
+## Sold-archive product images added on 2026-09-06
+
+The following five front views were generated with the built-in image generator
+in `product-mockup` mode. Each named existing front image was supplied only as
+a composition/lighting reference; the garment itself was newly generated. The
+shared constraints were: portrait 3:4, one complete garment, dark wooden hanger,
+warm off-white plaster wall, soft natural light from the left, realistic vintage
+wear, no person, text, logo, label, watermark, props or duplicate clothing.
+
+- `product-faded-black-moleskin-jacket.jpg` — reference:
+  `product-charcoal-coverall.jpg`; late-1970s faded-black cotton moleskin French
+  work jacket, point collar, five dark buttons, one chest and two lower patch
+  pockets, seam and elbow fading.
+- `product-burgundy-raglan-sweat.jpg` — reference:
+  `product-grey-sweat.jpg`; mid-1980s solid burgundy cotton raglan sweatshirt,
+  ribbed crew neck, triangular gusset, ribbed cuffs and hem, no graphic.
+- `product-brown-herringbone-trousers.jpg` — reference:
+  `product-black-wool-trousers.jpg`; early-1980s tobacco-brown herringbone wool
+  trousers, high rise, two forward pleats, belt loops and tapered straight legs.
+- `product-oatmeal-fisherman-cardigan.jpg` — reference:
+  `product-ecru-knit.jpg`; early-1980s oatmeal hand-knit fisherman cardigan,
+  V-neck, five wooden buttons, two patch pockets and restrained cable panels.
+- `product-sage-pullover-shirt.jpg` — reference:
+  `product-ivory-linen-shirt.jpg`; late-1970s washed sage cotton pullover shirt,
+  point collar, three-button half placket, chest pocket and long sleeves.
+
+Their five matching rear views were produced in `precise-object-edit` mode with
+the corresponding new front as the edit target. The instruction changed only
+the garment orientation and required the same individual garment, wall, hanger,
+hook, crop, camera, light, shadow, scale, colour, material and wear. Front-only
+buttons, plackets and pockets were removed; physically plausible rear yokes,
+seams, pleats or knit panels were added as appropriate.
+
+- `product-faded-black-moleskin-jacket-back.jpg`
+- `product-burgundy-raglan-sweat-back.jpg`
+- `product-brown-herringbone-trousers-back.jpg`
+- `product-oatmeal-fisherman-cardigan-back.jpg`
+- `product-sage-pullover-shirt-back.jpg`
+
 ## Journal images
 
 - `journal-choosing-vintage.jpg`

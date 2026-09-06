@@ -13,8 +13,8 @@ const localImage = (url) => path.join(ROOT, "uploads/production", url.slice(base
 const unique = (values) => new Set(values).size === values.length;
 
 test("portfolio disclosure and release-sized content set are present", () => {
-  assert.match(data.meta.disclosure, /fictional portfolio samples/i);
-  assert.equal(data.products.length, 12);
+  assert.match(data.meta.disclosure, /fictional samples/i);
+  assert.equal(data.products.length, 17);
   assert.equal(data.news.length, 6);
   assert.equal(data.hero_features.length, 4);
   assert.equal(data.special_features.length, 3);
@@ -25,10 +25,11 @@ test("every product is complete, unique and points at a local production image",
   assert.ok(unique(data.products.map((p) => p.sku)));
   assert.ok(unique(data.products.map((p) => p.slug)));
   for (const product of data.products) {
-    assert.equal(product.status, "published", `product ${product.id} status`);
+    assert.ok(["published", "soldout"].includes(product.status), `product ${product.id} status`);
+    assert.equal(product.stock, product.status === "soldout" ? 0 : 1, `product ${product.id} stock/status`);
     assert.ok(product.name && product.sku && product.slug && product.price > 0);
     assert.ok(product.condition_note && product.curator_note && product.story && product.styling);
-    assert.match(product.curator_note, /ポートフォリオ公開用の架空商品/);
+    assert.match(product.curator_note, /ポートフォリオ公開用の架空(?:の販売済み)?商品/);
     assert.ok(Object.keys(product.measurements || {}).length >= 2);
     assert.equal(product.images.length, 2, `product ${product.id} front/back image count`);
     assert.equal(product.images.filter((image) => image.primary).length, 1);
@@ -44,6 +45,8 @@ test("every product is complete, unique and points at a local production image",
     assert.ok(product.meta_title.length >= 20);
     assert.ok(product.meta_description.length >= 40);
   }
+  assert.equal(data.products.filter((product) => product.status === "published").length, 12);
+  assert.equal(data.products.filter((product) => product.status === "soldout").length, 5);
 });
 
 test("every article is substantive, safe to sanitize and fully described", () => {

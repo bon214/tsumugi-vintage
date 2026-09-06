@@ -465,13 +465,12 @@
     editor: ["products.view","content.view","content.edit","content.publish"],
     support: ["orders.view","orders.edit","customers.view","customers.edit","products.view","content.view"],
     viewer: ["settings.view","orders.view","products.view","customers.view","content.view"],
-    /* Anonymous portfolio visitor: reads the console's editorial surfaces and
-       changes nothing. Real orders and real customer records are deliberately
-       NOT here — an anonymous session is a stranger with a token, and the
-       orders/customers screens hold other people's names, addresses and spend.
-       (Under Supabase this is the same subject as auth.jwt()->>'is_anonymous' =
-       true; see supabase/migrations and AUTH_MIGRATION.md.) */
-    guest: ["settings.view", "products.view", "content.view"],
+    /* Anonymous portfolio visitor: may read the editorial surfaces plus the
+       isolated synthetic customer/order showcase. The repository never loads
+       profiles or real orders for this role, and no write/PII permission is
+       granted. (Under Supabase this is the same subject as
+       auth.jwt()->>'is_anonymous' = true; see 0006 and the 20260906 migration.) */
+    guest: ["settings.view", "orders.view", "products.view", "customers.view", "content.view"],
     /* A storefront customer is not a member of staff. The entry exists so the
        role is a known quantity rather than an unmatched string, and it is empty
        on purpose: every can() check in the console answers false for it. */
@@ -2570,13 +2569,11 @@
     if (Array.isArray(snapshot.news)) db.news = snapshot.news;
     if (Array.isArray(snapshot.heroFeatures)) db.heroFeatures = snapshot.heroFeatures;
     if (Array.isArray(snapshot.specialFeatures)) db.specialFeatures = snapshot.specialFeatures;
-    /* The remote phase currently implements editorial CMS only. Never mix the
-       bundled fictional customers/orders/accounts into a console that is
-       displaying real Supabase content: zero is truthful, demo totals are not.
-       A future commerce phase must hydrate these from their own RLS-safe
-       repositories before those screens are enabled. */
-    db.customers = [];
-    db.orders = [];
+    /* Customer/order screens are hydrated only from the explicitly synthetic,
+       RLS-isolated portfolio tables. Real profiles/orders remain outside this
+       snapshot, so a public console can never disclose production PII. */
+    db.customers = Array.isArray(snapshot.customers) ? snapshot.customers : [];
+    db.orders = Array.isArray(snapshot.orders) ? snapshot.orders : [];
     db.authUsers = [];
     db.profiles = [];
     db.addresses = [];

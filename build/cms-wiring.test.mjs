@@ -98,11 +98,64 @@ test("repository maps editor data to database rows without privileged secrets", 
   assert.deepEqual(row.images, [{ src: "https://example.test/coat.jpg" }]);
 });
 
-test("remote CMS mode cannot display bundled fictional commerce records", async () => {
+test("remote CMS displays only the RLS-isolated portfolio commerce dataset", async () => {
   const source = await read("tsumugi-data.js");
-  for (const collection of ["customers", "orders", "authUsers", "profiles", "addresses", "wishlists"]) {
+  assert.match(source, /db\.customers = Array\.isArray\(snapshot\.customers\)/);
+  assert.match(source, /db\.orders = Array\.isArray\(snapshot\.orders\)/);
+  for (const collection of ["authUsers", "profiles", "addresses", "wishlists"]) {
     assert.match(source, new RegExp(`db\\.${collection} = \\[\\]`), `${collection} demo rows are not cleared`);
   }
+  const repository = await read("tsumugi-repository.js");
+  assert.match(repository, /from\("demo_orders"\)/);
+  assert.match(repository, /from\("demo_customers"\)/);
+  assert.match(repository, /wantedScope === "staff" \|\| wantedScope === "demo"/);
+  assert.match(source, /guest: \["settings\.view", "orders\.view", "products\.view", "customers\.view", "content\.view"\]/);
+});
+
+test("portfolio commerce migration contains five synthetic, non-deliverable records", async () => {
+  const sql = await read("supabase/migrations/20260906093000_expand_portfolio_demo_dataset.sql");
+  for (let index = 1; index <= 5; index++) {
+    const suffix = String(index).padStart(4, "0");
+    assert.match(sql, new RegExp(`DEMO-${suffix}`));
+    assert.match(sql, new RegExp(`DEMO-2026-${suffix}`));
+  }
+  assert.equal((sql.match(/example\.invalid/g) || []).length, 10);
+  assert.equal((sql.match(/（架空）/g) || []).length >= 10, true);
+  assert.match(sql, /revoke insert, update, delete on public\.demo_customers, public\.demo_orders/);
+  assert.doesNotMatch(sql, /@(gmail|yahoo|outlook|icloud)\./i);
+});
+
+test("portfolio rows map to admin order and customer detail shapes", async () => {
+  const source = await read("tsumugi-repository.js");
+  const context = { window: { TSUMUGI_AUTH_CONFIG: {} }, console, setTimeout, clearTimeout };
+  vm.runInNewContext(source, context, { filename: "tsumugi-repository.js" });
+  const cms = context.window.TSUMUGI_CMS;
+  const product = {
+    id: 13, sku: "TSU-ARC-013", name: "Jacket", brand: "Studio",
+    images: [{ url: "/front.jpg", primary: true }],
+  };
+  const order = cms.portfolioOrderFromRow({
+    id: "uuid-only-in-db", number: "DEMO-2026-0001", date: "2026-08-28",
+    customer_id: "DEMO-0001", customer_name: "架空顧客", contact_email: "demo@example.invalid",
+    item_count: 1, total: 28600, payment_status: "paid", fulfilment_status: "delivered",
+    delivery_method: "Standard shipping",
+    detail: { items: [{ sku: "TSU-ARC-013", name: "Jacket", price: 28600, qty: 1 }] },
+  }, { "TSU-ARC-013": product });
+  assert.equal(order.id, "DEMO-2026-0001");
+  assert.equal(order.dbId, "uuid-only-in-db");
+  assert.equal(order.items[0].productId, 13);
+  assert.equal(order.paymentStatus, "Paid");
+  assert.equal(order.fulfilmentStatus, "Delivered");
+
+  const customer = cms.portfolioCustomerFromRow({
+    id: "DEMO-0001", name: "架空顧客", email: "demo@example.invalid",
+    city: "東京都", segment: "VIP", orders: 1, total_spent: 28600,
+    registered: "2026-05-12", detail: { tags: ["Outerwear buyer"], marketing: true },
+  }, [order]);
+  assert.equal(customer.purchases.length, 1);
+  assert.equal(customer.purchases[0].order, "DEMO-2026-0001");
+  assert.equal(customer.lastPurchase, "2026-08-28");
+  assert.equal(customer.portfolioDemo, true);
 });
 
 test("crawler export also respects product column grants", async () => {
