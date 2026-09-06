@@ -137,6 +137,19 @@
       .replace(/-+$/g, "");
     return value || "item";
   };
+  var normaliseArticleSlugs = function (rows) {
+    var used = {};
+    return (rows || []).map(function (row, index) {
+      var copy = Object.assign({}, row);
+      var base = slugify(copy.slug) || slugify(copy.title) || ("article-" + (copy.id || index + 1));
+      var next = base;
+      var suffix = 2;
+      while (used[next]) next = base + "-" + suffix++;
+      used[next] = true;
+      copy.slug = next;
+      return copy;
+    });
+  };
   var pad = function (n, w) { var s = String(n); while (s.length < w) s = "0" + s; return s; };
   var daysAgo = function (n) { var d = new Date(2026, 6, 29); d.setDate(d.getDate() - n); return d.toISOString().slice(0, 10); };
   var iso = function (n) { var d = new Date(2026, 6, 29, 9, 20); d.setDate(d.getDate() - n); return d.toISOString(); };
@@ -2575,7 +2588,7 @@
   Store._applyRemoteCMS = function (snapshot) {
     snapshot = snapshot || {};
     if (Array.isArray(snapshot.products)) db.products = snapshot.products;
-    if (Array.isArray(snapshot.news)) db.news = snapshot.news;
+    if (Array.isArray(snapshot.news)) db.news = normaliseArticleSlugs(snapshot.news);
     if (Array.isArray(snapshot.heroFeatures)) db.heroFeatures = snapshot.heroFeatures;
     if (Array.isArray(snapshot.specialFeatures)) db.specialFeatures = snapshot.specialFeatures;
     /* Customer/order screens are hydrated only from the explicitly synthetic,

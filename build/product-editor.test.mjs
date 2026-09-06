@@ -1,5 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
+import { normaliseArticleSlugs } from "./public-slugs.mjs";
 import vm from "node:vm";
 import { webcrypto } from "node:crypto";
 import { readFile } from "node:fs/promises";
@@ -99,6 +100,16 @@ test("product and article slug regeneration supports Japanese titles",async()=>{
   news._set("title","秋の入荷案内");
   news.renderVals().regenSlug();
   assert.equal(news.state.form.slug,"秋の入荷案内");
+
+  const legacyRows=[
+    {id:10,title:"秋の入荷案内",slug:""},
+    {id:11,title:"秋の入荷案内",slug:""},
+    {id:12,title:"",slug:""}
+  ];
+  const expected=["秋の入荷案内","秋の入荷案内-2","article-12"];
+  assert.deepEqual(normaliseArticleSlugs(legacyRows).map((n)=>n.slug),expected);
+  S._applyRemoteCMS({products:[],news:legacyRows,heroFeatures:[],specialFeatures:[]});
+  assert.deepEqual(S.news().map((n)=>n.slug),expected);
 });
 
 test("public product details use the same measurements and hide unfilled or wrong-category values",async()=>{

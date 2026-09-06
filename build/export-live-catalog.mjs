@@ -2,6 +2,7 @@
    This runs in GitHub Actions before prerender; no privileged key is needed. */
 import { writeFile } from "node:fs/promises";
 import { createClient } from "@supabase/supabase-js";
+import { normaliseArticleSlugs } from "./public-slugs.mjs";
 
 const url = String(process.env.SUPABASE_URL || "").trim();
 const key = String(process.env.SUPABASE_PUBLISHABLE_KEY || "").trim();
@@ -39,7 +40,7 @@ const catalog = {
       status: p.status,
     };
   }),
-  news: (newsResult.data || []).map((n) => ({
+  news: normaliseArticleSlugs(newsResult.data || []).map((n) => ({
     slug: n.slug, title: n.title, summary: n.summary || "",
     body: plain(n.body), category: n.category || "",
     date: n.publish_date || String(n.created_at || "").slice(0, 10),
