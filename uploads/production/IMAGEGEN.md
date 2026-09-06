@@ -1,8 +1,10 @@
 # TSUMUGI production image record
 
-Generated for the portfolio release on 2026-09-05. The product photographs are
+Generated for the portfolio release on 2026-09-05 and expanded with rear views
+on 2026-09-06. The product photographs are
 fictional visual studies, not photographs of real inventory. All files shipped
-to the site are JPEG derivatives at quality 84; the original generated PNGs
+to the site are JPEG derivatives (front views at quality 84; rear views at
+quality 90); the original generated PNGs
 remain in the Codex image-generation store and are not part of the website.
 
 ## Product images
@@ -55,6 +57,29 @@ remain in the Codex image-generation store and are not part of the website.
 
   > Create one polished e-commerce catalog photograph for a Japanese vintage clothing archive named TSUMUGI. Subject: an unbranded late-1970s ivory linen open-collar shirt, front view, relaxed short sleeves, single chest pocket, softly rumpled slubby linen, warm natural ivory, hanging alone from a dark natural-wood hanger. Warm light-beige lime plaster wall with clear garment separation, soft north-window daylight from the left, restrained quiet luxury mood, accurate garment proportions, centered full garment with breathing room. No model, no hands, no props, no text, no lettering, no logos, no labels, no watermark. Portrait 3:4 composition, production-ready fashion editorial realism.
 
+## Product rear-view edits
+
+The 12 rear views were made with the built-in image editor in precise-object-edit
+mode. Each corresponding front photograph was supplied as the edit target. The
+shared instruction was: turn only the hanging garment around; preserve the exact
+wall, window light, hanger, hook, camera position, crop, garment color, material,
+proportions and vintage wear; show a physically plausible true back; remove all
+front-only buttons, plackets and pockets; one garment only; no person, text,
+logo, label or watermark; do not mirror the front view or alter the background.
+
+- `product-indigo-chore-back.jpg` — plain chore-jacket rear with center seam.
+- `product-charcoal-coverall-back.jpg` — clean wool coverall rear with center seam.
+- `product-chambray-shirt-back.jpg` — rear shoulder yoke and center box pleat.
+- `product-quilted-liner-back.jpg` — continuous diamond quilting across the back.
+- `product-ecru-knit-back.jpg` — continuous matching cable-knit rear pattern.
+- `product-grey-sweat-back.jpg` — plain rear body with raglan seams.
+- `product-black-wool-trousers-back.jpg` — rear waistband, darts and two welt pockets.
+- `product-olive-fatigue-trousers-back.jpg` — rear waistband and two patch pockets.
+- `product-brown-leather-blouson-back.jpg` — shoulder yoke and restrained panel seams.
+- `product-navy-balmacaan-back.jpg` — raglan seams, center seam and lower vent.
+- `product-washed-black-denim-back.jpg` — trucker yoke, shaping seams and waist tabs.
+- `product-ivory-linen-shirt-back.jpg` — rear shoulder yoke and center box pleat.
+
 ## Journal images
 
 - `journal-choosing-vintage.jpg`
@@ -90,4 +115,3 @@ remain in the Codex image-generation store and are not part of the website.
 - `hero-textile-table.jpg`
 
   > Create a cinematic wide hero photograph for TSUMUGI, a quiet Japanese vintage archive shop. Scene: a close, atmospheric arrangement of folded indigo cotton, charcoal wool, ecru knit and olive quilted cloth on a long worn oak table, a few matching dark wooden hangers and a garment rail softly out of focus behind, late-afternoon side light, rich tactile detail, restrained warm neutral palette, editorial fashion realism. Keep the left third calm and shadowed for white headline overlay. No people, no readable text, no logos, no watermark. Wide 16:10 landscape, production-ready website hero.
-

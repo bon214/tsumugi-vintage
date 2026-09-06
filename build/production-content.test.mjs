@@ -30,7 +30,12 @@ test("every product is complete, unique and points at a local production image",
     assert.ok(product.condition_note && product.curator_note && product.story && product.styling);
     assert.match(product.curator_note, /ポートフォリオ公開用の架空商品/);
     assert.ok(Object.keys(product.measurements || {}).length >= 2);
+    assert.equal(product.images.length, 2, `product ${product.id} front/back image count`);
     assert.equal(product.images.filter((image) => image.primary).length, 1);
+    assert.equal(product.images.filter((image) => image.role === "front").length, 1);
+    assert.equal(product.images.filter((image) => image.role === "back").length, 1);
+    assert.equal(product.images.find((image) => image.role === "front")?.primary, true);
+    assert.equal(product.images.find((image) => image.role === "back")?.primary, false);
     for (const image of product.images) {
       assert.ok(image.url.startsWith(base), image.url);
       assert.ok(image.alt.length >= 12, `product ${product.id} alt`);
@@ -74,4 +79,3 @@ test("hero and special features only reference this release set", () => {
     }
   }
 });
-
