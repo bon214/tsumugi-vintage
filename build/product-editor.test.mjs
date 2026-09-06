@@ -89,6 +89,18 @@ test("public product details use the same measurements and hide unfilled or wron
   assert.deepEqual(result,[{k:"ウエスト",v:"80 cm"},{k:"股下",v:"75 cm"}]);
 });
 
+test("legacy letter grades and editor condition names render identically",async()=>{
+  const {S,context}=await fixture();
+  const base={...S.blankProduct(),status:"published",stock:1};
+  S.all().products=[{...base,id:1,condition:"B"},{...base,id:2,condition:"Very Good"}];
+  const logic=(await read("TSUMUGI.dc.html")).match(/<script type="text\/x-dc"[^>]*>([\s\S]*?)<\/script>/)[1];
+  const C=vm.runInNewContext("(()=>{"+logic+";return Component;})()",context);
+  const c=new C({}); c.store=S;
+  const products=c.products();
+  assert.deepEqual([products[0].condition,products[0].conditionName],["B","Very Good"]);
+  assert.deepEqual([products[1].condition,products[1].conditionName],["B","Very Good"]);
+});
+
 test("public product pages omit the former fabric and detail gallery",async()=>{
   const page=await read("PublicProduct.dc.html");
   const shell=await read("TSUMUGI.dc.html");

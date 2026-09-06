@@ -1067,6 +1067,7 @@ class Component extends DCLogic {
     const S = this.store;
     if (!S) return [];
     const GRADE = { Excellent: "A", "Very Good": "B", Good: "C", Fair: "D" };
+    const GRADE_NAME = { A: "Excellent", B: "Very Good", C: "Good", D: "Fair" };
     const I = window.TSUMUGI_I18N;
     const lang = S.lang ? S.lang() : "en";
     const PN = n => (I && I.pname ? I.pname(n, lang) : n);
@@ -1079,7 +1080,8 @@ class Component extends DCLogic {
         id: p.id, sku: p.sku, slug: p.slug, name: PN(p.name), brand: p.brand, year: p.year, price: p.price,
         taxStatus: p.taxStatus, category: p.category, subcategory: p.subcategory,
         size: p.size, sizeNotation: p.sizeNotation, colour: p.colour, material: p.material,
-        condition: GRADE[p.condition] || "B", conditionName: p.condition,
+        condition: GRADE[p.condition] || GRADE_NAME[p.condition] && p.condition || "B",
+        conditionName: GRADE_NAME[p.condition] || p.condition,
         conditionNote: (I && I.note ? I.note(p.conditionNote, lang) : p.conditionNote),
         stains: p.stains, damage: p.damage, repairs: p.repairs, fading: p.fading, missingParts: p.missingParts,
         short: (I && I.note ? I.note(p.curatorNote, lang) : p.curatorNote),
