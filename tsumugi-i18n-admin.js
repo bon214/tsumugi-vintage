@@ -18,7 +18,7 @@
     dashboard:       ["Dashboard", "ダッシュボード"],
     products:        ["Products", "商品"],
     customers:       ["Customers", "顧客"],
-    news:            ["News & Journal", "お知らせ・ジャーナル"],
+    news:            ["Articles", "記事"],
     settings:        ["Settings", "設定"],
     viewStore:       ["View store", "ストアを見る"],
     publicationReview: ["Publication & sales checks", "公開・販売状態の要確認"],
@@ -1185,15 +1185,15 @@ var ADMPAIRS = [
  ],
  [
   "News",
-  "お知らせ"
+  "記事"
  ],
  [
   "News &amp; Journal",
-  "お知らせ・ジャーナル"
+  "記事"
  ],
  [
   "News & Journal",
-  "お知らせ・ジャーナル"
+  "記事"
  ],
  [
   " pieces in the archive",
@@ -2167,6 +2167,7 @@ var ADMPAIRS = [
     out.kCuratorSNote = ["Product details", "商品詳細"];
     out.kCuratorSNote2 = ["Product details", "商品詳細"];
     out.kNoCuratorSNoteYet = ["No product details yet.", "商品詳細はまだありません。"];
+    out.kNewsJournal = ["Articles", "記事"];
     return out;
   })();
 

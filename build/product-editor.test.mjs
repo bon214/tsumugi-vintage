@@ -78,6 +78,29 @@ test("new drafts and duplicates receive unique automatic SKUs; edits keep the sa
   assert.equal(I.t("ja").secCondition,"状態");
 });
 
+test("product and article slug regeneration supports Japanese titles",async()=>{
+  const {S,I,c,context}=await fixture();
+  assert.equal(I.t("ja").news,"記事");
+  assert.equal(I.t("ja").kNews,"記事");
+  assert.equal(I.t("ja").kNewsJournal,"記事");
+  assert.equal(S.slugify(""),"");
+  assert.equal(S.slugify("藍染め カバーオール 2026"),"藍染め-カバーオール-2026");
+  c._set("brand","無銘");
+  c._set("name","藍染め カバーオール");
+  c.renderVals().regenSlug();
+  assert.equal(c.state.form.slug,"無銘-藍染め-カバーオール");
+
+  const source=await read("AdminNews.dc.html");
+  const logic=source.match(/<script type="text\/x-dc"[^>]*>([\s\S]*?)<\/script>/)[1];
+  const News=vm.runInNewContext("(()=>{"+logic+";return Component;})()",context);
+  const news=new News({view:"new",entityId:"",nav(){}});
+  news.S=S;
+  news._syncForm();
+  news._set("title","秋の入荷案内");
+  news.renderVals().regenSlug();
+  assert.equal(news.state.form.slug,"秋の入荷案内");
+});
+
 test("public product details use the same measurements and hide unfilled or wrong-category values",async()=>{
   const {S,context}=await fixture();
   const p={...S.blankProduct(),id:123,name:"QA pants",status:"published",category:"Bottoms",measurements:{waist:80,inseam:75,chest:50,hip:0,hem:-1}};

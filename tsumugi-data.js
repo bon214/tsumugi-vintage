@@ -126,7 +126,16 @@
   var TROUSER_CATS = ["Trousers"];
 
   var slugify = function (s) {
-    return String(s || "").toLowerCase().trim().replace(/['’]/g, "").replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "").slice(0, 60);
+    var value = String(s || "");
+    if (!value.trim()) return "";
+    if (value.normalize) value = value.normalize("NFKC");
+    value = value.toLowerCase().trim()
+      .replace(/['’]/g, "")
+      .replace(/[^\p{L}\p{N}]+/gu, "-")
+      .replace(/^-+|-+$/g, "")
+      .slice(0, 60)
+      .replace(/-+$/g, "");
+    return value || "item";
   };
   var pad = function (n, w) { var s = String(n); while (s.length < w) s = "0" + s; return s; };
   var daysAgo = function (n) { var d = new Date(2026, 6, 29); d.setDate(d.getDate() - n); return d.toISOString().slice(0, 10); };
