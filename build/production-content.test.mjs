@@ -65,15 +65,20 @@ test("every article is substantive, safe to sanitize and fully described", () =>
   }
 });
 
-test("the vintage selection guide matches the shared ecru-wall photography system", () => {
-  const article = data.news.find((entry) => entry.title === "古着を選ぶときに必ず見ること");
-  assert.ok(article, "updated selection guide");
-  assert.equal(article.slug, "古着を選ぶときに必ず見ること");
+test("the light and colour article matches the shared ecru-wall photography system", () => {
+  const restoredGuide = data.news.find((entry) => entry.title === "古着を選ぶときに必ず見ること");
+  assert.ok(restoredGuide, "restored vintage selection guide");
+  assert.match(restoredGuide.body, /布が戻るかを見る/);
+  assert.match(restoredGuide.image, /journal-choosing-vintage\.jpg$/);
+
+  const article = data.news.find((entry) => entry.title === "光と色を記録する");
+  assert.ok(article, "updated light and colour article");
+  assert.equal(article.slug, "recording-light-and-colour");
   assert.match(article.body, /生成りの壁/);
   assert.match(article.body, /自然光/);
   assert.match(article.body, /正面と背面/);
   assert.match(article.body, /ポートフォリオ用の生成イメージ/);
-  assert.match(article.image, /journal-choosing-vintage-v2\.jpg$/);
+  assert.match(article.image, /journal-light-and-color-v2\.jpg$/);
 });
 
 test("hero and special features only reference this release set", () => {

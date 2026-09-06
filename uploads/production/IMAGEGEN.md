@@ -125,10 +125,6 @@ seams, pleats or knit panels were added as appropriate.
 
   > Create a refined landscape editorial photograph for a Japanese vintage clothing journal named TSUMUGI. Scene: a quiet wooden worktable in a small archive studio, an indigo chore jacket laid flat while anonymous hands gently inspect the weave with a brass magnifier and a paper note card turned blank-side up. Soft morning window light, warm off-white plaster, natural wood, muted indigo, tactile cloth, Japanese wabi-sabi restraint, documentary realism. No face, no readable text, no lettering, no logos, no branded objects, no watermark. Wide 16:9 composition with calm negative space, production-ready magazine photography.
 
-- `journal-choosing-vintage-v2.jpg`
-
-  > Use case: photorealistic-natural. Wide editorial cover for TSUMUGI's vintage selection guide. Use the existing indigo chore jacket, ivory linen shirt and black wool trousers as references. Arrange the three garments separately on dark wooden hangers against the same subtly textured warm ecru plaster wall used throughout the product catalogue. Use one soft natural daylight source from outside the left edge, with a restrained diagonal window shadow. Preserve denim fading, linen slubs and wool texture. No people, hands, props, equipment, labels, logos, text or watermark. Landscape 8:5 composition, honest Japanese vintage shop editorial photography.
-
 - `journal-measuring.jpg`
 
   > Create a refined landscape editorial photograph for a Japanese vintage clothing journal named TSUMUGI. Scene: anonymous hands measuring the shoulder width of a charcoal wool jacket laid perfectly flat on a pale oak table, using a plain unbranded cloth measuring tape with no visible numbers facing camera. Soft daylight, warm neutral interior, careful archival process, restrained composition, tactile textile detail, documentary realism. No face, no readable text, no lettering, no logos, no watermark. Wide 16:9 composition, production-ready magazine photography.
@@ -144,6 +140,10 @@ seams, pleats or knit panels were added as appropriate.
 - `journal-light-and-color.jpg`
 
   > Create a refined landscape editorial photograph for a Japanese vintage clothing journal named TSUMUGI. Scene: a washed-black denim jacket on a neutral seamless backdrop in a small photography studio, one large softbox outside the frame creating a gentle gradient, a grey card turned blank-side toward camera, subtle shadows revealing fabric texture, quiet precise catalog-making mood, documentary realism. No people, no readable text, no lettering, no logos, no watermark. Wide 16:9 composition with calm negative space, production-ready magazine photography.
+
+- `journal-light-and-color-v2.jpg`
+
+  > Use case: photorealistic-natural. Wide editorial cover for TSUMUGI's article about recording light and colour. Use the existing indigo chore jacket, ivory linen shirt and black wool trousers as references. Arrange the three garments separately on dark wooden hangers against the same subtly textured warm ecru plaster wall used throughout the product catalogue. Use one soft natural daylight source from outside the left edge, with a restrained diagonal window shadow. Preserve denim fading, linen slubs and wool texture. No people, hands, props, equipment, labels, logos, text or watermark. Landscape 8:5 composition, honest Japanese vintage shop editorial photography.
 
 - `journal-september-notes.jpg`
 
