@@ -24,7 +24,7 @@
     "cms:import-production": "node scripts/import-production-content.mjs",
     "cms:backup": "node scripts/export-cms-backup.mjs",
     "test": "node --test build/*.test.mjs",
-    "build": "npm run build:dc && npm run test && npm run build:vendor && npm run app && npm run build:bundle && npm run verify",
+    "build": "npm run build:dc && npm run test && npm run build:vendor && npm run app && npm run build:bundle && node build/finalize-release.mjs && npm run verify",
     "build:bundled": "npm run build",
     "test:rls": "psql \"$DATABASE_URL\" -f supabase/tests/rls_matrix.sql"
   },

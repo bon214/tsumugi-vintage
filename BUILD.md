@@ -236,3 +236,36 @@ Therefore:
 - GitHub Pages frontend demo: allowed after setting the real `SITE_URL`.
 - Real customer data: not yet allowed.
 - Real order/payment acceptance: not yet allowed.
+
+## Open-tab updates
+
+`npm run build` finishes the bundled artifact with `build/finalize-release.mjs`
+and then verifies it. The finalizer hashes all shipped files (including content,
+HTML, styles and images), stamps each public/admin page and its asset URLs, and
+writes `dist/version.json`. Publish the complete `dist/` together using the
+existing Pages workflow; never publish only the manifest. Both main pushes and
+`cms-publish` builds use this path. No manual version bump is required.
+
+`runtime/site-update.js` runs before application dependencies. Visible tabs check
+every 60 seconds and on return, connection recovery and page restoration. A new
+manifest must agree with freshly fetched page HTML before navigation. Reloading
+preserves the path, query and fragment. Failed/offline checks keep the page open.
+Local script/stylesheet loading failures can attempt the same guarded recovery.
+
+Checkout/auth/account routes, admin pages, focused inputs and any page with an
+input/change event require the update button instead of automatic navigation.
+The button confirms possible loss of unsaved entries. Dirty protection remains
+for the document lifetime, including after submit (submission may still fail).
+The update banner uses Japanese or English to match the document language.
+
+Session storage limits automatic attempts to one per target release and at most
+one within five minutes. A navigation query marker also prevents stale-HTML loops
+when storage is unavailable. It is cleaned only when the intended release is
+adopted and the storage guard can be retained. Failed or blocked recovery offers
+a manual retry, never an automatic reload loop.
+
+Visitors who loaded the site before this feature was first deployed must reload
+once to acquire it. Sleeping browsers cannot be updated until they resume.
+Database edits become detectable through this mechanism after a successful
+public-site rebuild; this does not introduce database polling or change checkout
+validation. The build and runtime regression cases run with `npm test`.

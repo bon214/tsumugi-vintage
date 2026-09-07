@@ -64,6 +64,8 @@ try {
 }
 
 const problems = [];
+const release = JSON.parse(await readFile(join(ROOT, "version.json"), "utf8"));
+if (!/^[a-f0-9]{64}$/.test(release.version || "")) problems.push("Invalid release version");
 const titles = new Map();
 const descriptions = new Map();
 let htmlCount = 0;
@@ -83,6 +85,11 @@ for (const f of files) {
 
   if (!f.endsWith(".html")) continue;
   htmlCount++;
+  if (!raw.includes(`name="tsumugi-release" content="${release.version}"`)
+    || !raw.includes(`data-release="${release.version}"`)
+    || raw.indexOf("runtime/site-update.js") > raw.indexOf("vendor/react.production.min.js")) {
+    problems.push(`${f}: missing or mismatched early release guard`);
+  }
 
   const pick = (re) => { const m = re.exec(raw); return m ? m[1] : null; };
   const title = pick(/<title>([\s\S]*?)<\/title>/);
@@ -217,12 +224,12 @@ for (const f of files.filter((f) => f.endsWith(".html"))) {
   need(/<div id="dc-root">/.test(raw), "no #dc-root — the application has nowhere to mount");
   need(/id="dc-boot"/.test(raw), "no branded loading cover — prerendered text would flash before the app paints");
   need(/assets\/tsumugi-logo\.svg/.test(raw), "the loading cover does not use the supplied TSUMUGI logo");
-  need(/<script type="module" src="[^"]*runtime\/main-(public|admin)(\.bundle)?\.js(?:\?v=[a-f0-9]{12})?"/.test(raw),
+  need(/<script type="module" src="[^"]*runtime\/main-(public|admin)(\.bundle)?\.js(?:\?v=[a-f0-9]{64})?"/.test(raw),
     "no module entry — the page would never boot the application");
   if (bundled) {
     const localScripts = [...raw.matchAll(/<script(?:\s+type="module")?\s+src="([^"]+)"/g)]
       .map((match) => match[1]);
-    need(localScripts.length > 0 && localScripts.every((src) => /\?v=[a-f0-9]{12}$/.test(src)),
+    need(localScripts.length > 0 && localScripts.every((src) => /\?v=[a-f0-9]{64}$/.test(src)),
       "local scripts are not content-versioned — browsers could keep a stale auth build");
   }
   need(/http-equiv="Content-Security-Policy"/.test(raw), "no CSP meta");

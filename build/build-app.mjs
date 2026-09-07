@@ -138,7 +138,9 @@ const importMap = (root) => `<script type="importmap">
 </script>`;
 
 const versioned = (url) => `${url}?v=${ASSET_VERSION}`;
-const appTags = (root, entry) => `${importMap(root)}
+const appTags = (root, entry) => `<meta name="tsumugi-release" content="__TSUMUGI_RELEASE__">
+<script src="${versioned(root + "runtime/site-update.js")}" data-release="__TSUMUGI_RELEASE__"></script>
+${importMap(root)}
 <script src="${versioned(root + "vendor/react.production.min.js")}"></script>
 <script src="${versioned(root + "vendor/react-dom.production.min.js")}"></script>
 <script src="${versioned(root + "vendor/supabase.umd.js")}"></script>
