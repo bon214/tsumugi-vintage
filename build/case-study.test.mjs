@@ -11,7 +11,7 @@ test('case study follows the five reference headings and stays standalone', asyn
   const html = await read('case-study.html');
   const nodes = descendants(parse(html));
   assert.deepEqual(nodes.filter(n => n.tagName === 'h2').map(text), [
-    '想定した課題と、制作の目的', 'デザインに込めた意図', '共感から購入の検討への体験設計',
+    '想定した課題と制作の目的', 'デザインに込めた意図', '共感から購入の検討への体験設計',
     '制作工程と実装範囲', '制作において確認したこと、今後検証すること'
   ]);
   assert.equal(nodes.filter(n => n.tagName === 'h1').length, 1);
