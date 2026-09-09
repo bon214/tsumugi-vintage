@@ -87,7 +87,8 @@ for (const f of files) {
   htmlCount++;
   if (!raw.includes(`name="tsumugi-release" content="${release.version}"`)
     || !raw.includes(`data-release="${release.version}"`)
-    || raw.indexOf("runtime/site-update.js") > raw.indexOf("vendor/react.production.min.js")) {
+    || !raw.includes("runtime/site-update.js")
+    || (raw.includes("vendor/react.production.min.js") && raw.indexOf("runtime/site-update.js") > raw.indexOf("vendor/react.production.min.js"))) {
     problems.push(`${f}: missing or mismatched early release guard`);
   }
 
@@ -218,14 +219,20 @@ for (const f of files.filter((f) => f.endsWith(".html"))) {
   const raw = await readFile(f, "utf8");
   const name = rel(f);
   const isConsole = name === "admin.html";
+  const isEditorial = name === "case-study.html";
   const dcBase = /<meta name="dc-base" content="([^"]*)"/.exec(raw)?.[1] || null;
   const need = (cond, msg) => { if (!cond) problems.push(`${name}: ${msg}`); };
 
+  if (!isEditorial) {
   need(/<div id="dc-root">/.test(raw), "no #dc-root — the application has nowhere to mount");
   need(/id="dc-boot"/.test(raw), "no branded loading cover — prerendered text would flash before the app paints");
   need(/assets\/tsumugi-logo\.svg/.test(raw), "the loading cover does not use the supplied TSUMUGI logo");
   need(/<script type="module" src="[^"]*runtime\/main-(public|admin)(\.bundle)?\.js(?:\?v=[a-f0-9]{64})?"/.test(raw),
     "no module entry — the page would never boot the application");
+  } else {
+    need(/<main id="main">/.test(raw), "editorial page has no main content");
+    need(!/runtime\/main-(public|admin)/.test(raw), "editorial page must not mount the storefront");
+  }
   if (bundled) {
     const localScripts = [...raw.matchAll(/<script(?:\s+type="module")?\s+src="([^"]+)"/g)]
       .map((match) => match[1]);
@@ -252,11 +259,11 @@ for (const f of files.filter((f) => f.endsWith(".html"))) {
       if (/^https?:/.test(target)) problems.push(`${name}: import map sends "${spec}" to a remote origin (${target})`);
       if (target.startsWith("/")) problems.push(`${name}: import map target "${target}" is root-absolute and breaks a repository subpath`);
     }
-  } else if (!bundled) {
+  } else if (!bundled && !isEditorial) {
     problems.push(`${name}: no import map, so "react" resolves to nothing`);
   }
 
-  if (!isConsole) {
+  if (!isConsole && !isEditorial) {
     /* 404.html carries an empty dc-route on purpose: it is a fallback, not a
        route, and the app opens the home screen from it. */
     need(/<meta name="dc-route" content="/.test(raw),
@@ -269,7 +276,7 @@ for (const f of files.filter((f) => f.endsWith(".html"))) {
       need((raw.match(new RegExp(`@keyframes\\s+${animation}\\b`, "g")) || []).length === 1,
         `${animation} keyframes must appear exactly once while the component references them`);
     }
-  } else {
+  } else if (isConsole) {
     need((raw.match(/data-dc-global="TSUMUGI Admin"/g) || []).length === 1,
       "compiled TSUMUGI Admin global styles must appear exactly once");
     for (const animation of adminAnimations) {

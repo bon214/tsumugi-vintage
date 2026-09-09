@@ -398,6 +398,9 @@ ${appTags("./", "main-admin.js")}
 `;
   await writeFile(path.join(DIST, "admin.html"), admin, "utf8");
 
+  // Standalone editorial page: no store app is mounted over its own content.
+  await cp(path.join(ROOT, "case-study.html"), path.join(DIST, "case-study.html"));
+
   if (!existsSync(path.join(DIST, "404.html"))) {
     die("prerender produced no 404.html — GitHub Pages needs one for any path it "
       + "cannot resolve, and a retired product URL would otherwise hit the platform's "

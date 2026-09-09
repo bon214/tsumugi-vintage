@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>TSUMUGI 制作解説 | 自主制作ポートフォリオ</title>
+<meta name="description" content="架空の古着店TSUMUGIの制作解説。ブランドの世界観と一点物を選ぶ情報設計、AIを活用した画像・Web制作、Blenderによる店舗空間の検討を紹介します。">
+<meta name="theme-color" content="#F8F7F4">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data:; connect-src 'self'; base-uri 'self'; object-src 'none'">
+<meta name="tsumugi-release" content="__TSUMUGI_RELEASE__">
+<script src="./runtime/site-update.js?v=__TSUMUGI_RELEASE__" data-release="__TSUMUGI_RELEASE__"></script>
+<link rel="canonical" href="./case-study.html">
+<link rel="icon" href="./favicon.svg" type="image/svg+xml">
+<meta property="og:type" content="website">
+<meta property="og:title" content="TSUMUGI — 制作解説">
+<meta property="og:description" content="一点物を選ぶ体験を、店の空気感から設計する。古着店のブランド・Web・店舗空間を考えた自主制作。">
+<meta property="og:image" content="./uploads/production/hero-archive-rail.jpg">
+<meta name="twitter:card" content="summary_large_image">
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"CreativeWork","name":"TSUMUGI 制作解説","inLanguage":"ja","description":"架空の古着店のブランド・Web・店舗空間を検討した自主制作プロジェクト。"}
+</script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=EB+Garamond:wght@400;500&amp;family=IBM+Plex+Mono:wght@400&amp;family=Noto+Sans+JP:wght@400;500&amp;family=Noto+Serif+JP:wght@400;500&amp;display=swap" rel="stylesheet">
+<style>
+:root{color-scheme:light;--paper:#F8F7F4;--ink:#222222;--muted:#625F57;--accent:#4F5C42;--line:#DCD5CA;--panel:#EFE9E0}
+*{box-sizing:border-box}body{margin:0;background:var(--paper);color:var(--ink);font:16px/1.95 'Noto Sans JP',sans-serif}a{color:var(--accent);text-underline-offset:6px}a:hover{color:var(--ink)}:focus-visible{outline:2px solid var(--accent);outline-offset:6px}img{display:block;max-width:100%;height:auto}p{margin:0 0 20px}header,main,footer{width:min(100%,1200px);margin:auto;padding-inline:clamp(20px,5vw,64px)}header{display:flex;align-items:center;justify-content:space-between;gap:20px;padding-block:28px;border-bottom:1px solid var(--line)}header img{width:176px;max-width:42vw}header>a{display:inline-flex;align-items:center;min-height:44px}header>a:last-child{font-size:14px}.skip{position:absolute;left:20px;top:-100px;background:var(--paper);padding:12px;z-index:5}.skip:focus{top:12px}.eyebrow{font:13px/1.8 'IBM Plex Mono',monospace;letter-spacing:.12em;color:var(--accent);margin:0 0 18px;overflow-wrap:anywhere}h1,h2,h3{font-family:'Noto Serif JP',serif;font-weight:400}h1{font-size:clamp(30px,3.7vw,46px);line-height:1.6;letter-spacing:.03em;margin:0 0 26px}h2{font-size:clamp(23px,2.8vw,30px);line-height:1.6;margin:0 0 30px}h3{font-size:19px;line-height:1.7;margin:0 0 14px}.intro{display:grid;grid-template-columns:1.08fr 1fr;gap:clamp(28px,4vw,56px);align-items:center;padding-block:64px}.intro figure{margin:0}.intro img{width:100%;aspect-ratio:4/5;object-fit:cover}.note,figcaption{font-size:14px;line-height:1.85;color:var(--muted)}figcaption{margin-top:12px}.button{display:inline-flex;align-items:center;justify-content:center;min-height:48px;padding:12px 24px;border:1px solid var(--ink);background:var(--ink);color:var(--paper);text-decoration:none;font-size:14px}.button:hover{background:var(--accent);border-color:var(--accent);color:white}section:not(.intro){padding-block:56px;border-top:1px solid var(--line)}dl{display:grid;grid-template-columns:140px minmax(0,1fr);gap:20px 30px;margin:0}dt{color:var(--muted);font-size:14px}dd{margin:0;min-width:0}.cards{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:24px}.card{padding:26px;background:var(--panel)}.card p{margin:0;font-size:15px}.flow{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;padding:0;list-style:none;counter-reset:step}.flow li{counter-increment:step;background:var(--panel);padding:16px;margin:0}.flow li::before{content:counter(step,decimal-leading-zero) ' / ';color:var(--accent);font-family:'IBM Plex Mono',monospace;font-size:13px}.after-flow{margin-top:24px}.space{display:grid;grid-template-columns:1.2fr 1fr;gap:28px;align-items:center;margin:36px 0 0}.space figure{margin:0}.space img{width:100%}.space p:last-child{margin:0}ul{padding-left:1.4em;margin:0 0 24px}li+li{margin-top:14px}.return{display:flex;gap:20px;flex-wrap:wrap;align-items:center;margin-top:28px}.return>a{min-height:44px;display:inline-flex;align-items:center}footer{padding-block:28px;border-top:1px solid var(--line);font-size:13px;color:var(--muted)}
+@media(max-width:800px){.intro,.space{grid-template-columns:1fr}.intro{padding-block:40px}.intro img{aspect-ratio:16/10}.cards{grid-template-columns:1fr}.flow{grid-template-columns:repeat(2,minmax(0,1fr))}dl{grid-template-columns:1fr;gap:6px}dd+dt{margin-top:18px}section:not(.intro){padding-block:40px}}@media(max-width:420px){.flow{grid-template-columns:1fr}header{gap:12px}.eyebrow{letter-spacing:.06em}}
+</style>
+</head>
+<body>
+<a class="skip" href="#main">本文へ移動</a>
+<header><a href="./#/home" aria-label="TSUMUGI サイトへ"><img src="./assets/tsumugi-logo.svg" alt="TSUMUGI Vintage Shop" width="145" height="27"></a><a href="./#/home">サイトを見る ↗</a></header>
+<main id="main">
+<section class="intro">
+<div><p class="eyebrow">SELF-INITIATED PROJECT / VINTAGE STORE</p><h1>一点物を選ぶ体験を、<br>店の空気感から。</h1><p>架空の古着店「TSUMUGI」のWebサイト。生地や仕立て、着込まれた表情を見ながら、自分の暮らしに合う一着を選ぶ。その体験を、ブランドの世界観と商品の情報設計から考えました。</p><p class="note">自主制作のため、実在する店舗からの受託案件ではありません。商品・価格・人物・店舗情報は作品内の設定です。</p><a class="button" href="./#/home">サイトを見る</a></div>
+<figure><img src="./uploads/production/hero-archive-rail.jpg" alt="朝の光が差す空間に古着のラックを配したブランドイメージ" width="1587" height="991" fetchpriority="high"><figcaption>ブランドの空気感を表現したAI生成画像。</figcaption></figure>
+</section>
+<section aria-labelledby="brief-title"><p class="eyebrow">01 / BRIEF</p><h2 id="brief-title">想定した課題と、制作の目的</h2><dl>
+<dt>想定する顧客</dt><dd>年代やブランドだけでなく、生地・仕立て・今の服との合わせやすさで古着を選びたい人。店の選び方に共感しながら、サイズや状態も確かめたい、という仮説を置きました。</dd>
+<dt>想定する課題</dt><dd>一点ごとにサイズや状態が異なる古着は、雰囲気のよい写真だけでは選びきれない。店の価値観を伝えることと、購入を検討するための情報を見つけやすくすることの両立を課題にしました。</dd>
+<dt>制作の目的</dt><dd>店を知る、商品を探す、一着を詳しく見る、購入手続きへ進む。その流れを一つの世界観でつなぎ、商品や記事を更新する運用まで含めて制作すること。</dd>
+<dt>商品設定</dt><dd>ジャケット、シャツ、ニット、パンツなどの一点物を扱う架空の古着店。商品写真や説明は自主制作のための表現であり、実在する在庫や販売実績を示すものではありません。</dd>
+</dl></section>
+<section aria-labelledby="design-title"><p class="eyebrow">02 / DESIGN DECISIONS</p><h2 id="design-title">デザインに込めた意図</h2><div class="cards">
+<article class="card"><h3>服の表情が残る余白</h3><p>生成りの背景と落ち着いた緑、細い罫線を軸に構成。色や装飾が商品より先に目に入らないよう、布の色・織り・経年の表情を見せる余白を設けました。</p></article>
+<article class="card"><h3>空気感と、比較のしやすさ</h3><p>店のイメージには光や素材感のある写真を、商品には一着を見比べやすい写真を使い分けました。世界観を伝える役割と、商品を確かめる役割を分けています。</p></article>
+<article class="card"><h3>見出しと情報に、それぞれの役割を</h3><p>見出しにはセリフ体、説明には読みやすいサンセリフ体を使用。価格やサイズなどの判断材料を、ブランドの語り口の中に埋もれさせないよう整理しました。</p></article>
+</div></section>
+<section aria-labelledby="flow-title"><p class="eyebrow">03 / INFORMATION ARCHITECTURE</p><h2 id="flow-title">共感から購入の検討への体験設計</h2><ol class="flow"><li>店の世界観・選び方</li><li>商品一覧・絞り込み</li><li>写真・価格・商品説明</li><li>サイズ・状態の確認</li><li>カート</li><li>購入手続き</li></ol><p class="after-flow">Aboutでは一着を選ぶ基準を、Journalでは採寸や手入れなどの考え方を伝えます。商品を探す導線に加えて、店の姿勢を知ってから選ぶ導線も用意しました。</p><p>この制作解説へのリンクはAboutの最下部に配置。ブランド紹介を読み終えた人が制作の背景へ進めるようにし、通常の買い物の流れとは役割を分けています。</p></section>
+<section aria-labelledby="scope-title"><p class="eyebrow">04 / PROCESS &amp; SCOPE</p><h2 id="scope-title">制作工程と実装範囲</h2><dl>
+<dt>制作の進め方</dt><dd>ブランドの方向性、画面構成、画像の修正指示、改善方針を決定し、AIを活用して画像・文章・コードの作成と、レビューや検証を進めました。</dd>
+<dt>画像</dt><dd>商品画像と、このページ冒頭の店舗イメージにはAI生成画像を使用しています。実物の商品や実店舗の撮影写真ではありません。</dd>
+<dt>実装</dt><dd>画面幅に応じたレイアウト、商品一覧と絞り込み、商品詳細、カート・購入手続きの画面、About・Journalを制作。管理側には商品・記事などの編集画面を設けています。実商取引の運用実績を示すものではありません。</dd>
+<dt>更新への対応</dt><dd>新しい公開版を検知し、開いたままのタブにも更新を反映する仕組みを導入。入力中や購入手続き中などは自動で切り替えず、更新の案内を表示します。</dd>
+<dt>公開</dt><dd>HTML・CSS・JavaScriptとReactを使い、制作した画面を公開用にビルドしてGitHub Pagesで配信しています。</dd>
+</dl><div class="space"><figure><img src="./assets/case-study/store-counter.webp" alt="木製カウンターと衣類ラックを配置したTSUMUGIの店舗空間CG" width="2400" height="1600" loading="lazy" decoding="async"><figcaption>Blenderで制作した店舗空間の検討画像。実店舗の写真ではありません。</figcaption></figure><div><h3>Webの先にある、店舗空間も考える</h3><p>同じブランドの店舗空間をBlenderで制作。木材・布・金属の質感、衣服の配置、窓からの光と照明を調整し、店の空気感を立体でも検討しています。</p><p class="note">掲載画像はBlenderのレンダーをWeb用に圧縮したものです。空間の制作は継続中で、施工済みの店舗を示すものではありません。</p></div></div></section>
+<section aria-labelledby="validation-title"><p class="eyebrow">05 / VALIDATION &amp; LIMITS</p><h2 id="validation-title">制作において確認したこと、今後検証すること</h2><ul>
+<li>公開用ビルドで、各ページのタイトル・説明文、参照ファイル、配信先のパスと公開版の整合性を検証しています。</li>
+<li>更新検知について、入力保護、オフライン時の動作、古い情報が残った場合の再読み込み制限を自動テストで確認しています。</li>
+<li>今後は利用者による商品探し・サイズ確認の分かりやすさを検証し、説明や導線を改善していきます。</li>
+</ul><p>顧客像と課題は制作上の仮説です。購入率や売上の改善効果は測定していません。</p><p class="note">自動テストは実際の利用者による検証の代わりにはなりません。すべての実機・ブラウザでの動作を保証するものではありません。</p><div class="return"><a class="button" href="./#/home">TSUMUGI のサイトへ</a><a href="./#/about">Aboutへ戻る</a></div></section>
+</main><footer>© 2026 TSUMUGI (fictional) — 自主制作ポートフォリオ</footer>
+</body>
+</html>

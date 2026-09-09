@@ -249,6 +249,7 @@ urls.push("");
 
 written.push(await emit("about/index.html", page({
   file: "about/index.html", route: "about", title: "私たちについて",
+  links: [["このサイトの制作について — 制作解説を読む", "../case-study.html"]],
   description: "生地・つくり・状態・今も着られるか。TSUMUGI が一着を選ぶときの四つの基準と、修理をどこまで見せるかについて。",
   jsonLd: { "@context": "https://schema.org", "@type": "AboutPage", mainEntity: ORG },
   kicker: "ABOUT",

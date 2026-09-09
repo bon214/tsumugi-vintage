@@ -75,6 +75,14 @@
             <p style="margin:0;font-size:15px;line-height:2;color:#4A4740;white-space:pre-line;text-wrap:pretty">{{ vm.t.curatorQuote }}</p>
           </div>
         </section>
+        <section aria-labelledby="about-case-study-title" style="padding:clamp(36px,6vh,72px) clamp(20px,4vw,64px);border-top:1px solid #DFD6C9;background:#F2EEE7;display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:24px">
+          <div style="flex:1 1 280px;min-width:0;max-width:680px">
+            <p style="margin:0 0 12px;font-family:'IBM Plex Mono',monospace;font-size:13px;letter-spacing:0.14em;color:#4F5C42">SELF-INITIATED PROJECT</p>
+            <h2 id="about-case-study-title" style="margin:0 0 14px;font-family:'Noto Serif JP',serif;font-size:clamp(22px,2.6vw,30px);font-weight:400">{{ vm.caseStudyTitle }}</h2>
+            <p style="margin:0;font-size:15px;line-height:1.9;color:#4A4740">{{ vm.caseStudyBody }}</p>
+          </div>
+          <a href="{{ vm.caseStudyHref }}" style="display:inline-flex;align-items:center;justify-content:center;min-height:48px;padding:14px 24px;border:1px solid #222222;color:#F8F7F4;background:#222222;font-size:14px;text-decoration:none" style-hover="background:#4F5C42;border-color:#4F5C42">{{ vm.caseStudyLink }}</a>
+        </section>
       </div>
 </x-dc>
 <script type="text/x-dc" data-dc-script data-props="{&quot;vm&quot;:{&quot;editor&quot;:null,&quot;tsType&quot;:&quot;{ t: Record&lt;string,string&gt;; founderImage: string; heroImage: string; heroAlt: string; closingImage: string; closingAlt: string; steps: any[]; standards: any[] }&quot;}}">

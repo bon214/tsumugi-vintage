@@ -2380,6 +2380,11 @@ class Component extends DCLogic {
       // about content — bundled into one view model for the PublicAbout child
       aboutVm: {
         t: T,
+        caseStudyTitle: isJa ? "このサイトの制作について" : "Behind this project",
+        caseStudyBody: isJa ? "TSUMUGIは架空の古着店を題材にした自主制作です。ブランドの考え方、デザインの意図、制作工程をご紹介します。" : "TSUMUGI is a self-initiated project for a fictional vintage store. Explore the brand, design decisions and production process.",
+        caseStudyLink: isJa ? "制作解説を読む ↗" : "Read the case study (Japanese) ↗",
+        caseStudyHref: (window.TSUMUGI_IMAGES && window.TSUMUGI_IMAGES.asset)
+          ? window.TSUMUGI_IMAGES.asset("case-study.html") : "./case-study.html",
         // Japanese shows the name in kanji with the roman signature beneath it;
         // English carries the roman form alone.
         founderRoman: isJa ? "R. Seo" : "",
