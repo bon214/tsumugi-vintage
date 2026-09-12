@@ -7,10 +7,16 @@ Analytics 360、BigQuery、有料の外部解析サービスは使用しませ�
 
 ## 現在の状態
 
-サイト側の実装、テスト、GitHub Pagesのビルド設定は完了しています。ただし、
-ソースコードには測定IDを保存しません。TSUMUGI専用の `G-XXXXXXXXXX` を
-GitHubのRepository variableへ登録するまで、本番サイトからGoogleへ計測通信は
-送られません。LUMIE SKINの測定IDは流用せず、作品ごとにプロパティを分けます。
+サイト側の実装、テスト、GitHub Pagesのビルド設定、TSUMUGI専用GA4プロパティとの
+接続は完了しています。測定IDは `G-YFYQFNF381` です。ソースコードへ直書きせず、
+GitHubのRepository variable `GA4_MEASUREMENT_ID` から本番ビルド時に注入します。
+LUMIE SKINの測定IDは流用せず、作品ごとにプロパティを分けています。
+
+2026年9月12日に `TSUMUGI Portfolio` プロパティと
+`TSUMUGI Portfolio — GitHub Pages` ウェブストリームを作成し、イベントデータと
+ユーザーデータの保持期間を14か月に設定しました。GitHub Pagesへの接続後、
+Actionsの手動デプロイ（Run #41）が成功し、本番配信ファイルへの測定ID反映を
+確認しています。
 
 ## 1. Google Analytics側の準備
 
