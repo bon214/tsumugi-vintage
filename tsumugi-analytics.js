@@ -29,6 +29,7 @@
   var currentGroup = "";
   var scrollSent = false;
   var releaseReload = false;
+  var debugMode = false;
 
   function storage(name) {
     try {
@@ -74,6 +75,15 @@
         || url.searchParams.has("_lumie_release")
         || url.searchParams.has("__tsumugi_update");
       var command = String(url.searchParams.get(CONTROL_PARAM) || "").toLowerCase();
+      if (command === "debug") {
+        /* A one-tab diagnostic session. It deliberately does not change the
+           owner's persisted opt-out, and disappears on the next full load. */
+        debugMode = true;
+        url.searchParams.delete(CONTROL_PARAM);
+        var debugClean = url.pathname + (url.searchParams.toString() ? "?" + url.searchParams.toString() : "") + url.hash;
+        root.history.replaceState(root.history.state, "", debugClean);
+        return;
+      }
       if (command !== "off" && command !== "on") return;
       persistExcluded(command === "off");
       url.searchParams.delete(CONTROL_PARAM);
@@ -99,7 +109,7 @@
     } catch (e) { return false; }
   }
 
-  function disabled() { return !storageOkay || storedExcluded() || !isProductionStorefront(); }
+  function disabled() { return !storageOkay || (storedExcluded() && !debugMode) || !isProductionStorefront(); }
 
   function applyDisableFlag() {
     if (validId()) root["ga-disable-" + id] = disabled();
@@ -126,7 +136,8 @@
     root.gtag("config", id, {
       send_page_view: false,
       allow_google_signals: false,
-      allow_ad_personalization_signals: false
+      allow_ad_personalization_signals: false,
+      debug_mode: debugMode
     });
     var script = doc.createElement("script");
     script.async = true;
@@ -276,12 +287,13 @@
   }
 
   function state() {
-    var excluded = !storageOkay || storedExcluded();
+    var excluded = !storageOkay || (storedExcluded() && !debugMode);
     var eligible = isProductionStorefront();
     return {
       configured: validId(),
       eligible: eligible,
       excluded: excluded,
+      debug: debugMode,
       enabled: validId() && eligible && !excluded,
       reason: !validId() ? "not_configured"
         : !storageOkay ? "storage_unavailable"
@@ -293,7 +305,7 @@
 
   consumeControlParam();
   applyDisableFlag();
-  if (isProductionStorefront() && !storedExcluded()) startTag();
+  if (isProductionStorefront() && (!storedExcluded() || debugMode)) startTag();
   if (root.addEventListener) root.addEventListener("scroll", checkScroll, { passive: true });
 
   root.TSUMUGI_ANALYTICS = Object.freeze({

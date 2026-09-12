@@ -100,6 +100,22 @@ test("owner opt-out is applied before loading and the control query is removed",
   assert.equal(h.appended.length, 0);
 });
 
+test("debug mode is one-tab only and does not erase the owner's persisted opt-out", () => {
+  const h = harness({
+    url: "https://bon214.github.io/tsumugi-vintage/?analytics=debug#/home",
+    excluded: true
+  });
+  assert.equal(h.root.location.search, "");
+  assert.equal(h.localStorage.getItem("tsumugi.analytics.excluded"), "1");
+  assert.equal(h.root["ga-disable-G-TEST123456"], false);
+  assert.equal(h.root.TSUMUGI_ANALYTICS.state().debug, true);
+  assert.equal(h.root.TSUMUGI_ANALYTICS.state().enabled, true);
+  assert.equal(h.appended.length, 1);
+  const config = h.commands().find((row) => row[0] === "config");
+  assert.equal(config[2].debug_mode, true);
+  assert.equal(h.root.TSUMUGI_ANALYTICS.pageView({ title: "Debug home" }), true);
+});
+
 test("production config disables automatic views and sends each virtual page once", () => {
   const h = harness({ url: "https://bon214.github.io/tsumugi-vintage/?utm_source=crowdworks&utm_medium=referral&utm_campaign=portfolio&email=drop-me#/home" });
   assert.equal(h.appended.length, 1);
