@@ -96,7 +96,10 @@
 
   function isProductionStorefront() {
     if (!validId() || !doc || !root.location) return false;
-    if (root.navigator && root.navigator.webdriver === true) return false;
+    /* Automated previews never emit production analytics. The only exception
+       is the explicit, one-tab ?analytics=debug diagnostic entry point used
+       to verify this deployment in GA4 DebugView. */
+    if (root.navigator && root.navigator.webdriver === true && !debugMode) return false;
     if (root.location.protocol !== "https:") return false;
     if (/^#\/admin(?:\/|$)/.test(root.location.hash || "")) return false;
     if (/\/admin\.html$/i.test(root.location.pathname || "")) return false;

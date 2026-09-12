@@ -116,6 +116,25 @@ test("debug mode is one-tab only and does not erase the owner's persisted opt-ou
   assert.equal(h.root.TSUMUGI_ANALYTICS.pageView({ title: "Debug home" }), true);
 });
 
+test("explicit debug mode can verify GA4 from an automated browser without enabling normal test traffic", () => {
+  const debug = harness({
+    url: "https://bon214.github.io/tsumugi-vintage/?analytics=debug#/home",
+    excluded: true,
+    webdriver: true
+  });
+  assert.equal(debug.root.TSUMUGI_ANALYTICS.state().debug, true);
+  assert.equal(debug.root.TSUMUGI_ANALYTICS.state().enabled, true);
+  assert.equal(debug.appended.length, 1);
+
+  const ordinary = harness({
+    url: "https://bon214.github.io/tsumugi-vintage/#/home",
+    excluded: false,
+    webdriver: true
+  });
+  assert.equal(ordinary.root.TSUMUGI_ANALYTICS.state().enabled, false);
+  assert.equal(ordinary.appended.length, 0);
+});
+
 test("production config disables automatic views and sends each virtual page once", () => {
   const h = harness({ url: "https://bon214.github.io/tsumugi-vintage/?utm_source=crowdworks&utm_medium=referral&utm_campaign=portfolio&email=drop-me#/home" });
   assert.equal(h.appended.length, 1);
