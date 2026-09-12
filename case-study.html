@@ -6,9 +6,11 @@
 <title>TSUMUGI 制作解説 | 自主制作ポートフォリオ</title>
 <meta name="description" content="架空の古着店TSUMUGIの制作解説。ブランドの世界観と一点物を選ぶ情報設計、AIを活用した画像・Web制作、Blenderによる店舗空間の検討を紹介します。">
 <meta name="theme-color" content="#F8F7F4">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data:; connect-src 'self'; base-uri 'self'; object-src 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://www.googletagmanager.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https://*.google-analytics.com https://www.googletagmanager.com; connect-src 'self' https://*.google-analytics.com https://*.analytics.google.com https://www.googletagmanager.com; base-uri 'self'; object-src 'none'">
 <meta name="tsumugi-release" content="__TSUMUGI_RELEASE__">
 <script src="./runtime/site-update.js?v=__TSUMUGI_RELEASE__" data-release="__TSUMUGI_RELEASE__"></script>
+<script src="./tsumugi-analytics.js?v=__TSUMUGI_RELEASE__"></script>
+<script src="./runtime/case-study-analytics.js?v=__TSUMUGI_RELEASE__"></script>
 <link rel="canonical" href="./case-study.html">
 <link rel="icon" href="./favicon.svg" type="image/svg+xml">
 <meta property="og:type" content="website">
@@ -30,10 +32,10 @@
 </head>
 <body>
 <a class="skip" href="#main">本文へ移動</a>
-<header><a href="./#/home" aria-label="TSUMUGI サイトへ"><img src="./assets/tsumugi-logo.svg" alt="TSUMUGI Vintage Shop" width="145" height="27"></a><a href="./#/home">サイトを見る ↗</a></header>
+<header><a href="./#/home" aria-label="TSUMUGI サイトへ" data-ga-destination="home"><img src="./assets/tsumugi-logo.svg" alt="TSUMUGI Vintage Shop" width="145" height="27"></a><a href="./#/home" data-ga-destination="home">サイトを見る ↗</a></header>
 <main id="main">
 <section class="intro">
-<div><p class="eyebrow">SELF-INITIATED PROJECT / VINTAGE STORE</p><h1>一点物を選ぶ体験を、<br>お店と同じように</h1><p>架空の古着店『TSUMUGI』のWebサイト。生地や仕立て、着込まれた表情を見ながら、自分の暮らしに合う一着を選ぶ体験を、ブランドの世界観と商品の情報設計から考えました。</p><p class="note">自主制作のため、実在する店舗からの受託案件ではありません。商品・価格・人物・店舗情報は作品内の設定です。</p><a class="button" href="./#/home">サイトを見る</a></div>
+<div><p class="eyebrow">SELF-INITIATED PROJECT / VINTAGE STORE</p><h1>一点物を選ぶ体験を、<br>お店と同じように</h1><p>架空の古着店『TSUMUGI』のWebサイト。生地や仕立て、着込まれた表情を見ながら、自分の暮らしに合う一着を選ぶ体験を、ブランドの世界観と商品の情報設計から考えました。</p><p class="note">自主制作のため、実在する店舗からの受託案件ではありません。商品・価格・人物・店舗情報は作品内の設定です。</p><a class="button" href="./#/home" data-ga-destination="home">サイトを見る</a></div>
 <figure><img src="./uploads/production/hero-archive-rail.jpg" alt="朝の光が差す空間に古着のラックを配したブランドイメージ" width="1587" height="991" fetchpriority="high"><figcaption>ブランドの空気感を表現したAI生成画像。</figcaption></figure>
 </section>
 <section aria-labelledby="brief-title"><p class="eyebrow">01 / BRIEF</p><h2 id="brief-title">想定した課題と制作の目的</h2><dl>
@@ -57,7 +59,7 @@
 <section aria-labelledby="validation-title"><p class="eyebrow">05 / VALIDATION &amp; LIMITS</p><h2 id="validation-title">制作において確認したこと、今後検証すること</h2><ul>
 <li>公開用ビルドで、各ページのタイトル・説明文、参照ファイル、配信先のパスと公開版の整合性を検証しています。</li>
 <li>商品を羅列するだけではなく、このお店が何を大切にしているのかを読んで共感を呼べることを狙い記事ページなどを作成。</li>
-</ul><p>顧客像と課題は制作上の仮説です。購入率や売上の改善効果は測定していません。</p><div class="return"><a class="button" href="./#/home">TSUMUGI のサイトへ</a><a href="./#/about">Aboutへ戻る</a></div></section>
-</main><footer>© 2026 TSUMUGI (fictional) — 自主制作ポートフォリオ</footer>
+</ul><p>顧客像と課題は制作上の仮説です。購入率や売上の改善効果は測定していません。</p><div class="return"><a class="button" href="./#/home" data-ga-destination="home">TSUMUGI のサイトへ</a><a href="./#/about" data-ga-destination="about">Aboutへ戻る</a></div></section>
+</main><footer>© 2026 TSUMUGI (fictional) — 自主制作ポートフォリオ · <a href="./#/analytics" data-ga-destination="analytics">アクセス解析設定</a></footer>
 </body>
 </html>

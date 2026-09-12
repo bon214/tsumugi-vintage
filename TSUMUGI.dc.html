@@ -21,6 +21,7 @@
 <meta property="og:image" content="./og-cover.jpg">
 <meta name="twitter:card" content="summary_large_image">
 <script src="./auth-config.js"></script>
+<script src="./tsumugi-analytics.js"></script>
 <script src="./tsumugi-supabase.js"></script>
 <script src="./tsumugi-sanitize.js"></script>
 <script src="./tsumugi-data.js"></script>
@@ -253,6 +254,21 @@
       <dc-import name="PublicAccount" vm="{{ accountVm }}" hint-size="100%,1200px"></dc-import>
     </sc-if>
 
+    <sc-if value="{{ isAnalyticsSettings }}" hint-placeholder-val="{{ false }}">
+      <section style="padding:clamp(56px,10vh,120px) clamp(20px,6vw,96px);min-height:60vh;display:flex;flex-direction:column;gap:28px;max-width:860px">
+        <span style="font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:0.2em;color:#6D7761">{{ analyticsEyebrow }}</span>
+        <h1 style="margin:0;font-family:'EB Garamond',serif;font-size:clamp(34px,5vw,58px);line-height:1.1;font-weight:400">{{ analyticsTitle }}</h1>
+        <p style="margin:0;max-width:720px;font-size:15px;line-height:2;color:#4A4740">{{ analyticsDescription }}</p>
+        <div role="status" aria-live="polite" style="border-top:1px solid #C9C2B7;border-bottom:1px solid #C9C2B7;padding:22px 0;display:flex;flex-direction:column;gap:8px">
+          <span style="font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:0.18em;color:#9C978F">{{ analyticsCurrentLabel }}</span>
+          <strong style="font-family:'EB Garamond',serif;font-size:24px;font-weight:400;color:#222222">{{ analyticsStateLabel }}</strong>
+        </div>
+        <button type="button" onClick="{{ toggleAnalyticsExclusion }}" disabled="{{ analyticsControlDisabled }}" style="align-self:flex-start;border:1px solid #6D7761;background:{{ analyticsButtonBg }};color:{{ analyticsButtonColor }};font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:0.14em;padding:16px 24px;min-height:50px;cursor:{{ analyticsButtonCursor }}">{{ analyticsButtonLabel }}</button>
+        <p style="margin:0;max-width:720px;font-size:12px;line-height:1.9;color:#777168">{{ analyticsStorageNote }}</p>
+        <p style="margin:0;max-width:720px;font-size:12px;line-height:1.9;color:#777168">{{ analyticsPrivacyNote }}</p>
+      </section>
+    </sc-if>
+
     <sc-if value="{{ is404 }}" hint-placeholder-val="{{ false }}">
       <section style="padding:clamp(60px,14vh,160px) clamp(20px,4vw,64px);display:flex;flex-direction:column;gap:26px;align-items:flex-start;max-width:640px;animation:fadeUp 400ms ease both">
         <span style="font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:0.24em;color:#6D7761">{{ t.notInArchive }}</span>
@@ -295,6 +311,7 @@
     </div>
     <div style="display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap;border-top:1px solid #3A3A38;padding-top:24px">
       <span style="font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:0.14em;color:#6D7761">© 2026 TSUMUGI</span>
+      <button type="button" onClick="{{ goAnalyticsSettings }}" style="border:none;background:transparent;padding:0;font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:0.1em;color:#9C978F;cursor:pointer">{{ analyticsFooterLabel }}</button>
     </div>
   </footer>
 
@@ -391,7 +408,8 @@ class Component extends DCLogic {
     accSub: "", accOrderId: null,
     accEmail: "", accPassword: "", accConfirm: "",
     accBusy: false, accError: "", accNotice: "",
-    accForm: null, profileSaved: false, addressSaved: false, coPrefilled: false
+    accForm: null, profileSaved: false, addressSaved: false, coPrefilled: false,
+    analyticsVersion: 0
   };
 
   /* ---- home hero ----
@@ -422,6 +440,30 @@ class Component extends DCLogic {
   heroKey = (e) => {
     if (e.key === "ArrowLeft") { e.preventDefault(); this.heroStep(-1); }
     else if (e.key === "ArrowRight") { e.preventDefault(); this.heroStep(1); }
+  };
+
+  /* Analytics is deliberately a narrow, optional boundary. The storefront
+     never knows a measurement id and never sends free-form user input. */
+  _ga(name, params) {
+    const A = window.TSUMUGI_ANALYTICS;
+    if (A && A.track) A.track(name, params || {});
+  }
+  _syncAnalyticsPage() {
+    const A = window.TSUMUGI_ANALYTICS;
+    if (A && A.pageView) A.pageView({ title: document.title });
+  }
+  _analyticsState() {
+    const A = window.TSUMUGI_ANALYTICS;
+    return (A && A.state) ? A.state() : {
+      configured: false, eligible: false, excluded: true, enabled: false, reason: "not_configured"
+    };
+  }
+  toggleAnalyticsExclusion = () => {
+    const A = window.TSUMUGI_ANALYTICS;
+    if (!A || !A.setExcluded) return;
+    const state = A.state();
+    A.setExcluded(!state.excluded);
+    this.setState(s => ({ analyticsVersion: s.analyticsVersion + 1 }));
   };
 
   componentDidMount() {
@@ -512,6 +554,7 @@ class Component extends DCLogic {
       if (p === "checkout") setTimeout(() => this._prefillCheckout(), 0);
     };
     this._syncHash();
+    window.setTimeout(() => this._syncAnalyticsPage(), 0);
     window.addEventListener("hashchange", this._syncHash);
     this._heroStart();
     this._bindStore();
@@ -591,6 +634,7 @@ class Component extends DCLogic {
       || prevState.productId !== this.state.productId
       || prevState.lang !== this.state.lang) {
       this._syncDocumentMeta();
+      this._syncAnalyticsPage();
     }
     if (this.state.menuOpen) this._ensureFocus('[data-panel="menu"]');
     else if (this.state.filtersOpen) this._ensureFocus('[data-panel="filters"]');
@@ -611,6 +655,7 @@ class Component extends DCLogic {
   }
 
   openMenu = (e) => {
+    this._ga("menu_open", { ui_location: "header" });
     this._menuReturn = (e && e.currentTarget) || document.activeElement;
     this._lock();
     // Every opener clears its siblings: two overlays must never coexist, or the
@@ -664,7 +709,10 @@ class Component extends DCLogic {
   /* Search and cart run the same interaction model as the menu: only one
      overlay open at a time, the page locked behind it, focus moved into the
      panel and handed back to the trigger on close. */
-  openSearch = (e) => this._openSearch((e && e.currentTarget) || document.activeElement);
+  openSearch = (e) => {
+    this._ga("search_open", { ui_location: "header" });
+    this._openSearch((e && e.currentTarget) || document.activeElement);
+  };
   _openSearch(back) {
     this._searchReturn = (back && back !== document.body) ? back : null;
     this._lock();
@@ -680,6 +728,7 @@ class Component extends DCLogic {
 
   openCart = (e) => this._openCart((e && e.currentTarget) || document.activeElement);
   _openCart(back) {
+    this._ga("demo_cart_open", { ui_location: "header_or_sticky", item_count: this.state.cart.length });
     this._cartReturn = (back && back !== document.body) ? back : null;
     this._lock();
     this.setState({ cartOpen: true, menuOpen: false, searchOpen: false, filtersOpen: false, sortOpen: false },
@@ -982,7 +1031,10 @@ class Component extends DCLogic {
     }
     this.setState({ contactErr: {}, contactSending: true });
     clearTimeout(this._cSend);
-    this._cSend = setTimeout(() => this.setState({ contactSending: false, contactSent: true }), 800);
+    this._cSend = setTimeout(() => {
+      this._ga("demo_contact_submit", { form_type: "portfolio_contact" });
+      this.setState({ contactSending: false, contactSent: true });
+    }, 800);
   };
 
   _fmtDate(d, isJa) {
@@ -1306,6 +1358,7 @@ class Component extends DCLogic {
   }
 
   goCheckout = (step) => {
+    this._ga("demo_checkout_step", { step: String(step || "information"), item_count: this.state.cart.length });
     this._unlock(true);
     this.setState({ cartOpen: false, menuOpen: false });
     this._rememberScroll();
@@ -1337,6 +1390,7 @@ class Component extends DCLogic {
   _coPlace = () => {
     const S = this.store;
     if (!S || !this.state.cart.length || this.state.coPlacing) return;
+    this._ga("demo_order_submit", { item_count: this.state.cart.length });
     this.setState({ coPlacing: true, coError: "" });
     const res = S.placeOrder({
       items: this.state.cart.map(c => ({ productId: c.id, qty: 1 })),
@@ -1356,9 +1410,11 @@ class Component extends DCLogic {
         bad_price: T.ordErrUnavailable, portfolio_only: T.ordErrPortfolio,
         persist_failed: T.ordErrStorage
       };
+      this._ga("demo_order_error", { reason: String(code).slice(0, 40) });
       this.setState({ coPlacing: false, coError: map[code] || T.ordErrFailed });
       return;
     }
+    this._ga("demo_order_complete", { item_count: this.state.cart.length });
     /* The receipt token lives in state and sessionStorage, never in the URL: a
        shared or guessed link reaches no order data. */
     this.setState({
@@ -1430,6 +1486,12 @@ class Component extends DCLogic {
         break;
       case "account":
         title = "Account";
+        break;
+      case "analytics":
+        title = isJa ? "アクセス解析設定" : "Analytics settings";
+        desc = isJa
+          ? "TSUMUGIのGoogle Analytics 4によるアクセス解析と、このブラウザの計測除外設定について。"
+          : "Google Analytics 4 usage at TSUMUGI and analytics controls for this browser.";
         break;
       case "product": {
         const p = st.productId && S ? S.getProduct(st.productId) : null;
@@ -1573,13 +1635,17 @@ class Component extends DCLogic {
   };
 
   addToCart = (p) => {
+    this._ga("demo_cart_add", { product_id: String(p.id), ui_location: "product_or_card" });
     const back = document.activeElement;
     this.setState(s => ({ cart: s.cart.find(c => c.id === p.id) ? s.cart : [...s.cart, p], toast: p.name.toUpperCase() + " ADDED" }));
     this._openCart(back);
     clearTimeout(this._toast);
     this._toast = setTimeout(() => this.setState({ toast: "" }), 2600);
   };
-  removeFromCart = (id) => this.setState(s => ({ cart: s.cart.filter(c => c.id !== id) }));
+  removeFromCart = (id) => {
+    this._ga("demo_cart_remove", { product_id: String(id) });
+    this.setState(s => ({ cart: s.cart.filter(c => c.id !== id) }));
+  };
 
   /* ---- saved pieces ----
      The list lives in the store as rows of (owner, product id): a visitor who
@@ -1591,7 +1657,13 @@ class Component extends DCLogic {
     return (S && S.wishlistIds) ? S.wishlistIds() : [];
   }
   isWished(id) { return this.wishIds().indexOf(id) >= 0; }
-  toggleWish = (id) => { const S = this.store; if (S && S.toggleWishlist) S.toggleWishlist(id); };
+  toggleWish = (id) => {
+    const S = this.store;
+    if (S && S.toggleWishlist) {
+      this._ga("wishlist_toggle", { product_id: String(id), saved: !this.isWished(id) });
+      S.toggleWishlist(id);
+    }
+  };
   toggleFilter = (group, value) => this.setState(s => {
     const cur = s.filters[group] || [];
     return { filters: { ...s.filters, [group]: cur.includes(value) ? cur.filter(v => v !== value) : [...cur, value] }, pageNo: 1 };
@@ -2000,7 +2072,11 @@ class Component extends DCLogic {
           eyebrow: p.eyebrow, title: ovTitle || p.title, cta: p.cta,
           image: cfg.imageOverride || p.image, alt: ovAlt || p.alt,
           target: "#/" + cfg.route,
-          onOpen: (e) => { if (e) e.preventDefault(); this.go(cfg.route); }
+          onOpen: (e) => {
+            if (e) e.preventDefault();
+            this._ga("hero_select", { content_type: "page", position: cfg.order });
+            this.go(cfg.route);
+          }
         };
       }
       const n = this.store ? this.store.getNews(cfg.sourceId) : null;
@@ -2011,7 +2087,11 @@ class Component extends DCLogic {
         eyebrow: monthMeta(n), title: ovTitle || AR(n.title), cta: T.heroStory,
         image: cfg.imageOverride || n.image || n.thumb, alt: ovAlt || AR(n.alt) || n.alt,
         target: "#/" + page + "/" + n.slug,
-        onOpen: (e) => { if (e) e.preventDefault(); this.go(page, n.slug); }
+        onOpen: (e) => {
+          if (e) e.preventDefault();
+          this._ga("hero_select", { content_type: "journal", position: cfg.order });
+          this.go(page, n.slug);
+        }
       };
     }).filter(Boolean);
     if (!heroSrc.length) {
@@ -2021,7 +2101,11 @@ class Component extends DCLogic {
           id: "fallback-" + route, type: "page", route, order: i + 1,
           eyebrow: p.eyebrow, title: p.title, cta: p.cta, image: p.image, alt: p.alt,
           target: "#/" + route,
-          onOpen: (e) => { if (e) e.preventDefault(); this.go(route); }
+          onOpen: (e) => {
+            if (e) e.preventDefault();
+            this._ga("hero_select", { content_type: "page", position: i + 1 });
+            this.go(route);
+          }
         });
       });
     }
@@ -2029,6 +2113,7 @@ class Component extends DCLogic {
     const heroIdx = Math.min(Math.max(0, s.heroIndex || 0), heroSrc.length - 1);
     const heroCur = heroSrc[heroIdx] || heroSrc[0];
     const pad2 = n => String(n).padStart(2, "0");
+    const analyticsState = this._analyticsState();
 
     const V = {
       t: T,
@@ -2078,8 +2163,12 @@ class Component extends DCLogic {
       headerActionFontSize: isMobile ? "clamp(7px,2.25vw,9px)" : "11px",
       headerActionLetterSpacing: isMobile ? "0.02em" : "0.14em",
       headerActionPadding: isMobile ? "10px 2px" : "12px 4px",
-      goAccountHeader: () => this.goAccount(""),
-      goAccountMenu: (e) => { if (e) e.preventDefault(); this.goAccount(""); },
+      goAccountHeader: () => { this._ga("account_open", { ui_location: "header" }); this.goAccount(""); },
+      goAccountMenu: (e) => {
+        if (e) e.preventDefault();
+        this._ga("account_open", { ui_location: "menu" });
+        this.goAccount("");
+      },
       /* The account route is the only one that waits for the auth status, and a
          signed-in customer who asks for /sign-in or /create simply gets their
          account — the guard is here, not in the views. */
@@ -2093,8 +2182,9 @@ class Component extends DCLogic {
       isHome: s.page === "home", isAbout: s.page === "about", isShop: s.page === "shop",
       isProduct: s.page === "product" && !productMissing, isContact: s.page === "contact",
       isCartPage: s.page === "cart",
+      isAnalyticsSettings: s.page === "analytics",
       is404: productMissing || !["home", "about", "shop", "product", "journal", "news", "contact", "cart",
-               "checkout", "complete", "account", "feature"].includes(s.page),
+               "checkout", "complete", "account", "feature", "analytics"].includes(s.page),
       isJournal: s.page === "journal" && !s.slug,
       isArticle: (s.page === "journal" || s.page === "news") && !!s.slug,
       articleFound: !!s.slug && !!this.publicArticle(s.slug),
@@ -2109,8 +2199,40 @@ class Component extends DCLogic {
       })),
       goHome: (e) => { if (e) e.preventDefault(); this.go("home"); },
       goShop: () => this.go("shop"), goAbout: () => this.go("about"), goJournal: () => this.go("journal"),
-      goCartPage: () => this.go("cart"),
+      goCartPage: () => {
+        this._ga("demo_cart_review", { item_count: s.cart.length, ui_location: "cart_drawer" });
+        this.go("cart");
+      },
       goShopFromCart: () => this.go("shop"),
+      goAnalyticsSettings: () => this.go("analytics"),
+      analyticsEyebrow: isJa ? "プライバシー" : "PRIVACY",
+      analyticsTitle: isJa ? "アクセス解析設定" : "Analytics settings",
+      analyticsDescription: isJa
+        ? "TSUMUGIでは、ポートフォリオの改善を目的としてGoogle Analytics 4を利用します。閲覧ページ、利用環境、約90%地点へのスクロール、主要なデモ操作を記録します。氏名、メールアドレス、お問い合わせ内容、検索語、住所、注文番号は送信しません。"
+        : "TSUMUGI uses Google Analytics 4 to improve this portfolio. It records pages, device context, 90% scroll depth and key demo interactions. Names, email addresses, messages, search terms, addresses and order numbers are never sent.",
+      analyticsCurrentLabel: isJa ? "このブラウザの現在の設定" : "CURRENT SETTING FOR THIS BROWSER",
+      analyticsStateLabel: analyticsState.reason === "not_configured"
+        ? (isJa ? "アクセス解析はまだ接続されていません" : "Analytics is not connected yet")
+        : analyticsState.reason === "not_production"
+          ? (isJa ? "本番公開サイト以外では自動停止します" : "Automatically disabled outside production")
+          : analyticsState.excluded
+            ? (isJa ? "計測しない" : "Analytics disabled")
+            : (isJa ? "計測する" : "Analytics enabled"),
+      analyticsButtonLabel: analyticsState.excluded
+        ? (isJa ? "このブラウザの計測を有効にする" : "Enable analytics in this browser")
+        : (isJa ? "このブラウザを計測対象外にする" : "Exclude this browser"),
+      analyticsControlDisabled: !analyticsState.configured || !analyticsState.eligible,
+      analyticsButtonBg: analyticsState.excluded ? "transparent" : "#222222",
+      analyticsButtonColor: analyticsState.excluded ? "#222222" : "#F8F7F4",
+      analyticsButtonCursor: (!analyticsState.configured || !analyticsState.eligible) ? "not-allowed" : "pointer",
+      toggleAnalyticsExclusion: this.toggleAnalyticsExclusion,
+      analyticsStorageNote: isJa
+        ? "設定はこのブラウザ内に保存されます。別の端末・ブラウザ、シークレットモード、サイトデータ削除後は個別に設定してください。"
+        : "This choice is stored in this browser. Set it separately in other browsers, devices and private sessions, or after clearing site data.",
+      analyticsPrivacyNote: isJa
+        ? "購入・問い合わせ・ニュースレターはポートフォリオ用デモとして区別し、売上や実受注として記録しません。広告シグナルと広告パーソナライズは無効です。"
+        : "Purchase, contact and newsletter actions are labelled as portfolio demos and never recorded as revenue or real orders. Advertising signals and personalisation are disabled.",
+      analyticsFooterLabel: isJa ? "アクセス解析設定" : "ANALYTICS SETTINGS",
       openMenu: this.openMenu, closeMenu: this.closeMenu, onMenuBackdrop: this.onMenuBackdrop,
       menuExpanded: s.menuOpen ? "true" : "false",
       openSearch: this.openSearch, closeSearch: this.closeSearch, onSearchBackdrop: this.onSearchBackdrop,
@@ -2156,13 +2278,23 @@ class Component extends DCLogic {
       checkoutCols: s.vw >= 900 ? "minmax(0,1.5fr) minmax(0,1fr)" : "minmax(0,1fr)",
       query: s.query,
       onQuery: e => this.setState({ query: e.target.value }),
-      searchResults: results.map(p => ({ ...p, onOpen: () => this.go("product", p.id) })),
+      searchResults: results.map(p => ({
+        ...p,
+        onOpen: () => {
+          this._ga("search_result_select", { product_id: String(p.id) });
+          this.go("product", p.id);
+        }
+      })),
       searchCountLabel: q ? (isJa ? results.length + "件" : results.length + " RESULTS") : L.recentlyAdded,
       suggestions: ["reverse weave", "moleskin", "down", "1970s"].map(label => ({ label, onClick: () => this.setState({ query: label }) })),
       newsletter: s.newsletter,
       newsletterNote: s.newsletterKey === "ok" ? L.newsletterOk : s.newsletterKey === "bad" ? L.newsletterBad : "",
       onNewsletter: e => this.setState({ newsletter: e.target.value }),
-      subscribe: () => this.setState(st => ({ newsletterKey: st.newsletter.includes("@") ? "ok" : "bad", newsletter: st.newsletter.includes("@") ? "" : st.newsletter })),
+      subscribe: () => {
+        const ok = s.newsletter.includes("@");
+        if (ok) this._ga("demo_newsletter_submit", { form_type: "portfolio_newsletter" });
+        this.setState({ newsletterKey: ok ? "ok" : "bad", newsletter: ok ? "" : s.newsletter });
+      },
       allPiecesLabel: "ALL " + all.length,
       // Compact widths show the arrivals grid two-up, so six pieces fill three
       // even rows; desktop keeps the original single row of four.

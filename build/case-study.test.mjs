@@ -21,6 +21,9 @@ test('case study follows the five reference headings and stays standalone', asyn
     assert.ok(attr(img, 'alt')); await read(attr(img, 'src'));
   }
   assert.ok(html.includes('runtime/site-update.js'));
+  assert.ok(html.includes('tsumugi-analytics.js'));
+  assert.ok(html.includes('runtime/case-study-analytics.js'));
+  assert.ok(nodes.some(n => attr(n, 'data-ga-destination') === 'home'));
   assert.ok(!html.includes('runtime/main-public'));
   assert.ok(html.includes('実在する店舗からの受託案件ではありません'));
 });

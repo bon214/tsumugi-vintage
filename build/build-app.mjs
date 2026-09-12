@@ -47,6 +47,7 @@ const DEPLOY_BASE = (() => {
    the two root components declare in their <helmet>. */
 const SHARED_SCRIPTS = [
   "auth-config.js",
+  "tsumugi-analytics.js",
   "tsumugi-supabase.js",
   "tsumugi-sanitize.js",
   "tsumugi-data.js",
@@ -70,13 +71,24 @@ const FONT_LINKS = `<link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,400;0,500;1,400&family=Hanken+Grotesk:wght@300;400;500;600&family=IBM+Plex+Mono:wght@400;500&family=Noto+Serif+JP:wght@400;500&family=Noto+Sans+JP:wght@300;400;500&display=swap" rel="stylesheet">`;
 
-/* Content-Security-Policy for the built site. Every source is either 'self' or
-   Google Fonts; there is no script-src 'unsafe-eval' and no third-party script
-   origin, which is only possible because nothing is compiled or imported at
-   runtime any more. 'unsafe-inline' remains for style-src because the design
-   is built from inline style attributes — those are not scripts, and React
-   sets them as properties, so no nonce can cover them. */
-const CSP = [
+/* Content-Security-Policy for the built site. Public pages permit only Google's
+   official GA tag as a remote script; the admin remains self-only. There is no
+   script-src 'unsafe-eval'. 'unsafe-inline' remains for style-src because the
+   design is built from inline style attributes — those are not scripts, and
+   React sets them as properties, so no nonce can cover them. */
+const PUBLIC_CSP = [
+  "default-src 'self'",
+  "script-src 'self' https://www.googletagmanager.com",
+  "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
+  "font-src 'self' https://fonts.gstatic.com",
+  "img-src 'self' data: blob: https:",
+  "connect-src 'self' https://*.supabase.co https://*.google-analytics.com https://*.analytics.google.com https://www.googletagmanager.com",
+  "form-action 'none'",
+  "frame-ancestors 'none'",
+  "base-uri 'self'",
+  "object-src 'none'",
+].join("; ");
+const ADMIN_CSP = [
   "default-src 'self'",
   "script-src 'self'",
   "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
@@ -138,14 +150,19 @@ const importMap = (root) => `<script type="importmap">
 </script>`;
 
 const versioned = (url) => `${url}?v=${ASSET_VERSION}`;
-const appTags = (root, entry) => `<meta name="tsumugi-release" content="__TSUMUGI_RELEASE__">
+const appTags = (root, entry, includeAnalytics = true) => {
+  const scripts = includeAnalytics
+    ? SHARED_SCRIPTS
+    : SHARED_SCRIPTS.filter((name) => name !== "tsumugi-analytics.js");
+  return `<meta name="tsumugi-release" content="__TSUMUGI_RELEASE__">
 <script src="${versioned(root + "runtime/site-update.js")}" data-release="__TSUMUGI_RELEASE__"></script>
 ${importMap(root)}
 <script src="${versioned(root + "vendor/react.production.min.js")}"></script>
 <script src="${versioned(root + "vendor/react-dom.production.min.js")}"></script>
 <script src="${versioned(root + "vendor/supabase.umd.js")}"></script>
-${SHARED_SCRIPTS.map((s) => `<script src="${versioned(root + s)}"></script>`).join("\n")}
+${scripts.map((s) => `<script src="${versioned(root + s)}"></script>`).join("\n")}
 <script type="module" src="${versioned(root + "runtime/" + entry)}"></script>`;
+};
 
 async function contentVersion() {
   const files = [...SHARED_SCRIPTS];
@@ -254,6 +271,22 @@ async function main() {
     await writeFile(configPath, configSource, "utf8");
   }
 
+  /* GA4's public measurement id is injected like the deployment URL: no id in
+     source means no local or preview build can emit analytics. Unlike the
+     Supabase publishable key it is not a secret, so GitHub Actions supplies it
+     as a repository variable. */
+  const gaId = String(process.env.GA4_MEASUREMENT_ID || "").trim();
+  if (gaId && !/^G-[A-Z0-9]+$/i.test(gaId)) {
+    die("GA4_MEASUREMENT_ID must look like G-XXXXXXXXXX.");
+  }
+  const analyticsPath = path.join(DIST, "tsumugi-analytics.js");
+  let analyticsSource = await readFile(analyticsPath, "utf8");
+  analyticsSource = analyticsSource
+    .replace('measurementId: ""', `measurementId: ${JSON.stringify(gaId)}`)
+    .replace('siteUrl: "https://bon214.github.io/tsumugi-vintage"',
+      `siteUrl: ${JSON.stringify(String(process.env.SITE_URL || "https://bon214.github.io/tsumugi-vintage").replace(/\/+$/, ""))}`);
+  await writeFile(analyticsPath, analyticsSource, "utf8");
+
   /* generated/manifest.json and helmets.json are build metadata, not runtime
      files; publishing them would leak the source file names. */
   for (const f of ["manifest.json", "helmets.json"]) {
@@ -337,7 +370,7 @@ async function main() {
     }
 
     html = html.replace("</head>",
-      `<meta http-equiv="Content-Security-Policy" content="${CSP}">\n`
+      `<meta http-equiv="Content-Security-Policy" content="${PUBLIC_CSP}">\n`
       + `<link rel="stylesheet" href="${versioned(root + "generated/pseudo.css")}">\n`
       + `${FONT_LINKS}\n${publicGlobalStyle}\n${LIVE_CSS}\n</head>`);
     html = html.replace("</body>",
@@ -359,7 +392,7 @@ async function main() {
 <meta name="robots" content="noindex,nofollow,noarchive,nosnippet,noimageindex">
 <meta name="googlebot" content="noindex,nofollow">
 <meta name="referrer" content="no-referrer">
-<meta http-equiv="Content-Security-Policy" content="${CSP}">
+<meta http-equiv="Content-Security-Policy" content="${ADMIN_CSP}">
 <link rel="icon" href="./favicon.svg" type="image/svg+xml">
 <link rel="stylesheet" href="${versioned("./generated/pseudo.css")}">
 ${FONT_LINKS}
@@ -392,7 +425,7 @@ ${adminGlobalStyle}
 </div>
 <div id="dc-root"></div>
 <noscript><style>.dc-boot { display: none !important }</style><p>JavaScript が必要です / JavaScript required.</p></noscript>
-${appTags("./", "main-admin.js")}
+${appTags("./", "main-admin.js", false)}
 </body>
 </html>
 `;

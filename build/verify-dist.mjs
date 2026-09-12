@@ -1,7 +1,7 @@
 /* build/verify-dist.mjs — the release gate.
  *
  * Exits non-zero if the production output contains anything that would force a
- * weaker CSP, depend on a third-party CDN, or index as an empty page. This runs
+ * weaker CSP, depend on an unapproved third-party CDN, or index as an empty page. This runs
  * as the last step of `npm run build`, so a regression fails the build instead
  * of reaching GitHub Pages.
  *
@@ -206,8 +206,24 @@ for (const v of ["vendor/react.production.min.js", "vendor/react-dom.production.
                  "vendor/supabase.umd.js", "vendor/manifest.json"]) {
   needFile(v, "a third-party library is not vendored, so the browser would need a CDN");
 }
-for (const s of ["tsumugi-auth.js", "tsumugi-data.js", "tsumugi-i18n.js", "tsumugi-sanitize.js"]) {
+for (const s of ["tsumugi-auth.js", "tsumugi-analytics.js", "tsumugi-data.js", "tsumugi-i18n.js", "tsumugi-sanitize.js"]) {
   needFile(s, "a shared script the application depends on is not published");
+}
+if (has("tsumugi-analytics.js")) {
+  const analytics = await readFile(join(ROOT, "tsumugi-analytics.js"), "utf8");
+  if (!/send_page_view:\s*false/.test(analytics)) {
+    problems.push("tsumugi-analytics.js: automatic page views are not disabled — SPA routes would double count");
+  }
+  if (!/ga-disable-/.test(analytics) || !/tsumugi\.analytics\.excluded/.test(analytics)) {
+    problems.push("tsumugi-analytics.js: creator/browser exclusion is missing");
+  }
+  if (/gtag\(\s*["']event["']\s*,\s*["']purchase["']/.test(analytics)) {
+    problems.push("tsumugi-analytics.js: the portfolio demo must never emit a GA4 purchase event");
+  }
+  const expectedGa = String(process.env.GA4_MEASUREMENT_ID || "").trim();
+  if (expectedGa && !analytics.includes(`measurementId: ${JSON.stringify(expectedGa)}`)) {
+    problems.push("tsumugi-analytics.js: the build did not inject GA4_MEASUREMENT_ID");
+  }
 }
 if ([...names].some((n) => n.endsWith(".dc.html"))) {
   problems.push("an authoring .dc.html source was copied into dist/ — it is not needed and "
@@ -244,7 +260,22 @@ for (const f of files.filter((f) => f.endsWith(".html"))) {
   if (csp) {
     need(/script-src 'self'/.test(csp[1]), "CSP script-src is not 'self'");
     need(!/unsafe-eval/.test(csp[1]), "CSP still allows unsafe-eval");
-    need(!/script-src[^;]*https?:\/\//.test(csp[1]), "CSP allows a remote script origin");
+    const scriptPolicy = /(?:^|;\s*)script-src\s+([^;]+)/.exec(csp[1]);
+    const remoteScripts = scriptPolicy
+      ? [...scriptPolicy[1].matchAll(/https?:\/\/[^\s;]+/g)].map((match) => match[0])
+      : [];
+    if (isConsole) {
+      need(remoteScripts.length === 0, "admin CSP must not allow a remote script origin");
+      need(!/google-analytics|googletagmanager|analytics\.google/.test(csp[1]),
+        "admin CSP must not allow an analytics endpoint");
+    } else {
+      need(remoteScripts.length === 1 && remoteScripts[0] === "https://www.googletagmanager.com",
+        "public CSP may allow only the Google tag script origin");
+      need(/connect-src[^;]*https:\/\/\*\.google-analytics\.com/.test(csp[1])
+        && /connect-src[^;]*https:\/\/\*\.analytics\.google\.com/.test(csp[1])
+        && /connect-src[^;]*https:\/\/www\.googletagmanager\.com/.test(csp[1]),
+        "public CSP is missing an official GA4 collection endpoint");
+    }
   }
   need(!/location\.replace\(/.test(raw),
     "a redirect survived: a production page must serve its own route, not bounce");
@@ -263,6 +294,10 @@ for (const f of files.filter((f) => f.endsWith(".html"))) {
     problems.push(`${name}: no import map, so "react" resolves to nothing`);
   }
 
+  if (!isConsole) {
+    need((raw.match(/tsumugi-analytics\.js(?:\?v=[a-f0-9]{64})?/g) || []).length === 1,
+      "public page must load the analytics guard exactly once");
+  }
   if (!isConsole && !isEditorial) {
     /* 404.html carries an empty dc-route on purpose: it is a fallback, not a
        route, and the app opens the home screen from it. */
@@ -277,12 +312,16 @@ for (const f of files.filter((f) => f.endsWith(".html"))) {
         `${animation} keyframes must appear exactly once while the component references them`);
     }
   } else if (isConsole) {
+    need(!/tsumugi-analytics\.js/.test(raw), "the staff console must not load public analytics");
     need((raw.match(/data-dc-global="TSUMUGI Admin"/g) || []).length === 1,
       "compiled TSUMUGI Admin global styles must appear exactly once");
     for (const animation of adminAnimations) {
       need((raw.match(new RegExp(`@keyframes\\s+${animation}\\b`, "g")) || []).length === 1,
         `${animation} admin keyframes must appear exactly once`);
     }
+  } else if (isEditorial) {
+    need(/runtime\/case-study-analytics\.js/.test(raw),
+      "the standalone case study does not send its page view through the shared adapter");
   }
 
   /* Asset references must resolve inside dist/, or the deployed page 404s on

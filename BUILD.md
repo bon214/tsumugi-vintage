@@ -37,8 +37,8 @@ npm audit                        found 0 vulnerabilities
 | Components | `*.dc.html` | compiled JavaScript |
 | Template work | performed in the editor | already compiled |
 | Component loading | sibling source files | static module graph |
-| Third-party code | editor-provided/CDN fallback | pinned local files |
-| CSP | editor requirements | `script-src 'self'` |
+| Third-party code | editor-provided/CDN fallback | app libraries are pinned locally; public pages load only the official GA tag when configured |
+| CSP | editor requirements | public: `script-src 'self' https://www.googletagmanager.com`; admin: `script-src 'self'` |
 
 The `.dc.html` files remain the editable source. They, `support.js`, QA pages,
 build scripts and Supabase source are never copied into `dist/`.
@@ -61,9 +61,10 @@ npm run build
 5. `build/bundle.mjs` — create one public and one admin entry bundle.
 6. `build/verify-dist.mjs dist` — fail closed on packaging/security/SEO defects.
 
-The current suite contains 73 tests: the original 64 compiler/graph checks plus
-CMS wiring, migration, mapping, seed-safety, secret-exclusion and Storage path
-checks.
+The suite also covers CMS wiring, migrations, field mapping, seed safety,
+secret exclusion, Storage paths and the GA4 adapter. Analytics checks exercise
+the disabled/local/admin states, pre-load owner opt-out, manual SPA page-view
+deduplication, per-route 90% scroll, PII removal and demo-purchase isolation.
 
 The bundled build is the production path. An earlier unbundled path used an
 inline import map; real-browser testing proved that `script-src 'self'` blocks
@@ -84,7 +85,7 @@ Recorded results:
 21 modules compiled
 47 pseudo-state rules
 roots: TSUMUGI, TSUMUGI Admin
-73 tests passed, 0 failed
+139 tests passed, 0 failed
 ```
 
 The production CLI has its own regression test. This was added after the first
@@ -102,17 +103,35 @@ The shipped policy is:
 
 ```text
 default-src 'self';
-script-src 'self';
+script-src 'self' https://www.googletagmanager.com;
 style-src 'self' 'unsafe-inline' https://fonts.googleapis.com;
 font-src 'self' https://fonts.gstatic.com;
 img-src 'self' data: blob: https:;
-connect-src 'self' https://*.supabase.co;
+connect-src 'self' https://*.supabase.co https://*.google-analytics.com https://*.analytics.google.com https://www.googletagmanager.com;
 form-action 'none'; frame-ancestors 'none'; base-uri 'self'; object-src 'none'
 ```
 
-`unsafe-eval` and remote script origins are absent. `unsafe-inline` remains for
-styles because the design uses inline style properties and GitHub Pages cannot
-issue per-response nonces.
+This is the public policy. The admin policy stays `script-src 'self'` and does
+not load the analytics adapter. `unsafe-eval` remains absent, and the only
+remote public script origin is Google's official tag host. `unsafe-inline`
+remains for styles because the design uses inline style properties and GitHub
+Pages cannot issue per-response nonces.
+
+## Google Analytics 4
+
+`tsumugi-analytics.js` is a fail-closed public-site adapter. Source and
+local builds have an empty measurement ID; `build/build-app.mjs` injects the
+valid `GA4_MEASUREMENT_ID` supplied by the Pages workflow. It uses
+`send_page_view: false`, sends one view after each hash route settles, resets a
+single 90% `scroll` event per virtual page and suppresses rapid/release-marker
+reloads. Arbitrary URL queries, free-form input and account/order identifiers
+are not sent. Demo checkout events never become GA4 purchase or revenue events.
+
+The standalone `case-study.html` uses the same adapter and property, with its
+own `case_study` page group. The creator opt-out is stored per browser before
+the Google script is requested and exposed at `#/analytics`. Local previews,
+WebDriver and `admin.html` do not track. Deployment and non-technical setup instructions are in
+`GA4_SETUP_JA.md`.
 
 Supabase's published webpack UMD file contained runtime global discovery that
 failed the CSP gate. `build/vendor.mjs` instead builds an IIFE from the pinned
@@ -157,8 +176,8 @@ repository root.
 Recorded final result:
 
 ```text
-verify: 51 files, 25 HTML pages, 23 unique titles,
-        23 unique descriptions, bundled application
+verify: 116 files, 31 HTML pages, 29 unique titles,
+        29 unique descriptions, bundled application
 verify: no banned strings, metadata complete and unique,
         subpath-safe — build accepted
 ```
@@ -196,9 +215,10 @@ Only `dist/` was served. The following eight routes were tested at 390, 768 and
 ```
 
 Every case mounted one React root, loaded one local bundle, contained no import
-map, made no remote script request, logged zero console warnings/errors and had
-no horizontal overflow. `/shop/` also passed a direct reload. The article title
-was checked after React takeover to ensure the site suffix appears once.
+map, logged zero console warnings/errors and had no horizontal overflow.
+The recorded pass used an empty GA4 measurement ID, so it made no analytics
+request. `/shop/` also passed a direct reload. The article title was checked
+after React takeover to ensure the site suffix appears once.
 
 A separate `/repo/` deployment tested the root, shop, admin and the deep unknown
 URL `/repo/missing/deep/path`. The custom 404 response loaded its bundle and

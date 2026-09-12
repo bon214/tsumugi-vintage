@@ -32,6 +32,7 @@ jobs:
       - name: Export public catalogue and build
         env:
           SITE_URL: ${{ vars.SITE_URL }}
+          GA4_MEASUREMENT_ID: ${{ vars.GA4_MEASUREMENT_ID }}
           SUPABASE_URL: ${{ vars.SUPABASE_URL }}
           SUPABASE_PUBLISHABLE_KEY: ${{ secrets.SUPABASE_PUBLISHABLE_KEY }}
         run: |
