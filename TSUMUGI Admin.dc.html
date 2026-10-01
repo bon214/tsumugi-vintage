@@ -914,7 +914,7 @@ class Component extends DCLogic {
     /* Buttons: everything that writes is turned off, so nothing on screen is a
        click that silently does nothing. The allow-list is the console's reading
        vocabulary — navigation, disclosure, preview, cancel and menu openers. */
-    const READ_ONLY_OK = /プレビュー|preview|キャンセル|cancel|閉じる|close|ストアで見る|view on store|サイトで|編集|edit|戻る|back|次|前|page|検索|search|絞り込|filter|並び替|sort|表示|show|すべて|all|コピー|copy|ダウンロード|download|印刷|print/i;
+    const READ_ONLY_OK = /プレビュー|preview|キャンセル|cancel|閉じる|close|ストアで見る|view on store|サイトで|編集|edit|戻る|back|次|前|page|検索|search|絞り込|filter|並び替|並べ替|sort|表示|show|すべて|all|コピー|copy|ダウンロード|download|印刷|print/i;
     main.querySelectorAll("button").forEach(el => {
       if (el.dataset.guestLocked === "1" || el.disabled) return;
       // Disclosure toggles and popup openers only reveal what is already there.

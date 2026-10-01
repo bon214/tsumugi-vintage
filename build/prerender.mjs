@@ -235,13 +235,13 @@ const urls = [];
 
 written.push(await emit("index.html", page({
   file: "index.html", route: "", title: "古着とアーカイブの店",
-  description: "TSUMUGI は東京の古着店です。年代やブランドではなく、生地・仕立て・今の服と合わせて着られるかで一点ずつ選んでいます。すべて一点物、再入荷はありません。",
+  description: "TSUMUGIは東京の古着店です。年代やブランドではなく、生地・仕立て・今の服と合わせて着られるかで一点ずつ選んでいます。すべて一点物、再入荷はありません。",
   jsonLd: { "@context": "https://schema.org", ...ORG },
   kicker: "TOKYO · VINTAGE & ARCHIVE",
   heading: "新しい服との出会いを、ここから",
   body: [
-    "TSUMUGI は東京・渋谷の古着店です。年代や希少性ではなく、生地の質、仕立て、そして今の服と合わせて自然に着られるかを見て、一点ずつ選んでいます。",
-    "在庫はすべて一点物です。同じ服にもう一度出会える機会はなかなかありません。",
+    "TSUMUGIは東京・渋谷の古着店です。年代や希少性ではなく、生地の質、仕立て、そして今の服と合わせて自然に着られるかを見て、一点ずつ選んでいます。",
+    "在庫はすべて一点物です。同じ服にもう一度出会う機会はなかなかありません。",
     "TSUMUGI is a vintage and archive clothing shop in Tokyo. Every piece is one of one, and nothing is restocked.",
   ],
 })));
@@ -250,19 +250,19 @@ urls.push("");
 written.push(await emit("about/index.html", page({
   file: "about/index.html", route: "about", title: "私たちについて",
   links: [["このサイトの制作について — 制作解説を読む", "../case-study.html"]],
-  description: "生地・つくり・状態・今も着られるか。TSUMUGI が一着を選ぶときの四つの基準と、修理をどこまで見せるかについて。",
+  description: "生地・つくり・状態・今も着られるか。TSUMUGIが一着を選ぶときの四つの基準と、修理をどこまで見せるかについて。",
   jsonLd: { "@context": "https://schema.org", "@type": "AboutPage", mainEntity: ORG },
   kicker: "ABOUT",
   heading: "人と服との出会いを紡ぐ",
   body: [
     "私自身、古着を選ぶときに年代やブランドだけを見ることはありません。生地や仕立て、着込まれたあとの表情を見て、今でも着たいと思えるかを考えます。",
-    "良いところだけでなく、傷や分からないこともそのまま伝え、皆様に古着との出会いを楽しんでもらえる。そんな店でありたいと思っています。",
+    "良いところだけでなく、傷や分からないこともそのまま伝え、皆様に古着との出会いを楽しんでいただける店でありたいと思っています。",
   ],
   facts: [
     ["生地", "天然繊維を中心に、着込んだあとも風合いが残る生地を選びます。"],
     ["つくり", "縫製やパターン、細部の仕立てまで見て選びます。"],
     ["状態", "傷や色褪せがあっても、まだ十分に着られるものを選びます。"],
-    ["今、着てもらえるか", "現代の服と合わせても自然に着られるかを判断材料にしています。"],
+    ["今、着てもらえるか", "現代の服と合わせても自然に着られるかを基準にしています。"],
   ],
 })));
 urls.push("about");
@@ -296,7 +296,7 @@ urls.push("shop");
 
 written.push(await emit("journal/index.html", page({
   file: "journal/index.html", route: "journal", title: "Journal",
-  description: "入荷の記録、仕入れの旅、修理の考え方、ラベルの読み方。TSUMUGI が書いている服についての覚書。",
+  description: "入荷の記録、仕入れの旅、修理の考え方、ラベルの読み方。TSUMUGIが書いている服についての覚書。",
   jsonLd: {
     "@context": "https://schema.org", "@type": "Blog", name: "TSUMUGI Journal",
     blogPost: catalog.news.map((n) => ({
@@ -317,7 +317,7 @@ urls.push("journal");
 
 written.push(await emit("contact/index.html", page({
   file: "contact/index.html", route: "contact", title: "お問い合わせ",
-  description: "TSUMUGI へのお問い合わせ。東京都渋谷区霧ヶ谷4-11-6。営業日・修理相談・お取り置きについて。",
+  description: "TSUMUGIへのお問い合わせ。東京都渋谷区霧ヶ谷4-11-6。営業日・修理相談・お取り置きについて。",
   jsonLd: { "@context": "https://schema.org", "@type": "ContactPage", mainEntity: ORG },
   kicker: "CONTACT",
   heading: "お問い合わせ",

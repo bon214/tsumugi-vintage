@@ -8,10 +8,10 @@ test("approved Japanese storefront proofreading remains applied", async () => {
   const source = await read("tsumugi-i18n-public.js");
   const expected = [
     "日本国内は送料無料です。",
-    "人と服との時間が新しく繋がっていきますように。\\nそんな想いを込めた古着屋です。",
-    "それら全てを知ったうえで「着たい」と思ってもらえること。",
+    "人と服との時間が、新しくつながっていきますように。\\nそんな想いを込めた古着屋です。",
+    "それらをすべて知ったうえで「着たい」と思ってもらえること。",
     "そんな人と服との出会いをつくることが、私たちの仕事だと考えています。",
-    "同じ服にもう一度出会える機会は、なかなかありません。",
+    "同じ服にもう一度出会う機会は、なかなかありません。",
     "だから私たちは一着ずつ丁寧に向き合って選びます。",
     "そのきっかけを、TSUMUGIからお届けします。",
     "どれも大切に着られ、時を重ねてきた一着です。",
@@ -24,7 +24,7 @@ test("approved Japanese storefront proofreading remains applied", async () => {
     "ご注文完了の控えは、ご注文時の画面でのみ表示されます。",
     "希望があれば個人の方とも、\\n一着ずつ",
     "一着ごとの状態や背景を、できるだけ正直に記載します。",
-    "皆様に今も着たいと思っていただけるかを判断材料にしています。",
+    "皆様に今も着たいと思っていただけるかを基準にしています。",
   ];
   for (const text of expected) assert.ok(source.includes(text), text);
 
@@ -50,11 +50,11 @@ test("approved catalogue proofreading remains applied", async () => {
   const articles = new Map(data.news.map((article) => [article.id, article]));
   assert.equal(articles.get(1).summary, "布・縫い目・シルエットから、その服がこれからも着続けられるかを確かめます。");
   assert.match(articles.get(1).body, /別の観点に目を向けることで見えてきます。/);
-  assert.match(articles.get(1).body, /色ではなく、繊維と構造から状態を読みます。/);
+  assert.match(articles.get(1).body, /色ではなく、繊維と構造から状態を確かめます。/);
   assert.match(articles.get(1).seo_description, /力の集まる箇所/);
   assert.match(articles.get(3).body, /表面の埃なら柔らかなブラシをかけ/);
   assert.match(articles.get(3).seo_description, /洗濯前に湿気を逃がす方法から/);
-  assert.match(articles.get(5).body, /すべての商品において同じ生成りの壁/);
+  assert.match(articles.get(5).body, /すべての商品を、同じ生成りの壁/);
   assert.match(data.special_features.find((feature) => feature.id === "sf-light-outerwear").description_ja, /冬のコートにはまだ早い時期に。/);
 });
 
@@ -63,14 +63,14 @@ test("approved case-study proofreading remains applied", async () => {
   const expected = [
     "店舗のコンセプトに沿うものを選定しました。",
     "撮り方を統一した写真",
-    "Aboutではそれぞれの服を選ぶ基準を",
+    "Aboutはそれぞれの服を選ぶ基準を",
     "店主の姿勢を知ってから選べる導線も用意しました。",
     "画像・文章・コードの作成、レビューや検証を進めました。",
     "店舗イメージには、AI生成画像を使用しています。",
     "カート・購入手続き画面、About・Journalを制作しました。",
     "店舗空間をBlenderで制作。",
     "空間の制作は継続中です。",
-    "共感を呼ぶことを狙い、記事ページなどを作成しました。",
+    "店が大切にしていることを伝えて共感してもらえるよう、記事ページなどを作成しました。",
   ];
   for (const text of expected) assert.ok(html.includes(text), text);
 });

@@ -12,7 +12,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,400;0,500;1,400&family=Hanken+Grotesk:wght@300;400;500&family=IBM+Plex+Mono:wght@400&display=swap" rel="stylesheet">
 <title>TSUMUGI — 古着とアーカイブの店 | Vintage &amp; Archive Clothing</title>
-<meta name="description" content="TSUMUGI は東京の古着店です。年代やブランドではなく、生地・仕立て・今の服と合わせて着られるかで一点ずつ選んでいます。">
+<meta name="description" content="TSUMUGIは東京の古着店です。年代やブランドではなく、生地・仕立て・今の服と合わせて着られるかで一点ずつ選んでいます。">
 <meta name="robots" content="index,follow">
 <link rel="canonical" href="./">
 <link rel="icon" href="./favicon.svg" type="image/svg+xml">
@@ -40,6 +40,9 @@
   a { color: #6D7761; text-decoration: none; }
   a:hover { color: #222222; }
   button, input, select { font-family: inherit; }
+  /* CMS article images retain their aspect ratio inside the existing text column. */
+  [data-article-body] { overflow-wrap: anywhere; }
+  [data-article-body] img { display: block; max-width: 100%; height: auto; }
   :focus-visible { outline: 2px solid #6D7761; outline-offset: 3px; }
   ::selection { background: #EFE9E0; }
   @keyframes fadeUp { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: none; } }
@@ -2210,7 +2213,7 @@ class Component extends DCLogic {
       analyticsDescription: isJa
         ? "TSUMUGIでは、ポートフォリオの改善を目的としてGoogle Analytics 4を利用します。閲覧ページ、利用環境、約90%地点へのスクロール、主要なデモ操作を記録します。氏名、メールアドレス、お問い合わせ内容、検索語、住所、注文番号は送信しません。"
         : "TSUMUGI uses Google Analytics 4 to improve this portfolio. It records pages, device context, 90% scroll depth and key demo interactions. Names, email addresses, messages, search terms, addresses and order numbers are never sent.",
-      analyticsCurrentLabel: isJa ? "このブラウザの現在の設定" : "CURRENT SETTING FOR THIS BROWSER",
+      analyticsCurrentLabel: isJa ? "このブラウザの設定" : "CURRENT SETTING FOR THIS BROWSER",
       analyticsStateLabel: analyticsState.reason === "not_configured"
         ? (isJa ? "アクセス解析はまだ接続されていません" : "Analytics is not connected yet")
         : analyticsState.reason === "not_production"
@@ -2220,14 +2223,14 @@ class Component extends DCLogic {
             : (isJa ? "計測する" : "Analytics enabled"),
       analyticsButtonLabel: analyticsState.excluded
         ? (isJa ? "このブラウザの計測を有効にする" : "Enable analytics in this browser")
-        : (isJa ? "このブラウザを計測対象外にする" : "Exclude this browser"),
+        : (isJa ? "このブラウザの計測を停止" : "Exclude this browser"),
       analyticsControlDisabled: !analyticsState.configured || !analyticsState.eligible,
       analyticsButtonBg: analyticsState.excluded ? "transparent" : "#222222",
       analyticsButtonColor: analyticsState.excluded ? "#222222" : "#F8F7F4",
       analyticsButtonCursor: (!analyticsState.configured || !analyticsState.eligible) ? "not-allowed" : "pointer",
       toggleAnalyticsExclusion: this.toggleAnalyticsExclusion,
       analyticsStorageNote: isJa
-        ? "設定はこのブラウザ内に保存されます。別の端末・ブラウザ、シークレットモード、サイトデータ削除後は個別に設定してください。"
+        ? "設定はこのブラウザ内に保存されます。別の端末・ブラウザやシークレットモードでは、個別に設定してください。サイトデータを削除した場合も再設定が必要です。"
         : "This choice is stored in this browser. Set it separately in other browsers, devices and private sessions, or after clearing site data.",
       analyticsPrivacyNote: isJa
         ? "購入・問い合わせ・ニュースレターはポートフォリオ用デモとして区別し、売上や実受注として記録しません。広告シグナルと広告パーソナライズは無効です。"
@@ -2374,7 +2377,7 @@ class Component extends DCLogic {
       filtersExpanded: s.filtersOpen ? "true" : "false",
       sortExpanded: s.sortOpen ? "true" : "false",
       onSortBackdrop: this.onSortBackdrop,
-      sortLabel: isJa ? "並び替え · " + L.sortOption(s.sort) : "SORT · " + s.sort.toUpperCase(),
+      sortLabel: isJa ? "並べ替え · " + L.sortOption(s.sort) : "SORT · " + s.sort.toUpperCase(),
       sortOpen: s.sortOpen,
       toggleSort: this.toggleSort,
       sortOptions: L.sortOptions.map(o => ({

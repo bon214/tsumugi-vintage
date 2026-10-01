@@ -9,11 +9,11 @@
   /* ---- admin console ---- */
   var ADM = {
     adminConsole:    ["ADMIN CONSOLE", "管理コンソール"],
-    signIn:          ["Sign in", "サインイン"],
-    signOut:         ["Sign out", "サインアウト"],
+    signIn:          ["Sign in", "ログイン"],
+    signOut:         ["Sign out", "ログアウト"],
     emailAddress:    ["Email address", "メールアドレス"],
     password:        ["Password", "パスワード"],
-    rememberMe:      ["Keep me signed in", "サインインを保持する"],
+    rememberMe:      ["Keep me signed in", "ログイン状態を保持"],
     demoCreds:       ["Demo credentials", "デモ用アカウント"],
     dashboard:       ["Dashboard", "ダッシュボード"],
     products:        ["Products", "商品"],
@@ -59,21 +59,21 @@
     noResults:       ["No results", "該当なし"],
     resetDemo:       ["Reset demo data", "デモデータをリセット"],
     language:        ["Language", "言語"],
-    langHint:        ["Applies to both the admin console and the public store.", "管理コンソールと公開ストアの両方に適用されます。"],
+    langHint:        ["Applies to both the admin console and the public store.", "管理画面と公開ストアの両方に適用されます。"],
     japanese:        ["Japanese", "日本語"],
     english:         ["English", "English"],
 
     /* ---- authentication ---- */
     authAdministration: ["ADMINISTRATION", "管理画面"],
-    authSignInIntro: ["Sign in with a staff account to manage the store.", "管理者アカウントでサインインして、ストアを管理します。"],
+    authSignInIntro: ["Sign in with a staff account to manage the store.", "管理者アカウントでログインすると、ストアを管理できます。"],
     authFailed:      ["We couldn't sign you in. Check your email address and password.", "ログインできませんでした。メールアドレスとパスワードをご確認ください。"],
     authEmailNeeded: ["Enter your email address.", "メールアドレスを入力してください。"],
     authPassNeeded:  ["Enter your password.", "パスワードを入力してください。"],
     authForgot:      ["Forgot your password?", "パスワードをお忘れですか？"],
     authRecoverHead: ["Set a new admin password", "管理者用の新しいパスワードを設定"],
-    authRecoverIntro: ["This recovery link was verified for a staff account. Set a new password below.", "管理者アカウント用の回復リンクを確認しました。新しいパスワードを設定してください。"],
-    authRecoverExpired: ["This admin recovery link has expired or has already been used. Return to sign in and request a new one.", "この管理者用リンクは期限切れか、すでに使用されています。サインイン画面に戻り、再度お手続きください。"],
-    authRecoverUnsupported: ["Password recovery is unavailable until Supabase Auth is connected.", "Supabase Auth が接続されるまで、パスワードの再設定は利用できません。"],
+    authRecoverIntro: ["This recovery link was verified for a staff account. Set a new password below.", "管理者アカウント用の再設定リンクを確認しました。新しいパスワードを設定してください。"],
+    authRecoverExpired: ["This admin recovery link has expired or has already been used. Return to sign in and request a new one.", "この管理者用リンクは期限切れか、すでに使用されています。ログイン画面に戻り、再度お手続きください。"],
+    authRecoverUnsupported: ["Password recovery is unavailable until Supabase Auth is connected.", "Supabase Authが接続されるまで、パスワードの再設定は利用できません。"],
     authEmailInvalid: ["Enter a valid email address.", "有効なメールアドレスを入力してください。"],
     authResetRateLimited: ["Too many recovery emails were requested. Wait a few minutes, then try again.", "再設定メールの送信回数が上限に達しました。数分待ってから再度お試しください。"],
     authResetFailed: ["We couldn't send the recovery email. Wait a moment and try again.", "再設定メールを送信できませんでした。しばらく待ってから再度お試しください。"],
@@ -85,32 +85,32 @@
     authSavePassword: ["Save new password", "新しいパスワードを保存"],
     authSavingPassword: ["Saving…", "保存中…"],
     authRecoverFailed: ["We couldn't update the password. Request a new admin recovery email and try again.", "パスワードを更新できませんでした。管理画面から再設定メールを再度送信してください。"],
-    authRecoverDone: ["Your admin password was updated. Sign in again with the new password.", "管理者用パスワードを更新しました。新しいパスワードで再度サインインしてください。"],
-    authBackToSignIn: ["Back to admin sign in", "管理者サインインに戻る"],
+    authRecoverDone: ["Your admin password was updated. Sign in again with the new password.", "管理者用パスワードを更新しました。新しいパスワードで再度ログインしてください。"],
+    authBackToSignIn: ["Back to admin sign in", "管理者ログイン画面へ"],
     authOr:          ["or", "または"],
     authGuestEnter:  ["VIEW AS GUEST", "ゲストとして見る"],
     authGuestWait:   ["OPENING…", "準備中…"],
-    authGuestFailed: ["Guest access is unavailable. Anonymous sign-in may be disabled for this project.", "ゲスト閲覧を利用できません。匿名サインインが無効な可能性があります。"],
-    authLocalMode:   ["Demo mode — credentials are checked in the browser. Supabase Auth is not connected yet.", "デモモード — 認証はブラウザ内で処理しています。Supabase Auth は未接続です。"],
+    authGuestFailed: ["Guest access is unavailable. Anonymous sign-in may be disabled for this project.", "ゲスト閲覧を利用できません。匿名ログインが無効な可能性があります。"],
+    authLocalMode:   ["Demo mode — credentials are checked in the browser. Supabase Auth is not connected yet.", "デモモードです。認証はブラウザ内で処理しています。Supabase Authは未接続です。"],
     guestBadge:      ["GUEST", "ゲスト"],
     guestReadOnly:   ["READ ONLY", "閲覧のみ"],
     guestNoticeHead: ["Read only", "閲覧モード"],
     guestNoticeBody: ["Guest access lets you explore the administration interface. Changes cannot be saved.", "ゲストでは管理画面を閲覧できますが、内容の変更・保存はできません。"],
-    guestBlocked:    ["Guest access is read only — that change was not saved.", "ゲストは閲覧のみです — 変更は保存されません。"],
+    guestBlocked:    ["Guest access is read only — that change was not saved.", "ゲストは閲覧のみです。変更は保存されません。"],
     guestSignedIn:   ["Signed in as a guest", "ゲストとして閲覧中"],
     roleGuest:       ["Guest", "ゲスト"],
 
     /* ---- featured content (top-page hero) ---- */
     fcTitle:         ["Featured Content", "注目コンテンツ"],
     fcSubtitle:      ["What the top page hero shows, and in what order", "トップページのHeroに表示する内容と、その順番"],
-    fcHeroHead:      ["TOP PAGE HERO", "トップページ HERO"],
+    fcHeroHead:      ["TOP PAGE HERO", "トップページのHero"],
     fcHeroNote:      ["The hero shows these in order. Anything disabled, unpublished or missing is skipped.", "Heroはこの順に表示します。無効・未公開・参照切れのものはスキップされます。"],
-    fcAdd:           ["Add feature", "Featureを追加"],
+    fcAdd:           ["Add feature", "コンテンツを追加"],
     fcPosition:      ["Position", "表示順"],
-    fcSourceType:    ["Source type", "ソース種別"],
-    fcSource:        ["Source", "ソース"],
+    fcSourceType:    ["Source type", "参照先の種類"],
+    fcSource:        ["Source", "参照先"],
     fcDestination:   ["Destination", "リンク先"],
-    fcSourceStatus:  ["Source status", "ソースの状態"],
+    fcSourceStatus:  ["Source status", "参照先の状態"],
     fcJournalType:   ["Journal", "ジャーナル"],
     fcPageType:      ["Page", "ページ"],
     fcPickArticle:   ["Select an article…", "記事を選択…"],
@@ -124,34 +124,34 @@
     fcRemove:        ["Remove", "削除"],
     fcLive:          ["In the hero", "Heroに表示中"],
     fcNotLive:       ["Not in the hero", "Heroには非表示"],
-    fcUnset:         ["No source set", "ソース未設定"],
-    fcUnsetNote:     ["Choose a source before enabling this feature.", "有効にする前にソースを設定してください。"],
-    fcMissing:       ["Source missing", "ソースが見つかりません"],
-    fcMissingNote:   ["The article this feature pointed to no longer exists. The hero skips it; nothing was substituted.", "このFeatureが参照していた記事は存在しません。Heroではスキップされ、別の記事に差し替えられることはありません。"],
+    fcUnset:         ["No source set", "参照先未設定"],
+    fcUnsetNote:     ["Choose a source before enabling this feature.", "有効にする前に参照先を設定してください。"],
+    fcMissing:       ["Source missing", "参照先が見つかりません"],
+    fcMissingNote:   ["The article this feature pointed to no longer exists. The hero skips it; nothing was substituted.", "このコンテンツが参照していた記事は存在しません。Heroには表示されず、別の記事に差し替えられることもありません。"],
     fcUnpublished:   ["Not public", "非公開"],
     fcUnpubNote:     ["This article is not published, so it will not appear in the hero.", "この記事は現在公開されていないため、Heroには表示されません。"],
-    fcNoLive:        ["No feature can appear in the hero right now. The storefront falls back to Online Shop and About.", "現在Heroに表示できるFeatureがありません。公開側はオンラインショップとAboutで代替表示されます。"],
-    fcManyNotice:    ["Five or more features make the hero longer to get through.", "Featureが5件以上になると、Heroの情報量が増えます。"],
+    fcNoLive:        ["No feature can appear in the hero right now. The storefront falls back to Online Shop and About.", "現在Heroに表示できるコンテンツがありません。代わりにオンラインショップとAboutが表示されます。"],
+    fcManyNotice:    ["Five or more features make the hero longer to get through.", "コンテンツが5件以上になると、Heroの情報量が増えます。"],
     fcAtMax:         ["The hero holds at most {n} features.", "Heroは最大{n}件までです。"],
-    fcRemoveQ:       ["Remove this feature from the hero?", "このFeatureをHeroから外しますか？"],
+    fcRemoveQ:       ["Remove this feature from the hero?", "このコンテンツをHeroから外しますか？"],
     fcRemoveBody:    ["The hero stops showing it. The article or page itself is not deleted.", "Heroから外れます。記事やページ自体は削除されません。"],
     fcSavedToast:    ["Hero updated", "Heroを更新しました"],
-    fcRemovedToast:  ["Feature removed from the hero", "FeatureをHeroから外しました"],
+    fcRemovedToast:  ["Feature removed from the hero", "コンテンツをHeroから外しました"],
     fcMovedToast:    ["Hero order updated", "Heroの順番を変更しました"],
     fcReadOnly:      ["Your role can view featured content but not change it.", "現在の権限では、注目コンテンツの閲覧のみ可能です。"],
     fcPageShop:      ["Online Shop", "オンラインショップ"],
     fcPageAbout:     ["About TSUMUGI", "TSUMUGIについて"],
     fcPageJournal:   ["Journal index", "ジャーナル一覧"],
     fcPageContact:   ["Contact", "お問い合わせ"],
-    fcEmpty:         ["The hero has no features yet.", "Heroに登録されたFeatureがありません。"],
-    fcEmptyBody:     ["Add a feature to choose what the top page shows.", "Featureを追加して、トップページに表示する内容を選んでください。"],
+    fcEmpty:         ["The hero has no features yet.", "Heroに登録されたコンテンツがありません。"],
+    fcEmptyBody:     ["Add a feature to choose what the top page shows.", "コンテンツを追加して、トップページに表示する内容を選んでください。"],
 
     /* ---- special features (curated product stories shown in Shop) ----
        A different thing from Featured Content above: that controls the home
        hero, this curates products for the Shop page. */
     sfTitle:         ["Special Features", "特集"],
     sfSubtitle:      ["Curated product stories shown in Shop", "ショップに掲載する商品特集"],
-    sfIntroHead:     ["SHOP FEATURE", "ショップ 特集"],
+    sfIntroHead:     ["SHOP FEATURE", "ショップの特集"],
     sfIntroNote:     ["Choose the theme and the pieces; the shop handles the rest — publication dates, sold-out pieces and layout. Featured Content, in the section above, controls the home hero instead.",
                       "テーマと商品はこちらで編集します。掲載期間・売り切れ商品の除外・レイアウトはシステム側で処理します。上の「注目コンテンツ」はトップページのHeroを管理する別機能です。"],
     sfNew:           ["New feature", "特集を追加"],
@@ -180,7 +180,7 @@
     sfTitleEn:       ["Title (EN)", "タイトル（英語）"],
     sfDescJa:        ["Description (JA)", "説明（日本語）"],
     sfDescEn:        ["Description (EN)", "説明（英語）"],
-    sfCategory:      ["Category label", "カテゴリ表記"],
+    sfCategory:      ["Category label", "カテゴリー表記"],
     sfEra:           ["Era label", "年代表記"],
     sfPublishAt:     ["Publish date", "掲載開始"],
     sfUnpublishAt:   ["End date", "掲載終了"],
@@ -191,15 +191,15 @@
     sfOverlapNote:   ["The shop shows one feature at a time — the one published most recently.", "ショップに表示されるのは1件だけで、掲載開始が最も新しい特集になります。"],
     sfCandidates:    ["Candidate products", "候補商品"],
     sfCandidateNote: ["Pick five to eight pieces. The shop uses the first ones that are publicly available and skips the rest, in this order.",
-                      "5〜8点を選んでください。ショップではこの順に、公開可能な商品から使用されます。"],
+                      "5〜8点を選んでください。ショップには、公開可能な商品がこの順に表示されます。"],
     sfCandidateCount:["{n} selected", "{n}点選択中"],
     sfCandidateFull: ["A feature holds at most {n} candidate products.", "候補商品は最大{n}点までです。"],
     sfSearchProducts:["Search products", "商品を検索"],
     sfAdd:           ["Add", "追加"],
     sfRemove:        ["Remove", "外す"],
-    sfSoldWarn:      ["Sold out — skipped on public site", "売り切れ — 公開側では表示されません"],
-    sfDraftWarn:     ["Draft — not eligible for public display", "非公開 — 公開側では表示されません"],
-    sfMissingWarn:   ["Product missing — skipped on public site", "商品が見つかりません — 公開側では表示されません"],
+    sfSoldWarn:      ["Sold out — skipped on public site", "売り切れのため、公開サイトには表示されません"],
+    sfDraftWarn:     ["Draft — not eligible for public display", "非公開のため、公開サイトには表示されません"],
+    sfMissingWarn:   ["Product missing — skipped on public site", "商品が見つからないため、公開サイトには表示されません"],
     sfEligible:      ["Shown publicly", "公開対象"],
     sfMedia:         ["Feature visuals", "特集ビジュアル"],
     sfMediaNote:     ["Each frame shows a photograph you choose from the candidate products. Left automatic, it follows the candidate order and moves on when a piece sells.",
@@ -224,9 +224,9 @@
     sfVisualCustom:  ["External image", "外部画像"],
     sfVisualCustomNote: ["A photograph of your own — styling, a rack, a detail. Paste an image address.", "スタイリングやラック、ディテールなど独自の写真。画像のURLを入力してください。"],
     sfVisualCustomUse: ["Use this address", "このURLを使う"],
-    sfSlotPrimary:   ["Primary (large)", "Primary（大）"],
-    sfSlotSecondary: ["Secondary (upper right)", "Secondary（右上）"],
-    sfSlotTertiary:  ["Tertiary (lower right)", "Tertiary（右下）"],
+    sfSlotPrimary:   ["Primary (large)", "メイン（大）"],
+    sfSlotSecondary: ["Secondary (upper right)", "右上"],
+    sfSlotTertiary:  ["Tertiary (lower right)", "右下"],
     sfViewInShop:    ["View in shop", "ショップで見る"],
     sfSavedToast:    ["Feature saved", "特集を保存しました"],
     sfDeletedToast:  ["Feature deleted", "特集を削除しました"],
@@ -245,7 +245,7 @@ var ADMPAIRS = [
  ],
  [
   "Sign in",
-  "サインイン"
+  "ログイン"
  ],
  [
   "Email address",
@@ -413,7 +413,7 @@ var ADMPAIRS = [
  ],
  [
   "Sign out",
-  "サインアウト"
+  "ログアウト"
  ],
  [
   "Demo data",
@@ -477,7 +477,7 @@ var ADMPAIRS = [
  ],
  [
   "SORT",
-  "並び替え"
+  "並べ替え"
  ],
  [
   "Filters",
@@ -773,7 +773,7 @@ var ADMPAIRS = [
  ],
  [
   "Archived",
-  "アーカイブ済"
+  "アーカイブ済み"
  ],
  [
   "Vintage information",
@@ -865,7 +865,7 @@ var ADMPAIRS = [
  ],
  [
   "Drag a tile to reorder. The first image is used on the shop grid.",
-  "ドラッグして並び替えできます。1枚目がショップ一覧に使われます。"
+  "ドラッグして並べ替えできます。1枚目がショップ一覧に使われます。"
  ],
  [
   "SEO &amp; publishing",
@@ -1265,7 +1265,7 @@ var ADMPAIRS = [
  ],
  [
   "ARCHIVED",
-  "アーカイブ済"
+  "アーカイブ済み"
  ],
  [
   "SCHEDULED",
@@ -1357,11 +1357,11 @@ var ADMPAIRS = [
  ],
  [
   "Signed in as ",
-  "サインインしました: "
+  "ログインしました: "
  ],
  [
   "Sign out of the admin console?",
-  "管理コンソールからサインアウトしますか？"
+  "管理コンソールからログアウトしますか？"
  ],
  [
   "Unsaved work in an open editor will be lost. Store data stays in this browser.",
@@ -1393,7 +1393,7 @@ var ADMPAIRS = [
  ],
  [
   "Signing in…",
-  "サインイン中…"
+  "ログイン中…"
  ],
  [
   "A reset link would be sent to admin@tsumugi.archive. This is a prototype.",
@@ -1865,7 +1865,7 @@ var ADMPAIRS = [
  ],
  [
   "Consented",
-  "同意済"
+  "同意済み"
  ],
  [
   "Declined",
